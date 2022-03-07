@@ -6,24 +6,21 @@ use skia::{
     Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point, Surface,
 };
 
-use crate::{Diagram, Error};
+use crate::{
+    layout::{self, layout, FinishedLayout, LayoutAlgorithm},
+    Diagram, Error,
+};
 
 impl Diagram {
     fn draw(&self, canvas: &mut Canvas) {
         let mut paint = Paint::default();
         paint.set_anti_alias(true);
-        let mut path = Path::default();
-        path.move_to((124, 108))
-            .line_to((172, 24))
-            .add_circle((50, 50), 30.0, None)
-            .move_to((36, 148))
-            .quad_to((66, 188), (120, 136));
-        canvas.draw_path(&path, &paint);
-        paint
-            .set_style(paint::Style::Stroke)
-            .set_color(Color::BLUE)
-            .set_stroke_width(3.0);
-        canvas.draw_path(&path, &paint);
+
+        let FinishedLayout { boxes } = layout(self, LayoutAlgorithm::Row);
+
+        for (label, (box_, rect)) in boxes {
+            draw_text(canvas, &box_.text.0, rect)
+        }
     }
 
     fn render_to_skia_surface(&self) -> skia::Surface {
@@ -52,7 +49,7 @@ impl Diagram {
     }
 }
 
-fn draw_text(canvas: &mut Canvas, text: &str) {
+fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
     let mut font_collection = FontCollection::new();
     font_collection.set_default_font_manager(FontMgr::new(), None);
 
@@ -72,7 +69,7 @@ fn draw_text(canvas: &mut Canvas, text: &str) {
 
     paragraph.layout(64.0);
 
-    paragraph.paint(canvas, Point { x: 0.0, y: 0.0 });
+    paragraph.paint(canvas, rect.top_left());
 }
 
 fn save_skia_image_to_png(image: &Image, output: &StdPath) -> Result<(), Error> {

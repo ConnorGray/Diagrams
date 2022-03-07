@@ -2,12 +2,11 @@
 pub struct Diagram {
     pub boxes: Vec<Box>,
     pub arrows: Vec<Arrow>,
-
     // pub callouts: Vec<Callout>,
 }
 
 /// A unique user-visible label for an element of a diagram.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Label(pub String);
 
 /// Text displayed inside or alongside an element of a diagram.
