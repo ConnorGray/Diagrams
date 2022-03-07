@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::diagram::{Arrow, Attachment, Border, Box, Diagram, Label};
+use crate::diagram::{Arrow, Attachment, Border, Box, Diagram, Id};
 
 use skia::Point;
 
@@ -16,7 +16,7 @@ pub struct Rect {
 /// algorithm.
 #[derive(Debug, Clone)]
 pub struct PlacedDiagram {
-    pub boxes: HashMap<Label, PlacedBox>,
+    pub boxes: HashMap<Id, PlacedBox>,
     pub arrows: Vec<PlacedArrow>,
 }
 
@@ -75,7 +75,7 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     // Place boxes
     //------------
 
-    for box_ @ Box { label, text: _ } in boxes {
+    for box_ @ Box { id, text: _ } in boxes {
         let border_left = x_offset;
         let text_left = x_offset + PADDING;
 
@@ -105,7 +105,7 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
 
         x_offset += placed_box.border_rect.width() + MARGIN;
 
-        if let Some(_old) = placed_boxes.insert(label.clone(), placed_box) {
+        if let Some(_old) = placed_boxes.insert(id.clone(), placed_box) {
             todo!()
         }
     }

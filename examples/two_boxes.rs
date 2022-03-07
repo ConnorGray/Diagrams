@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use diagram_maker::{
-    diagram::{Arrow, Attachment, Border, Box, Label, Text},
+    diagram::{Arrow, Attachment, Border, Box, Id, Text},
     layout::{layout, LayoutAlgorithm},
     Diagram,
 };
@@ -10,17 +10,17 @@ fn main() {
     let diagram = Diagram {
         boxes: vec![
             Box {
-                label: Label("Box A".into()),
+                id: Id::new("Box A"),
                 text: Text("This is Box A".into()),
             },
             Box {
-                label: Label("Box B".into()),
+                id: Id::new("Box B"),
                 text: Text("This is Box B".into()),
             },
         ],
         arrows: vec![Arrow {
-            start: Label("Box A".into()),
-            end: Label("Box B".into()),
+            start: Id::new("Box A"),
+            end: Id::new("Box B"),
 
             text: Text("An arrow".into()),
 

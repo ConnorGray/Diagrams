@@ -5,9 +5,9 @@ pub struct Diagram {
     // pub callouts: Vec<Callout>,
 }
 
-/// A unique user-visible label for an element of a diagram.
+/// A unique identifier used to refer to an element of a diagram.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Label(pub String);
+pub struct Id(pub String);
 
 /// Text displayed inside or alongside an element of a diagram.
 // TODO: Support styled text.
@@ -19,7 +19,7 @@ pub struct Box {
     /// Unique identifier for this box.
     ///
     /// This is used to refer to this box from other boxes and arrows.
-    pub label: Label,
+    pub id: Id,
 
     /// The text displayed in this box.
     pub text: Text,
@@ -28,8 +28,8 @@ pub struct Box {
 /// An arrow that relates two elements in the diagram.
 #[derive(Debug, Clone)]
 pub struct Arrow {
-    pub start: Label,
-    pub end: Label,
+    pub start: Id,
+    pub end: Id,
 
     /// The text displayed alongside this arrow.
     pub text: Text,
@@ -54,4 +54,10 @@ pub enum Border {
     Right,
     Top,
     Bottom,
+}
+
+impl Id {
+    pub fn new<T: Into<String>>(s: T) -> Id {
+        Id(s.into())
+    }
 }

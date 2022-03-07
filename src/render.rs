@@ -21,7 +21,7 @@ impl PlacedDiagram {
         // Draw boxes
         //-----------
 
-        for (label, placed_box) in boxes {
+        for (_id, placed_box) in boxes {
             let PlacedBox {
                 ref box_,
                 text_rect,
