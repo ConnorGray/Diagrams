@@ -164,33 +164,39 @@ impl PlacedBox {
         } = *self;
 
         let point = match attachment {
-            Attachment::Border(side) => match side {
-                Border::Left => {
-                    let x = border_rect.left;
-                    // Center Y
-                    // TODO: This assumes +Y points downward.
-                    let y = border_rect.top + border_rect.height() / 2.0;
-                    Point { x, y }
-                },
-                Border::Right => {
-                    let x = border_rect.right;
-                    // Center Y
-                    // TODO: This assumes +Y points downward.
-                    let y = border_rect.top + border_rect.height() / 2.0;
-                    Point { x, y }
-                },
-                Border::Top => {
-                    // Center X
-                    let x = border_rect.left + border_rect.width() / 2.0;
-                    let y = border_rect.top;
-                    Point { x, y }
-                },
-                Border::Bottom => {
-                    // Center X
-                    let x = border_rect.left + border_rect.width() / 2.0;
-                    let y = border_rect.bottom;
-                    Point { x, y }
-                },
+            Attachment::Border(side, lerp_factor) => {
+                // Factor used for linear interpolation.
+                let lerp_factor = lerp_factor.unwrap_or(0.5);
+                let lerp_factor = f32::clamp(lerp_factor, 0.0, 1.0);
+
+                match side {
+                    Border::Left => {
+                        let x = border_rect.left;
+                        // Center Y
+                        // TODO: This assumes +Y points downward.
+                        let y = border_rect.top + lerp_factor * border_rect.height();
+                        Point { x, y }
+                    },
+                    Border::Right => {
+                        let x = border_rect.right;
+                        // Center Y
+                        // TODO: This assumes +Y points downward.
+                        let y = border_rect.top + lerp_factor * border_rect.height();
+                        Point { x, y }
+                    },
+                    Border::Top => {
+                        // Center X
+                        let x = border_rect.left + lerp_factor * border_rect.width();
+                        let y = border_rect.top;
+                        Point { x, y }
+                    },
+                    Border::Bottom => {
+                        // Center X
+                        let x = border_rect.left + lerp_factor * border_rect.width();
+                        let y = border_rect.bottom;
+                        Point { x, y }
+                    },
+                }
             },
             Attachment::Angle(_angle) => todo!(),
         };

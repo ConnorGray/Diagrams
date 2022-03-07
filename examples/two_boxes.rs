@@ -24,8 +24,8 @@ fn main() {
 
             text: Text("An arrow".into()),
 
-            start_at: Attachment::Border(Border::Right),
-            end_at: Attachment::Border(Border::Left),
+            start_at: Attachment::Border(Border::Right, None),
+            end_at: Attachment::Border(Border::Left, None),
         }],
     };
 

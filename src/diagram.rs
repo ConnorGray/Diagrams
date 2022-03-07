@@ -42,8 +42,16 @@ pub struct Arrow {
 /// ending at.
 #[derive(Debug, Clone)]
 pub enum Attachment {
-    /// Specified side of the rectangular border.
-    Border(Border),
+    /// Attach to specified edge of the rectangular border.
+    ///
+    /// The second field is the position along the specified edge that the arrow should
+    /// attach to. This should be a value between 0.0 and 1.0, and is linearly
+    /// proportional to the final length of the specified border.
+    ///
+    /// 0.0 is minimum X or minimum Y depending on the axis of the `Border`.
+    ///
+    /// 1.0 is maximum X or maximum Y.
+    Border(Border, Option<f32>),
     /// Point along the border of the element at the specified angle.
     Angle(f32),
 }
@@ -56,8 +64,18 @@ pub enum Border {
     Bottom,
 }
 
+//======================================
+// Impls
+//======================================
+
 impl Id {
     pub fn new<T: Into<String>>(s: T) -> Id {
         Id(s.into())
+    }
+}
+
+impl Text {
+    pub fn new<T: Into<String>>(s: T) -> Text {
+        Text(s.into())
     }
 }
