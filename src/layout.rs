@@ -65,7 +65,7 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     const TEXT_WIDTH: f32 = 64.0;
     const TEXT_HEIGHT: f32 = 64.0;
 
-    const MARGIN: f32 = 16.0;
+    const MARGIN: f32 = 32.0;
     const PADDING: f32 = 8.0;
 
     let mut x_offset = 0.0;
