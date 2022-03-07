@@ -43,20 +43,7 @@ impl PlacedDiagram {
             end_point,
         } in arrows
         {
-            let mut paint = Paint::default();
-            paint.set_anti_alias(true);
-            let mut path = Path::default();
-
-            path.move_to(*start_point).line_to(*end_point);
-
-            canvas.draw_path(&path, &paint);
-
-            paint
-                .set_style(paint::Style::Stroke)
-                .set_color(Color::GREEN)
-                .set_stroke_width(3.0);
-
-            canvas.draw_path(&path, &paint);
+            draw_arrow(canvas, *start_point, *end_point);
         }
     }
 
@@ -118,6 +105,23 @@ fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
         .set_stroke_width(3.0);
 
     canvas.draw_round_rect(rect.into_skia(), 5.0, 5.0, &paint);
+}
+
+fn draw_arrow(canvas: &mut Canvas, start_point: Point, end_point: Point) {
+    let mut path = Path::default();
+    path.move_to(start_point).line_to(end_point);
+
+    let paint = {
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        paint
+            .set_style(paint::Style::Stroke)
+            .set_color(Color::GREEN)
+            .set_stroke_width(3.0);
+        paint
+    };
+
+    canvas.draw_path(&path, &paint);
 }
 
 fn save_skia_image_to_png(image: &Image, output: &StdPath) -> Result<(), Error> {
