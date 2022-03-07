@@ -1,6 +1,6 @@
 use std::{fs, io::Write, path::Path as StdPath};
 
-use skia::{EncodedImageFormat, Image, Surface, Paint, Path, paint, Color, Canvas};
+use skia::{paint, Canvas, Color, EncodedImageFormat, Image, Paint, Path, Surface};
 
 use crate::{Diagram, Error};
 
@@ -43,14 +43,19 @@ impl Diagram {
     /// Render this diagram to a PNG file.
     pub fn save_to_png(&self, output: &StdPath) -> Result<(), Error> {
         let image: Image = self.render_to_skia_image();
-        // TODO: use encode_to_data_with_quality()?
-        let png_data = image.encode_to_data(EncodedImageFormat::PNG).unwrap();
 
-        fs::create_dir_all(output.parent().unwrap())?;
-
-        let mut file = fs::File::create(output)?;
-        file.write_all(png_data.as_bytes())?;
-
-        Ok(())
+        save_skia_image_to_png(&image, output)
     }
+}
+
+fn save_skia_image_to_png(image: &Image) -> Result<(), Error> {
+    // TODO: use encode_to_data_with_quality()?
+    let png_data = image.encode_to_data(EncodedImageFormat::PNG).unwrap();
+
+    fs::create_dir_all(output.parent().unwrap())?;
+
+    let mut file = fs::File::create(output)?;
+    file.write_all(png_data.as_bytes())?;
+
+    Ok(())
 }
