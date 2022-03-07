@@ -7,19 +7,29 @@ use skia::{
 };
 
 use crate::{
-    layout::{self, layout, FinishedLayout, LayoutAlgorithm},
+    layout::{self, layout, LayoutAlgorithm, PlacedBox, PlacedDiagram},
     Diagram, Error,
 };
 
 impl Diagram {
     fn draw(&self, canvas: &mut Canvas) {
-        let mut paint = Paint::default();
-        paint.set_anti_alias(true);
+        // let mut paint = Paint::default();
+        // paint.set_anti_alias(true);
 
-        let FinishedLayout { boxes } = layout(self, LayoutAlgorithm::Row);
+        let PlacedDiagram { boxes } = layout(self, LayoutAlgorithm::Row);
 
-        for (label, (box_, rect)) in boxes {
-            draw_text(canvas, &box_.text.0, rect)
+        for (label, placed_box) in boxes {
+            let PlacedBox {
+                box_,
+                text_rect,
+                border_rect,
+            } = placed_box;
+
+            // assert!(text_rect.width() <= border_rect.width());
+            // assert!(text_rect.height() <= border_rect.height());
+
+            draw_text(canvas, &box_.text.0, text_rect);
+            draw_border(canvas, border_rect);
         }
     }
 
@@ -70,6 +80,17 @@ fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
     paragraph.layout(64.0);
 
     paragraph.paint(canvas, rect.top_left());
+}
+
+fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
+    let mut paint = Paint::default();
+    paint.set_anti_alias(true);
+    paint
+        .set_style(paint::Style::Stroke)
+        .set_color(Color::BLUE)
+        .set_stroke_width(3.0);
+
+    canvas.draw_round_rect(rect.into_skia(), 5.0, 5.0, &paint);
 }
 
 fn save_skia_image_to_png(image: &Image, output: &StdPath) -> Result<(), Error> {
