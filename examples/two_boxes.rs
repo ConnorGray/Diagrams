@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use diagram_maker::{
-    diagram::{Arrow, Attachment, Border, Box, Id, Text},
+    diagram::{Arrow, Attachment, Box, Id, Side, Text},
     layout::{layout, LayoutAlgorithm},
     Diagram,
 };
@@ -24,8 +24,8 @@ fn main() {
 
             text: Text("An arrow".into()),
 
-            start_at: Attachment::Border(Border::Right, None),
-            end_at: Attachment::Border(Border::Left, None),
+            start_at: Attachment::Border(Side::Right, None),
+            end_at: Attachment::Border(Side::Left, None),
         }],
     };
 

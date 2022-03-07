@@ -42,22 +42,22 @@ pub struct Arrow {
 /// ending at.
 #[derive(Debug, Clone)]
 pub enum Attachment {
-    /// Attach to specified edge of the rectangular border.
+    /// Attach to specified side of the rectangular border.
     ///
     /// The second field is the position along the specified edge that the arrow should
     /// attach to. This should be a value between 0.0 and 1.0, and is linearly
     /// proportional to the final length of the specified border.
     ///
-    /// 0.0 is minimum X or minimum Y depending on the axis of the `Border`.
+    /// 0.0 is minimum X or minimum Y depending on the axis of the [`Side`].
     ///
     /// 1.0 is maximum X or maximum Y.
-    Border(Border, Option<f32>),
+    Border(Side, Option<f32>),
     /// Point along the border of the element at the specified angle.
     Angle(f32),
 }
 
 #[derive(Debug, Clone)]
-pub enum Border {
+pub enum Side {
     Left,
     Right,
     Top,

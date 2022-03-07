@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::diagram::{Arrow, Attachment, Border, Box, Diagram, Id};
+use crate::diagram::{Arrow, Attachment, Box, Diagram, Id, Side};
 
 use skia::Point;
 
@@ -170,27 +170,27 @@ impl PlacedBox {
                 let lerp_factor = f32::clamp(lerp_factor, 0.0, 1.0);
 
                 match side {
-                    Border::Left => {
+                    Side::Left => {
                         let x = border_rect.left;
                         // Center Y
                         // TODO: This assumes +Y points downward.
                         let y = border_rect.top + lerp_factor * border_rect.height();
                         Point { x, y }
                     },
-                    Border::Right => {
+                    Side::Right => {
                         let x = border_rect.right;
                         // Center Y
                         // TODO: This assumes +Y points downward.
                         let y = border_rect.top + lerp_factor * border_rect.height();
                         Point { x, y }
                     },
-                    Border::Top => {
+                    Side::Top => {
                         // Center X
                         let x = border_rect.left + lerp_factor * border_rect.width();
                         let y = border_rect.top;
                         Point { x, y }
                     },
-                    Border::Bottom => {
+                    Side::Bottom => {
                         // Center X
                         let x = border_rect.left + lerp_factor * border_rect.width();
                         let y = border_rect.bottom;
