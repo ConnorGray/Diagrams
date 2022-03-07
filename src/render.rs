@@ -6,6 +6,8 @@ use skia::{
     Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point, Surface,
 };
 
+use cgmath::{InnerSpace, Rad, Vector2};
+
 use crate::{
     layout::{self, PlacedArrow, PlacedBox, PlacedDiagram},
     Error,
@@ -108,9 +110,9 @@ fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
 }
 
 fn draw_arrow(canvas: &mut Canvas, start_point: Point, end_point: Point) {
-    let mut path = Path::default();
-    path.move_to(start_point).line_to(end_point);
+    use std::f32;
 
+    // Style to use for the arrow.
     let paint = {
         let mut paint = Paint::default();
         paint.set_anti_alias(true);
@@ -121,7 +123,65 @@ fn draw_arrow(canvas: &mut Canvas, start_point: Point, end_point: Point) {
         paint
     };
 
+    let mut path = Path::default();
+
+    // Draw the main arrow shaft.
+    path.move_to(start_point).line_to(end_point);
     canvas.draw_path(&path, &paint);
+
+    // Draw the arrow 'ticks'
+    {
+        // Get the normalized direction vector of start_point => end_point.
+        let vector =
+            Vector2::new(start_point.x - end_point.x, start_point.y - end_point.y)
+                .normalize();
+
+        draw_arrow_tick(
+            canvas,
+            end_point,
+            vector,
+            Rad(0.25 * f32::consts::PI),
+            &paint,
+        );
+        draw_arrow_tick(
+            canvas,
+            end_point,
+            vector,
+            Rad(-0.25 * f32::consts::PI),
+            &paint,
+        );
+    }
+}
+
+/// `end_point` is the point where the arrow ends.
+///
+/// `arrow_vector` is the direction vector of the main arrow shaft.
+///
+/// `tick_angle` is the angle in radians to offset the arrow tick from `arrow_vector`.
+fn draw_arrow_tick(
+    canvas: &mut Canvas,
+    end_point: skia::Point,
+    arrow_vector: Vector2<f32>,
+    tick_angle_rad: Rad<f32>,
+    paint: &Paint,
+) {
+    use cgmath::{Basis2, Point2 as CgPoint2, Rotation, Rotation2};
+
+    // Draw the left arrow 'tick'
+    let rot: Basis2<f32> = Rotation2::from_angle(tick_angle_rad);
+
+    // Rotate the vector using the two-dimensional rotation matrix:
+    let left_tick_dir = rot.rotate_vector(arrow_vector);
+    let left_tick_start = CgPoint2 {
+        x: end_point.x,
+        y: end_point.y,
+    };
+    let left_tick_end = left_tick_start + 20.0 * left_tick_dir;
+
+    let mut path = Path::default();
+    path.move_to((left_tick_start.x, left_tick_start.y))
+        .line_to((left_tick_end.x, left_tick_end.y));
+    canvas.draw_path(&path, paint);
 }
 
 fn save_skia_image_to_png(image: &Image, output: &StdPath) -> Result<(), Error> {

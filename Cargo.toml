@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 skia = { package = "skia-safe", version = "0.47.0", features = ["textlayout"] }
+
+cgmath = "0.18.0"
