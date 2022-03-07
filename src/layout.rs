@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::diagram::{Box, Diagram, Label};
+use crate::diagram::{Arrow, Attachment, Border, Box, Diagram, Label};
 
 use skia::Point;
 
@@ -14,16 +14,27 @@ pub struct Rect {
 
 /// A [`Diagram`] whose elements have been placed in their final position by a layout
 /// algorithm.
+#[derive(Debug, Clone)]
 pub struct PlacedDiagram {
     pub boxes: HashMap<Label, PlacedBox>,
+    pub arrows: Vec<PlacedArrow>,
 }
 
 /// A [`Box`] that has been placed in its final position by a layout algorithm.
+#[derive(Debug, Clone)]
 pub struct PlacedBox {
     pub box_: Box,
 
     pub text_rect: Rect,
     pub border_rect: Rect,
+}
+
+#[derive(Debug, Clone)]
+pub struct PlacedArrow {
+    pub arrow: Arrow,
+
+    pub start_point: Point,
+    pub end_point: Point,
 }
 
 pub enum LayoutAlgorithm {
@@ -60,6 +71,10 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     let mut x_offset = 0.0;
     let mut placed_boxes = HashMap::new();
 
+    //------------
+    // Place boxes
+    //------------
+
     for box_ @ Box { label, text: _ } in boxes {
         let border_left = x_offset;
         let text_left = x_offset + PADDING;
@@ -90,11 +105,97 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
 
         x_offset += placed_box.border_rect.width() + MARGIN;
 
-        placed_boxes.insert(label.clone(), placed_box);
+        if let Some(_old) = placed_boxes.insert(label.clone(), placed_box) {
+            todo!()
+        }
+    }
+
+    //-------------
+    // Place arrows
+    //-------------
+
+    let mut placed_arrows = Vec::new();
+
+    for arrow @ Arrow {
+        start,
+        end,
+        text,
+        start_at,
+        end_at,
+    } in arrows
+    {
+        let start_box = match placed_boxes.get(start) {
+            Some(box_) => box_,
+            None => todo!(),
+        };
+
+        let end_box = match placed_boxes.get(end) {
+            Some(box_) => box_,
+            None => todo!(),
+        };
+
+        let start_point = start_box.attachment_point(start_at);
+        let end_point = end_box.attachment_point(end_at);
+
+        placed_arrows.push(PlacedArrow {
+            arrow: arrow.clone(),
+            start_point,
+            end_point,
+        });
     }
 
     PlacedDiagram {
         boxes: placed_boxes,
+        arrows: placed_arrows,
+    }
+}
+
+//==========================================================
+// impl Placed*
+//==========================================================
+
+impl PlacedBox {
+    /// Get the location of the specified [`Attachment`] point for this box.
+    pub fn attachment_point(&self, attachment: &Attachment) -> Point {
+        let PlacedBox {
+            box_: _,
+            text_rect: _,
+            border_rect,
+        } = *self;
+
+        let point = match attachment {
+            Attachment::Border(side) => match side {
+                Border::Left => {
+                    let x = border_rect.left;
+                    // Center Y
+                    // TODO: This assumes +Y points downward.
+                    let y = border_rect.top + border_rect.height() / 2.0;
+                    Point { x, y }
+                },
+                Border::Right => {
+                    let x = border_rect.right;
+                    // Center Y
+                    // TODO: This assumes +Y points downward.
+                    let y = border_rect.top + border_rect.height() / 2.0;
+                    Point { x, y }
+                },
+                Border::Top => {
+                    // Center X
+                    let x = border_rect.left + border_rect.width() / 2.0;
+                    let y = border_rect.top;
+                    Point { x, y }
+                },
+                Border::Bottom => {
+                    // Center X
+                    let x = border_rect.left + border_rect.width() / 2.0;
+                    let y = border_rect.bottom;
+                    Point { x, y }
+                },
+            },
+            Attachment::Angle(_angle) => todo!(),
+        };
+
+        point
     }
 }
 
@@ -107,7 +208,7 @@ impl Rect {
     pub(crate) fn into_skia(self) -> skia::Rect {
         let Rect { left, right, top, bottom } = self;
 
-        skia::Rect { left, right,top, bottom, }
+        skia::Rect { left, right, top, bottom }
     }
 
     pub fn width(&self) -> f32 {
@@ -116,8 +217,9 @@ impl Rect {
     }
 
     pub fn height(&self) -> f32 {
-        assert!(self.bottom <= self.top);
-        self.top - self.bottom
+        // TODO: This assumes that +Y points downward.
+        assert!(self.top <= self.bottom);
+        self.bottom - self.top
     }
 
     pub fn top_left(&self) -> Point {

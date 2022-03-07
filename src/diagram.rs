@@ -28,9 +28,30 @@ pub struct Box {
 /// An arrow that relates two elements in the diagram.
 #[derive(Debug, Clone)]
 pub struct Arrow {
-    pub subject: Label,
-    pub object: Label,
+    pub start: Label,
+    pub end: Label,
 
     /// The text displayed alongside this arrow.
     pub text: Text,
+
+    pub start_at: Attachment,
+    pub end_at: Attachment,
+}
+
+/// Description of where an [`Arrow`] attaches to the element it is starting from or
+/// ending at.
+#[derive(Debug, Clone)]
+pub enum Attachment {
+    /// Specified side of the rectangular border.
+    Border(Border),
+    /// Point along the border of the element at the specified angle.
+    Angle(f32),
+}
+
+#[derive(Debug, Clone)]
+pub enum Border {
+    Left,
+    Right,
+    Top,
+    Bottom,
 }

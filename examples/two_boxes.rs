@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use diagram_maker::{
-    diagram::{Box, Label, Text},
+    diagram::{Arrow, Attachment, Border, Box, Label, Text},
     layout::{layout, LayoutAlgorithm},
     Diagram,
 };
@@ -18,7 +18,15 @@ fn main() {
                 text: Text("This is Box B".into()),
             },
         ],
-        arrows: vec![],
+        arrows: vec![Arrow {
+            start: Label("Box A".into()),
+            end: Label("Box B".into()),
+
+            text: Text("An arrow".into()),
+
+            start_at: Attachment::Border(Border::Right),
+            end_at: Attachment::Border(Border::Left),
+        }],
     };
 
     let placed = layout(&diagram, LayoutAlgorithm::Row);

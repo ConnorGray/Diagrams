@@ -7,15 +7,17 @@ use skia::{
 };
 
 use crate::{
-    layout::{self, PlacedBox, PlacedDiagram},
+    layout::{self, PlacedArrow, PlacedBox, PlacedDiagram},
     Error,
 };
 
 impl PlacedDiagram {
     fn draw(&self, canvas: &mut Canvas) {
-        // let mut paint = Paint::default();
-        // paint.set_anti_alias(true);
-        let PlacedDiagram { boxes } = self;
+        let PlacedDiagram { boxes, arrows } = self;
+
+        //-----------
+        // Draw boxes
+        //-----------
 
         for (label, placed_box) in boxes {
             let PlacedBox {
@@ -29,6 +31,32 @@ impl PlacedDiagram {
 
             draw_text(canvas, &box_.text.0, text_rect);
             draw_border(canvas, border_rect);
+        }
+
+        //------------
+        // Draw arrows
+        //------------
+
+        for PlacedArrow {
+            arrow: _,
+            start_point,
+            end_point,
+        } in arrows
+        {
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            let mut path = Path::default();
+
+            path.move_to(*start_point).line_to(*end_point);
+
+            canvas.draw_path(&path, &paint);
+
+            paint
+                .set_style(paint::Style::Stroke)
+                .set_color(Color::GREEN)
+                .set_stroke_width(3.0);
+
+            canvas.draw_path(&path, &paint);
         }
     }
 
