@@ -28,12 +28,8 @@ pub struct PlacedBox {
 
 pub enum LayoutAlgorithm {
     Row,
-    #[allow(dead_code)]
     Column,
-    #[allow(dead_code)]
-    Multicolumn {
-        columns: usize,
-    },
+    Multicolumn { columns: usize },
 }
 
 pub fn layout(diagram: &Diagram, algo: LayoutAlgorithm) -> PlacedDiagram {

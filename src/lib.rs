@@ -1,6 +1,6 @@
 pub mod diagram;
+pub mod layout;
 
-mod layout;
 mod render;
 
 pub use crate::diagram::Diagram;

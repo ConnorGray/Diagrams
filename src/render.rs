@@ -7,23 +7,22 @@ use skia::{
 };
 
 use crate::{
-    layout::{self, layout, LayoutAlgorithm, PlacedBox, PlacedDiagram},
-    Diagram, Error,
+    layout::{self, PlacedBox, PlacedDiagram},
+    Error,
 };
 
-impl Diagram {
+impl PlacedDiagram {
     fn draw(&self, canvas: &mut Canvas) {
         // let mut paint = Paint::default();
         // paint.set_anti_alias(true);
-
-        let PlacedDiagram { boxes } = layout(self, LayoutAlgorithm::Row);
+        let PlacedDiagram { boxes } = self;
 
         for (label, placed_box) in boxes {
             let PlacedBox {
-                box_,
+                ref box_,
                 text_rect,
                 border_rect,
-            } = placed_box;
+            } = *placed_box;
 
             // assert!(text_rect.width() <= border_rect.width());
             // assert!(text_rect.height() <= border_rect.height());

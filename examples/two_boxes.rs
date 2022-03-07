@@ -2,6 +2,7 @@ use std::path::Path;
 
 use diagram_maker::{
     diagram::{Box, Label, Text},
+    layout::{layout, LayoutAlgorithm},
     Diagram,
 };
 
@@ -20,5 +21,7 @@ fn main() {
         arrows: vec![],
     };
 
-    diagram.save_to_png(Path::new("./diagram.png")).unwrap()
+    let placed = layout(&diagram, LayoutAlgorithm::Row);
+
+    placed.save_to_png(Path::new("./diagram.png")).unwrap()
 }
