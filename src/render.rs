@@ -1,6 +1,10 @@
 use std::{fs, io::Write, path::Path as StdPath};
 
-use skia::{paint, Canvas, Color, EncodedImageFormat, Image, Paint, Path, Surface};
+use skia::{
+    paint,
+    textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle},
+    Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point, Surface,
+};
 
 use crate::{Diagram, Error};
 
@@ -48,7 +52,30 @@ impl Diagram {
     }
 }
 
-fn save_skia_image_to_png(image: &Image) -> Result<(), Error> {
+fn draw_text(canvas: &mut Canvas, text: &str) {
+    let mut font_collection = FontCollection::new();
+    font_collection.set_default_font_manager(FontMgr::new(), None);
+
+    let paragraph_style = ParagraphStyle::new();
+
+    let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
+
+    let ts = {
+        let mut ts = TextStyle::new();
+        ts.set_foreground_color(Paint::default());
+        ts
+    };
+    paragraph_builder.push_style(&ts);
+    paragraph_builder.add_text(text);
+
+    let mut paragraph = paragraph_builder.build();
+
+    paragraph.layout(64.0);
+
+    paragraph.paint(canvas, Point { x: 0.0, y: 0.0 });
+}
+
+fn save_skia_image_to_png(image: &Image, output: &StdPath) -> Result<(), Error> {
     // TODO: use encode_to_data_with_quality()?
     let png_data = image.encode_to_data(EncodedImageFormat::PNG).unwrap();
 

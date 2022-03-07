@@ -5,8 +5,8 @@ use diagram_maker::Diagram;
 fn main() {
     let diagram = Diagram {
         boxes: vec![],
-        arrows: vec![]
+        arrows: vec![],
     };
 
-    diagram.save_to_png(Path::new("./hello.png")).unwrap()
+    diagram.save_to_png(Path::new("./diagram.png")).unwrap()
 }

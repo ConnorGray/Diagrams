@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-skia = { package = "skia-safe", version = "0.47.0"}
+skia = { package = "skia-safe", version = "0.47.0", features = ["textlayout"] }
