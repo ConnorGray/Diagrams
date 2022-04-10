@@ -31,5 +31,7 @@ fn main() {
 
     let placed = layout(&diagram, LayoutAlgorithm::Row);
 
-    placed.save_to_png(Path::new("./diagram.png")).unwrap()
+    placed.save_to_png(Path::new("./diagram.png")).unwrap();
+
+    open::that("./diagram.png").unwrap()
 }

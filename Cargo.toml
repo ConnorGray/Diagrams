@@ -9,3 +9,6 @@ edition = "2021"
 skia = { package = "skia-safe", version = "0.47.0", features = ["textlayout"] }
 
 cgmath = "0.18.0"
+
+[dev-dependencies]
+open = "2.1.1"
