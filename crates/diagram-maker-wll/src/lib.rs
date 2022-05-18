@@ -7,6 +7,6 @@ fn load_diagram_maker_functions(args: Vec<Expr>) -> Expr {
 }
 
 #[export(wstp)]
-fn render_diagram(args: Vec<Expr>) -> Expr {
-    todo!("render_diagram()")
+fn diagram_image(args: Vec<Expr>) -> Expr {
+    todo!("diagram_image()")
 }

@@ -2,11 +2,13 @@ BeginPackage["DiagramMaker`"]
 
 (* Declare your package's public symbols here. *)
 
-DiagramBlock::usage = "Represents a block element in a diagram."
-DiagramArrow::usage = "Represents an arrow defining a relationship between two diagram block elements."
+Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."
 
-RenderDiagram::usage = "Renders a diagram to a graphical represenation."
-DiagramGraph::usage = "Returns the Graph object representing the relations between graph blocks."
+DiaBox::usage = "DiaBox[..] is a diagram element of a generic box."
+DiaArrow::usage = "DiaArrow[..] is a diagram element that defines a relationship between two diagram box elements."
+
+DiagramImage::usage = "DiagramImage[diagram] returns an image containing the graphical representation of diagram."
+DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing the relations between diagram elements blocks."
 
 Begin["`Private`"]
 
@@ -28,15 +30,7 @@ Subgraphs[graph_Graph] := Map[
 
 (*--------------------------------------------------------------------------------------*)
 
-RenderDiagram[
-	DiagramBlock[name_?StringQ, blocks : {___}, relations : {___}]
-] := Framed[
-	Column[{
-		Item[Style[name, "Title"], Alignment -> Center]
-	}],
-	RoundingRadius -> 5,
-	Background -> GrayLevel[0.95]
-]
+DiagramImage[args___] := $functions["diagram_image"][args]
 
 (*--------------------------------------------------------------------------------------*)
 
