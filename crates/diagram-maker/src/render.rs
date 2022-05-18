@@ -95,6 +95,13 @@ fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
 
     paragraph.layout(64.0);
 
+    println!(
+        "Width: {} ({}), Height: {}",
+        paragraph.max_width(),
+        paragraph.max_intrinsic_width(),
+        paragraph.height()
+    );
+
     paragraph.paint(canvas, rect.top_left());
 }
 
