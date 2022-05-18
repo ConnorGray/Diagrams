@@ -1,4 +1,5 @@
 [config]
+default_to_workspace = false
 
 #---------------------------------------
 # Development tasks

@@ -21,7 +21,8 @@ If[FileNameTake[$repositoryDir] =!= "diagram-maker",
 
 result = PacletBuild[
 	FileNameJoin[{$repositoryDir, "paclets", "DiagramMaker"}],
-	FileNameJoin[{$repositoryDir, "build"}]
+	FileNameJoin[{$repositoryDir, "build"}],
+	OverwriteTarget -> True
 ];
 
 If[FailureQ[result],
@@ -41,6 +42,6 @@ CreateDirectory[$dir]
 
 (* FIXME: Make this switch between release and debug builds somehow. *)
 CopyFile[
-    FileNameJoin[{"target", "debug", "libdiagram_maker.dylib"}],
-    FileNameJoin[{$dir, "libdiagram_maker.dylib"}]
+    FileNameJoin[{$repositoryDir, "target", "debug", "libdiagram_maker_wll.dylib"}],
+    FileNameJoin[{$dir, "libdiagram_maker_wll.dylib"}]
 ]

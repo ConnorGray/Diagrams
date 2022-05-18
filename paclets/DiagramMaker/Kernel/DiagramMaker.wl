@@ -10,6 +10,15 @@ DiagramGraph::usage = "Returns the Graph object representing the relations betwe
 
 Begin["`Private`"]
 
+$functions = LibraryFunctionLoad[
+	"libdiagram_maker_wll",
+	"load_diagram_maker_functions",
+	LinkObject,
+	LinkObject
+][];
+
+Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
+
 (*--------------------------------------------------------------------------------------*)
 
 Subgraphs[graph_Graph] := Map[

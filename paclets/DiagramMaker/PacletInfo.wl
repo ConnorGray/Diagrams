@@ -10,10 +10,7 @@ PacletObject[
                     "Root" -> "Kernel",
                     "Context" -> "DiagramMaker`"
                 },
-                {
-                    "Documentation",
-                    "Language" -> "English"
-                }
+                {"LibraryLink"}
             }
     |>
 ]
