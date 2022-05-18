@@ -3,7 +3,8 @@ use std::{fs, io::Write, path::Path as StdPath};
 use skia::{
     paint,
     textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle},
-    Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point, Surface,
+    Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point,
+    Surface,
 };
 
 use cgmath::{InnerSpace, Rad, Vector2};
@@ -94,7 +95,8 @@ fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
 
     let paragraph_style = ParagraphStyle::new();
 
-    let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
+    let mut paragraph_builder =
+        ParagraphBuilder::new(&paragraph_style, font_collection);
 
     let ts = {
         let mut ts = TextStyle::new();
@@ -152,9 +154,11 @@ fn draw_arrow(canvas: &mut Canvas, start_point: Point, end_point: Point) {
     // Draw the arrow 'ticks'
     {
         // Get the normalized direction vector of start_point => end_point.
-        let vector =
-            Vector2::new(start_point.x - end_point.x, start_point.y - end_point.y)
-                .normalize();
+        let vector = Vector2::new(
+            start_point.x - end_point.x,
+            start_point.y - end_point.y,
+        )
+        .normalize();
 
         draw_arrow_tick(
             canvas,
@@ -204,7 +208,10 @@ fn draw_arrow_tick(
     canvas.draw_path(&path, paint);
 }
 
-fn save_skia_image_to_png(image: &Image, output: &StdPath) -> Result<(), Error> {
+fn save_skia_image_to_png(
+    image: &Image,
+    output: &StdPath,
+) -> Result<(), Error> {
     // TODO: use encode_to_data_with_quality()?
     let png_data = image.encode_to_data(EncodedImageFormat::PNG).unwrap();
 

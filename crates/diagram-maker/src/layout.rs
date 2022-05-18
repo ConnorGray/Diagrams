@@ -46,7 +46,9 @@ pub enum LayoutAlgorithm {
 pub fn layout(diagram: &Diagram, algo: LayoutAlgorithm) -> PlacedDiagram {
     match algo {
         LayoutAlgorithm::Row => layout_row(diagram),
-        LayoutAlgorithm::Column | LayoutAlgorithm::Multicolumn { .. } => todo!(),
+        LayoutAlgorithm::Column | LayoutAlgorithm::Multicolumn { .. } => {
+            todo!()
+        },
     }
 }
 
@@ -175,25 +177,29 @@ impl PlacedBox {
                         let x = border_rect.left;
                         // Center Y
                         // TODO: This assumes +Y points downward.
-                        let y = border_rect.top + lerp_factor * border_rect.height();
+                        let y = border_rect.top
+                            + lerp_factor * border_rect.height();
                         Point { x, y }
                     },
                     Side::Right => {
                         let x = border_rect.right;
                         // Center Y
                         // TODO: This assumes +Y points downward.
-                        let y = border_rect.top + lerp_factor * border_rect.height();
+                        let y = border_rect.top
+                            + lerp_factor * border_rect.height();
                         Point { x, y }
                     },
                     Side::Top => {
                         // Center X
-                        let x = border_rect.left + lerp_factor * border_rect.width();
+                        let x = border_rect.left
+                            + lerp_factor * border_rect.width();
                         let y = border_rect.top;
                         Point { x, y }
                     },
                     Side::Bottom => {
                         // Center X
-                        let x = border_rect.left + lerp_factor * border_rect.width();
+                        let x = border_rect.left
+                            + lerp_factor * border_rect.width();
                         let y = border_rect.bottom;
                         Point { x, y }
                     },

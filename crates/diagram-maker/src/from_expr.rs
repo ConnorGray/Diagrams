@@ -102,7 +102,9 @@ impl TryFrom<&Expr> for Arrow {
         };
         let end = match rule.rhs.kind() {
             ExprKind::String(s) => Id::new(s),
-            _ => return Err(format!("expected DiaArrow[_String -> _String, _]")),
+            _ => {
+                return Err(format!("expected DiaArrow[_String -> _String, _]"))
+            },
         };
 
         let text = match e.elements()[1].kind() {
