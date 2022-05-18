@@ -30,7 +30,13 @@ Subgraphs[graph_Graph] := Map[
 
 (*--------------------------------------------------------------------------------------*)
 
-DiagramImage[args___] := $functions["diagram_image"][args]
+DiagramImage[args___] := Module[{result},
+	result = $functions["diagram_image"][args];
+
+	Replace[result, {
+		bytes:{___?IntegerQ} :> ImportByteArray[ByteArray[bytes], "PNG"]
+	}]
+]
 
 (*--------------------------------------------------------------------------------------*)
 

@@ -11,4 +11,6 @@ crate-type = ["cdylib"]
 
 
 [dependencies]
+diagram-maker = { path = "../diagram-maker" }
+
 wolfram-library-link = "0.2.4"

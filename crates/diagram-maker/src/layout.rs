@@ -119,7 +119,8 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     for arrow @ Arrow {
         start,
         end,
-        text,
+        // FIXME: Include this text in the rendered arrow.
+        text: _,
         start_at,
         end_at,
     } in arrows

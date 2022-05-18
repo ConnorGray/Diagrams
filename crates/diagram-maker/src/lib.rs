@@ -1,6 +1,7 @@
 pub mod diagram;
 pub mod layout;
 
+mod from_expr;
 mod render;
 
 pub use crate::diagram::Diagram;

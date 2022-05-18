@@ -73,6 +73,19 @@ impl PlacedDiagram {
 
         save_skia_image_to_png(&image, output)
     }
+
+    /// Render this diagram to a PNG, and return the resulting encoded PNG image
+    /// data.
+    pub fn render_to_png_bytes(&self) -> Vec<u8> {
+        let image: Image = self.render_to_skia_image();
+
+        // TODO: use encode_to_data_with_quality()?
+        let png_data = image
+            .encode_to_data(EncodedImageFormat::PNG)
+            .expect("failed to encode diagram Skia image as PNG bytes");
+
+        png_data.as_bytes().to_vec()
+    }
 }
 
 fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
