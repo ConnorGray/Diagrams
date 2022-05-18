@@ -23,6 +23,26 @@ Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 
 (*--------------------------------------------------------------------------------------*)
 
+Diagram /: MakeBoxes[
+	obj : Diagram[boxes:{___}, arrows:{___}],
+	form : StandardForm
+] := Module[{icon},
+	(* icon = Thumbnail[DiagramImage[obj]]; *)
+	BoxForm`ArrangeSummaryBox[
+		Diagram,
+		obj,
+		ImageCrop[DiagramImage[obj]],
+		{
+			BoxForm`SummaryItem[{"Boxes: ", Length[boxes]}],
+			BoxForm`SummaryItem[{"Arrows: ", Length[arrows]}]
+		},
+		{},
+		form
+	]
+]
+
+(*--------------------------------------------------------------------------------------*)
+
 Subgraphs[graph_Graph] := Map[
 	Subgraph[graph, #, VertexLabels -> "Name"] &,
 	ConnectedComponents[UndirectedGraph[graph]]
