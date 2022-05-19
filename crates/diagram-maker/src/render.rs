@@ -3,7 +3,8 @@ use std::{fs, io::Write, path::Path as StdPath};
 use skia::{
     paint,
     textlayout::{
-        FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, TextStyle,
+        FontCollection, LineMetrics, Paragraph, ParagraphBuilder,
+        ParagraphStyle, TextStyle,
     },
     Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point,
     Surface,
@@ -131,7 +132,16 @@ pub fn rendered_text_size(text: &str, width: f32) -> (f32, f32) {
 
     paragraph.layout(width);
 
-    (paragraph.max_intrinsic_width(), paragraph.height())
+    let metrics: Vec<LineMetrics> = paragraph.get_line_metrics();
+
+    assert!(metrics.len() > 0);
+
+    let width = metrics
+        .iter()
+        .map(|line| line.width)
+        .fold(0.0f32, |a, b| a.max(b as f32));
+
+    (width, paragraph.height())
 }
 
 fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
