@@ -118,6 +118,13 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
 
     let mut placed_arrows = Vec::new();
 
+    let get_box = |id: &Id| -> &PlacedBox {
+        match placed_boxes.get(id) {
+            Some(box_) => box_,
+            None => todo!(),
+        }
+    };
+
     for arrow @ Arrow {
         start,
         end,
@@ -127,15 +134,8 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
         end_at,
     } in arrows
     {
-        let start_box = match placed_boxes.get(start) {
-            Some(box_) => box_,
-            None => todo!(),
-        };
-
-        let end_box = match placed_boxes.get(end) {
-            Some(box_) => box_,
-            None => todo!(),
-        };
+        let start_box = get_box(start);
+        let end_box = get_box(end);
 
         let start_point = start_box.attachment_point(start_at);
         let end_point = end_box.attachment_point(end_at);
