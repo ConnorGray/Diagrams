@@ -172,38 +172,26 @@ impl PlacedBox {
                 let lerp_factor = lerp_factor.unwrap_or(0.5);
                 let lerp_factor = f32::clamp(lerp_factor, 0.0, 1.0);
 
-                match side {
-                    Side::Left => {
-                        let x = border_rect.left;
-                        // Center Y
-                        // TODO: This assumes +Y points downward.
-                        let y = border_rect.top
-                            + lerp_factor * border_rect.height();
-                        Point { x, y }
+                let x = match side {
+                    Side::Left => border_rect.left,
+                    Side::Right => border_rect.right,
+                    // Center X
+                    Side::Top | Side::Bottom => {
+                        border_rect.left + lerp_factor * border_rect.width()
                     },
-                    Side::Right => {
-                        let x = border_rect.right;
-                        // Center Y
-                        // TODO: This assumes +Y points downward.
-                        let y = border_rect.top
-                            + lerp_factor * border_rect.height();
-                        Point { x, y }
+                };
+
+                let y = match side {
+                    // Center Y
+                    // TODO: This assumes +Y points downward.
+                    Side::Left | Side::Right => {
+                        border_rect.top + lerp_factor * border_rect.height()
                     },
-                    Side::Top => {
-                        // Center X
-                        let x = border_rect.left
-                            + lerp_factor * border_rect.width();
-                        let y = border_rect.top;
-                        Point { x, y }
-                    },
-                    Side::Bottom => {
-                        // Center X
-                        let x = border_rect.left
-                            + lerp_factor * border_rect.width();
-                        let y = border_rect.bottom;
-                        Point { x, y }
-                    },
-                }
+                    Side::Top => border_rect.top,
+                    Side::Bottom => border_rect.bottom,
+                };
+
+                Point { x, y }
             },
             Attachment::Angle(_angle) => todo!(),
         };
