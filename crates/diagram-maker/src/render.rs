@@ -2,7 +2,9 @@ use std::{fs, io::Write, path::Path as StdPath};
 
 use skia::{
     paint,
-    textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle},
+    textlayout::{
+        FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, TextStyle,
+    },
     Canvas, Color, EncodedImageFormat, FontMgr, Image, Paint, Path, Point,
     Surface,
 };
@@ -90,6 +92,21 @@ impl PlacedDiagram {
 }
 
 fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
+    let mut paragraph = make_paragraph(text);
+
+    paragraph.layout(rect.width());
+
+    // println!(
+    //     "Width: {} ({}), Height: {}",
+    //     paragraph.max_width(),
+    //     paragraph.max_intrinsic_width(),
+    //     paragraph.height()
+    // );
+
+    paragraph.paint(canvas, rect.top_left());
+}
+
+fn make_paragraph(text: &str) -> Paragraph {
     let mut font_collection = FontCollection::new();
     font_collection.set_default_font_manager(FontMgr::new(), None);
 
@@ -106,18 +123,7 @@ fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
     paragraph_builder.push_style(&ts);
     paragraph_builder.add_text(text);
 
-    let mut paragraph = paragraph_builder.build();
-
-    paragraph.layout(64.0);
-
-    println!(
-        "Width: {} ({}), Height: {}",
-        paragraph.max_width(),
-        paragraph.max_intrinsic_width(),
-        paragraph.height()
-    );
-
-    paragraph.paint(canvas, rect.top_left());
+    paragraph_builder.build()
 }
 
 fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
