@@ -1,5 +1,5 @@
 use crate::{
-    diagram::{Arrow, Attachment, Box, Id, Side, Text},
+    diagram::{Arrow, Box, Id, Text},
     Diagram,
 };
 
@@ -116,9 +116,9 @@ impl TryFrom<&Expr> for Arrow {
             start,
             end,
             text,
-            // FIXME: Use Automatic attachment, or user-specified attachment.
-            start_at: Attachment::Border(Side::Bottom, None),
-            end_at: Attachment::Border(Side::Bottom, None),
+            // TODO: Support Attachment option on DiaArrow, use that here if specified.
+            start_at: None,
+            end_at: None,
         })
     }
 }

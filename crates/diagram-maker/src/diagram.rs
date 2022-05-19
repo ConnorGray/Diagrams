@@ -34,8 +34,8 @@ pub struct Arrow {
     /// The text displayed alongside this arrow.
     pub text: Text,
 
-    pub start_at: Attachment,
-    pub end_at: Attachment,
+    pub start_at: Option<Attachment>,
+    pub end_at: Option<Attachment>,
 }
 
 /// Description of where an [`Arrow`] attaches to the element it is starting from or
@@ -56,7 +56,7 @@ pub enum Attachment {
     Angle(f32),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Side {
     Left,
     Right,

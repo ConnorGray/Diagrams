@@ -137,8 +137,23 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
         let start_box = get_box(start);
         let end_box = get_box(end);
 
-        let start_point = start_box.attachment_point(start_at);
-        let end_point = end_box.attachment_point(end_at);
+        // The sides to use automatically if no explicit Attachment has been
+        // specified by the user.
+        let (auto_start_side, auto_end_side) =
+            closest_sides(start_box.border_rect, end_box.border_rect);
+
+        let start_at = match start_at {
+            Some(attachment) => attachment.clone(),
+            None => Attachment::Border(auto_start_side, None),
+        };
+
+        let end_at = match end_at {
+            Some(attachment) => attachment.clone(),
+            None => Attachment::Border(auto_end_side, None),
+        };
+
+        let start_point = start_box.attachment_point(&start_at);
+        let end_point = end_box.attachment_point(&end_at);
 
         placed_arrows.push(PlacedArrow {
             arrow: arrow.clone(),
@@ -151,6 +166,38 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
         boxes: placed_boxes,
         arrows: placed_arrows,
     }
+}
+
+fn closest_sides(a: Rect, b: Rect) -> (Side, Side) {
+    let sides = [Side::Left, Side::Right, Side::Top, Side::Bottom];
+
+    let mut best: (f32, (Side, Side)) = (f32::MAX, (sides[0], sides[0]));
+
+    for a_side in sides {
+        for b_side in sides {
+            let a_points = a.side_points(a_side);
+            let b_points = b.side_points(b_side);
+
+            let distance = sides_distance_factor(a_points, b_points);
+
+            if distance < best.0 {
+                best = (distance, (a_side, b_side));
+            }
+        }
+    }
+
+    best.1
+}
+
+fn sides_distance_factor(a: (Point, Point), b: (Point, Point)) -> f32 {
+    distance(a.0, b.0)
+        + distance(a.0, b.1)
+        + distance(a.1, b.0)
+        + distance(a.1, b.1)
+}
+
+fn distance(a: Point, b: Point) -> f32 {
+    (a - b).length()
 }
 
 //==========================================================
@@ -228,5 +275,48 @@ impl Rect {
             x: self.left,
             y: self.top,
         }
+    }
+
+    pub fn top_right(&self) -> Point {
+        Point {
+            x: self.right,
+            y: self.top,
+        }
+    }
+
+    pub fn bottom_left(&self) -> Point {
+        Point {
+            x: self.left,
+            y: self.bottom,
+        }
+    }
+
+    pub fn bottom_right(&self) -> Point {
+        Point {
+            x: self.right,
+            y: self.bottom,
+        }
+    }
+
+    pub fn side_points(&self, side: Side) -> (Point, Point) {
+        match side {
+            Side::Left => (self.top_left(), self.bottom_left()),
+            Side::Right => (self.top_right(), self.bottom_right()),
+            Side::Top => (self.top_left(), self.top_right()),
+            Side::Bottom => (self.bottom_left(), self.bottom_right()),
+        }
+    }
+
+    pub fn intersects(&self, other: Rect) -> bool {
+        let x_overlap: bool = {
+            self.left >= other.left && self.left <= other.right
+                || self.left <= other.right && self.left >= other.left
+        };
+        let y_overlap: bool = {
+            self.top >= other.bottom && self.top <= other.top
+                || self.bottom >= other.bottom && self.bottom <= other.top
+        };
+
+        x_overlap && y_overlap
     }
 }
