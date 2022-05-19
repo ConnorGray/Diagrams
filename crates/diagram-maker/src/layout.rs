@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::diagram::{Arrow, Attachment, Box, Diagram, Id, Side};
+use crate::diagram::{Arrow, Attachment, Box, Diagram, Id, Side, Text};
 
 use skia::Point;
 
@@ -65,7 +65,6 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
 
     // TODO: Don't use a fixed width/height for boxes.
     const TEXT_WIDTH: f32 = 64.0;
-    const TEXT_HEIGHT: f32 = 64.0;
 
     const MARGIN: f32 = 32.0;
     const PADDING: f32 = 8.0;
@@ -77,11 +76,24 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     // Place boxes
     //------------
 
-    for box_ @ Box { id, text: _ } in boxes {
+    for box_ @ Box {
+        id,
+        text: Text(text),
+    } in boxes
+    {
         let border_left = x_offset;
         let text_left = x_offset + PADDING;
 
-        let text_right = text_left + TEXT_WIDTH;
+        let (text_width, text_height) =
+            crate::render::rendered_text_size(text, TEXT_WIDTH);
+
+        // Note: +0.7 fudge factor to prevent text wrapping done by Skia,
+        //       even though we're using the width it told us.
+        let text_width = text_width + 0.7;
+
+        let text_height = text_height;
+
+        let text_right = text_left + text_width;
         let border_right = text_right + PADDING;
 
         let placed_box = PlacedBox {
@@ -90,13 +102,13 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
                 left: text_left,
                 right: text_right,
                 top: PADDING,
-                bottom: PADDING + TEXT_HEIGHT,
+                bottom: PADDING + text_height,
             },
             border_rect: Rect {
                 left: border_left,
                 right: border_right,
                 top: 0.0,
-                bottom: PADDING + TEXT_HEIGHT + PADDING,
+                bottom: PADDING + text_height + PADDING,
             },
         };
 

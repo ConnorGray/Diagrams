@@ -126,6 +126,14 @@ fn make_paragraph(text: &str) -> Paragraph {
     paragraph_builder.build()
 }
 
+pub fn rendered_text_size(text: &str, width: f32) -> (f32, f32) {
+    let mut paragraph = make_paragraph(text);
+
+    paragraph.layout(width);
+
+    (paragraph.max_intrinsic_width(), paragraph.height())
+}
+
 fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
     let mut paint = Paint::default();
     paint.set_anti_alias(true);
