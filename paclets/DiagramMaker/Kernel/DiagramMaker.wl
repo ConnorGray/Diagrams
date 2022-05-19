@@ -21,7 +21,7 @@ $functions = LibraryFunctionLoad[
 
 Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 
-(*--------------------------------------------------------------------------------------*)
+(*----------------------------------------------------------------------------*)
 
 Diagram /: MakeBoxes[
 	obj : Diagram[boxes:{___}, arrows:{___}],
@@ -41,14 +41,14 @@ Diagram /: MakeBoxes[
 	]
 ]
 
-(*--------------------------------------------------------------------------------------*)
+(*----------------------------------------------------------------------------*)
 
 Subgraphs[graph_Graph] := Map[
 	Subgraph[graph, #, VertexLabels -> "Name"] &,
 	ConnectedComponents[UndirectedGraph[graph]]
 ]
 
-(*--------------------------------------------------------------------------------------*)
+(*----------------------------------------------------------------------------*)
 
 DiagramImage[args___] := Module[{result},
 	result = $functions["diagram_image"][args];
@@ -58,7 +58,7 @@ DiagramImage[args___] := Module[{result},
 	}]
 ]
 
-(*--------------------------------------------------------------------------------------*)
+(*----------------------------------------------------------------------------*)
 
 (* renderVertex[vertex_] := Framed[Style[vertex, Bold]] *)
 
@@ -92,7 +92,8 @@ DiagramGraph[
 
 	{relationLabels, relations} = Transpose @ Cases[
 		Prepend[blocks0, block0],
-		DiagramArrow[label_?StringQ, lhs_?StringQ -> rhs_?StringQ, opts___] -> {(lhs -> rhs) -> label, lhs -> rhs},
+		DiagramArrow[label_?StringQ, lhs_?StringQ -> rhs_?StringQ, opts___]
+			-> {(lhs -> rhs) -> label, lhs -> rhs},
 		Infinity
 	];
 
