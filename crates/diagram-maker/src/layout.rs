@@ -64,7 +64,7 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     let Diagram { boxes, arrows } = diagram;
 
     // TODO: Don't use a fixed width/height for boxes.
-    const TEXT_WIDTH: f32 = 64.0;
+    const TEXT_WIDTH: f32 = 256.0;
 
     const MARGIN: f32 = 32.0;
     const PADDING: f32 = 8.0;
@@ -89,7 +89,7 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
 
         // Note: +0.7 fudge factor to prevent text wrapping done by Skia,
         //       even though we're using the width it told us.
-        let text_width = text_width + 0.7;
+        let text_width = text_width + 1.0;
 
         let text_height = text_height;
 

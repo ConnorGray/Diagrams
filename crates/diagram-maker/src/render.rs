@@ -17,8 +17,44 @@ use crate::{
     Error,
 };
 
+// TODO: Add box corner radius as a themeable field.
+#[derive(Debug, Copy, Clone)]
+struct Theme {
+    box_text_color: Color,
+    box_border: Color,
+    box_background: Color,
+    arrow_stroke: Color,
+}
+
+const THEMES: &[Theme] = &[
+    // https://coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51
+    Theme {
+        box_text_color: Color::from_rgb(233, 196, 106),
+        box_border: Color::from_rgb(38, 70, 83),
+        box_background: Color::from_rgb(42, 157, 143),
+        arrow_stroke: Color::from_rgb(244, 162, 97),
+    },
+    // https://coolors.co/palette/e63946-f1faee-a8dadc-457b9d-1d3557
+    Theme {
+        box_text_color: Color::from_rgb(69, 123, 157),
+        box_border: Color::from_rgb(230, 57, 70),
+        box_background: Color::from_rgb(241, 250, 238),
+        arrow_stroke: Color::from_rgb(29, 53, 87),
+    },
+    // https://coolors.co/palette/072ac8-1e96fc-a2d6f9-fcf300-ffc600
+    Theme {
+        box_text_color: Color::from_rgb(7, 42, 200),
+        box_border: Color::from_rgb(30, 150, 252),
+        box_background: Color::from_rgb(162, 214, 249),
+        arrow_stroke: Color::from_rgb(255, 198, 0),
+        // arrow_stroke: Color::from_rgb(252, 243, 0),
+    },
+];
+
 impl PlacedDiagram {
     fn draw(&self, canvas: &mut Canvas) {
+        let theme = THEMES[2];
+
         let PlacedDiagram { boxes, arrows } = self;
 
         //-----------
@@ -35,8 +71,13 @@ impl PlacedDiagram {
             // assert!(text_rect.width() <= border_rect.width());
             // assert!(text_rect.height() <= border_rect.height());
 
-            draw_text(canvas, &box_.text.0, text_rect);
-            draw_border(canvas, border_rect);
+            draw_box(
+                canvas,
+                border_rect,
+                theme.box_background,
+                theme.box_border,
+            );
+            draw_text(canvas, &box_.text.0, text_rect, theme.box_text_color);
         }
 
         //------------
@@ -49,7 +90,7 @@ impl PlacedDiagram {
             end_point,
         } in arrows
         {
-            draw_arrow(canvas, *start_point, *end_point);
+            draw_arrow(canvas, *start_point, *end_point, theme.arrow_stroke);
         }
     }
 
@@ -92,8 +133,13 @@ impl PlacedDiagram {
     }
 }
 
-fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
-    let mut paragraph = make_paragraph(text);
+fn draw_text(
+    canvas: &mut Canvas,
+    text: &str,
+    rect: layout::Rect,
+    color: Color,
+) {
+    let mut paragraph = make_paragraph(text, color);
 
     paragraph.layout(rect.width());
 
@@ -107,7 +153,7 @@ fn draw_text(canvas: &mut Canvas, text: &str, rect: layout::Rect) {
     paragraph.paint(canvas, rect.top_left());
 }
 
-fn make_paragraph(text: &str) -> Paragraph {
+fn make_paragraph(text: &str, color: Color) -> Paragraph {
     let mut font_collection = FontCollection::new();
     font_collection.set_default_font_manager(FontMgr::new(), None);
 
@@ -118,7 +164,10 @@ fn make_paragraph(text: &str) -> Paragraph {
 
     let ts = {
         let mut ts = TextStyle::new();
-        ts.set_foreground_color(Paint::default());
+        let mut paint = Paint::default();
+        paint.set_color(color);
+        ts.set_foreground_color(paint);
+        ts.set_font_size(20.0);
         ts
     };
     paragraph_builder.push_style(&ts);
@@ -128,7 +177,7 @@ fn make_paragraph(text: &str) -> Paragraph {
 }
 
 pub fn rendered_text_size(text: &str, width: f32) -> (f32, f32) {
-    let mut paragraph = make_paragraph(text);
+    let mut paragraph = make_paragraph(text, Color::BLACK);
 
     paragraph.layout(width);
 
@@ -144,18 +193,39 @@ pub fn rendered_text_size(text: &str, width: f32) -> (f32, f32) {
     (width, paragraph.height())
 }
 
-fn draw_border(canvas: &mut Canvas, rect: layout::Rect) {
-    let mut paint = Paint::default();
-    paint.set_anti_alias(true);
-    paint
-        .set_style(paint::Style::Stroke)
-        .set_color(Color::BLUE)
-        .set_stroke_width(3.0);
+fn draw_box(
+    canvas: &mut Canvas,
+    rect: layout::Rect,
+    fill: Color,
+    border: Color,
+) {
+    let fill = {
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        paint.set_style(paint::Style::Fill).set_color(fill);
+        paint
+    };
 
-    canvas.draw_round_rect(rect.into_skia(), 5.0, 5.0, &paint);
+    let border = {
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        paint
+            .set_style(paint::Style::Stroke)
+            .set_color(border)
+            .set_stroke_width(3.0);
+        paint
+    };
+
+    canvas.draw_round_rect(rect.into_skia(), 5.0, 5.0, &fill);
+    canvas.draw_round_rect(rect.into_skia(), 5.0, 5.0, &border);
 }
 
-fn draw_arrow(canvas: &mut Canvas, start_point: Point, end_point: Point) {
+fn draw_arrow(
+    canvas: &mut Canvas,
+    start_point: Point,
+    end_point: Point,
+    color: Color,
+) {
     use std::f32;
 
     // Style to use for the arrow.
@@ -164,7 +234,7 @@ fn draw_arrow(canvas: &mut Canvas, start_point: Point, end_point: Point) {
         paint.set_anti_alias(true);
         paint
             .set_style(paint::Style::Stroke)
-            .set_color(Color::GREEN)
+            .set_color(color)
             .set_stroke_width(3.0);
         paint
     };
