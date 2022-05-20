@@ -44,7 +44,14 @@ impl TryFrom<&Expr> for Diagram {
             .map(Arrow::try_from)
             .collect::<Result<_, _>>()?;
 
-        Ok(Diagram { boxes, arrows })
+        // TODO: Parse the theme from diagram options.
+        let theme = Default::default();
+
+        Ok(Diagram {
+            boxes,
+            arrows,
+            theme,
+        })
     }
 }
 

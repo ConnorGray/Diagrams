@@ -37,6 +37,7 @@ fn main() {
                 end_at: Some(Attachment::Border(Side::Left, Some(0.2))),
             },
         ],
+        theme: Default::default(),
     };
 
     let placed = layout(&diagram, LayoutAlgorithm::Row);

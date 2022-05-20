@@ -3,6 +3,7 @@ pub mod layout;
 
 mod from_expr;
 mod render;
+mod themes;
 
 pub use crate::diagram::Diagram;
 

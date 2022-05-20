@@ -27,6 +27,7 @@ fn main() {
             start_at: Some(Attachment::Border(Side::Right, None)),
             end_at: Some(Attachment::Border(Side::Left, None)),
         }],
+        theme: Default::default(),
     };
 
     let placed = layout(&diagram, LayoutAlgorithm::Row);

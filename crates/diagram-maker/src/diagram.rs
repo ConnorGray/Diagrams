@@ -1,8 +1,11 @@
+use skia::Color;
+
 #[derive(Debug, Clone)]
 pub struct Diagram {
     pub boxes: Vec<Box>,
     pub arrows: Vec<Arrow>,
     // pub callouts: Vec<Callout>,
+    pub theme: Theme,
 }
 
 /// A unique identifier used to refer to an element of a diagram.
@@ -64,6 +67,15 @@ pub enum Side {
     Bottom,
 }
 
+// TODO: Add box corner radius as a themeable field.
+#[derive(Debug, Copy, Clone)]
+pub struct Theme {
+    pub box_text_color: Color,
+    pub box_border: Color,
+    pub box_background: Color,
+    pub arrow_stroke: Color,
+}
+
 //======================================
 // Impls
 //======================================
@@ -77,5 +89,15 @@ impl Id {
 impl Text {
     pub fn new<T: Into<String>>(s: T) -> Text {
         Text(s.into())
+    }
+}
+
+//======================================
+// Default Impls
+//======================================
+
+impl Default for Theme {
+    fn default() -> Self {
+        crate::themes::THEMES[2]
     }
 }

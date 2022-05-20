@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::diagram::{Arrow, Attachment, Box, Diagram, Id, Side, Text};
+use crate::diagram::{Arrow, Attachment, Box, Diagram, Id, Side, Text, Theme};
 
 use skia::Point;
 
@@ -18,6 +18,7 @@ pub struct Rect {
 pub struct PlacedDiagram {
     pub boxes: HashMap<Id, PlacedBox>,
     pub arrows: Vec<PlacedArrow>,
+    pub theme: Theme,
 }
 
 /// A [`Box`] that has been placed in its final position by a layout algorithm.
@@ -61,7 +62,11 @@ pub fn layout(diagram: &Diagram, algo: LayoutAlgorithm) -> PlacedDiagram {
 //======================================
 
 fn layout_row(diagram: &Diagram) -> PlacedDiagram {
-    let Diagram { boxes, arrows } = diagram;
+    let Diagram {
+        boxes,
+        arrows,
+        theme: _,
+    } = diagram;
 
     // TODO: Don't use a fixed width/height for boxes.
     const TEXT_WIDTH: f32 = 256.0;
@@ -177,6 +182,7 @@ fn layout_row(diagram: &Diagram) -> PlacedDiagram {
     PlacedDiagram {
         boxes: placed_boxes,
         arrows: placed_arrows,
+        theme: diagram.theme,
     }
 }
 
