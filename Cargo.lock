@@ -229,13 +229,6 @@ dependencies = [
  "open",
  "skia-safe",
  "wolfram-expr",
-]
-
-[[package]]
-name = "diagram-maker-wll"
-version = "0.1.0"
-dependencies = [
- "diagram-maker",
  "wolfram-library-link",
 ]
 

@@ -6,12 +6,17 @@ publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate-type = ["rlib", "cdylib"]
+
 
 [dependencies]
 skia = { package = "skia-safe", version = "0.47.0", features = ["textlayout"] }
 cgmath = "0.18.0"
 
 wolfram-expr = "0.1.1"
+
+wolfram-library-link = "0.2.4"
 
 [dev-dependencies]
 open = "2.1.1"

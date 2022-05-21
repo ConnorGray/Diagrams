@@ -4,7 +4,7 @@ use wolfram_library_link::{
     wstp::Link,
 };
 
-use diagram_maker::{
+use crate::{
     layout::{layout, LayoutAlgorithm},
     Diagram,
 };

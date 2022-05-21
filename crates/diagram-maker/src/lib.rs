@@ -5,6 +5,8 @@ mod from_expr;
 mod render;
 mod themes;
 
+mod wll_api;
+
 pub use crate::diagram::Diagram;
 
 #[derive(Debug, Clone)]
