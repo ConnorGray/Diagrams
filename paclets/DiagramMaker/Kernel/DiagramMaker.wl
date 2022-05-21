@@ -24,7 +24,7 @@ Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 (*----------------------------------------------------------------------------*)
 
 Diagram /: MakeBoxes[
-	obj : Diagram[boxes:{___}, arrows:{___}],
+	obj : Diagram[boxes:{___}, arrows:{___}, opts___?OptionQ],
 	form : StandardForm
 ] := Module[{icon},
 	(* icon = Thumbnail[DiagramImage[obj]]; *)
