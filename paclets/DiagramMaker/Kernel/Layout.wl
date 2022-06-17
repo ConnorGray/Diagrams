@@ -89,7 +89,30 @@ doRowLayout[
 	(* Place arrows *)
 	(*--------------*)
 
-	Scan[
+	placedArrows = placeArrowsBasedOnBoxes[arrows, placedBoxes];
+
+	RaiseAssert[Length[placedArrows] === Length[arrows]];
+	RaiseAssert[Length[placedBoxes] === Length[boxes]];
+
+	PlacedDiagram[
+		placedBoxes,
+		placedArrows
+	]
+]
+
+(*====================================*)
+(* Graph Layout                       *)
+(*====================================*)
+
+(*====================================*)
+(* Common                             *)
+(*====================================*)
+
+placeArrowsBasedOnBoxes[
+	arrows:{___DiaArrow},
+	placedBoxes_
+] := Module[{},
+	Map[
 		Replace[{
 			arrow:DiaArrow[
 				start_?StringQ -> end_?StringQ,
@@ -126,32 +149,17 @@ doRowLayout[
 				startPoint = boxAttachmentPoint[startBox, startAt];
 				endPoint = boxAttachmentPoint[endBox, endAt];
 
-				AppendTo[
-					placedArrows,
-					PlacedArrow[
-						arrow,
-						startPoint,
-						endPoint
-					]
-				];
+				PlacedArrow[
+					arrow,
+					startPoint,
+					endPoint
+				]
 			],
 			other_ :> RaiseError["unexpected diagram arrow structure: ``", other]
 		}],
 		arrows
-	];
-
-	RaiseAssert[Length[placedArrows] === Length[arrows]];
-	RaiseAssert[Length[placedBoxes] === Length[boxes]];
-
-	PlacedDiagram[
-		placedBoxes,
-		placedArrows
 	]
 ]
-
-(*====================================*)
-(* Graph Layout                       *)
-(*====================================*)
 
 (*========================================================*)
 (* Helper functions                                       *)
