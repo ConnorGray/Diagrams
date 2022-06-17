@@ -97,6 +97,36 @@ RenderedTextSize[args___] :=
 
 (*----------------------------------------------------------------------------*)
 
+DiagramGraph[
+	Diagram[
+		boxes:{___DiaBox},
+		arrows:{___DiaArrow}
+	]
+] := Module[{vertices, edges},
+	vertices = Cases[
+		boxes,
+		box_DiaBox :> Replace[box, {
+			DiaBox[id_?StringQ] :> id,
+			other_ :> RaiseError["unexpected DiaBox structure: ``", other]
+		}]
+	];
+
+	edges = Cases[
+		arrows,
+		arrow_DiaArrow :> Replace[arrow, {
+			DiaArrow[
+				lhs_?StringQ -> rhs_?StringQ,
+				_?StringQ
+			] :> DirectedEdge[lhs, rhs],
+			other_ :> RaiseError["unexpected DiaArrow structure: ``", other]
+		}]
+	];
+
+	Graph[vertices, edges, VertexLabels -> "Name"]
+]
+
+(****************************************)
+
 (* renderVertex[vertex_] := Framed[Style[vertex, Bold]] *)
 
 renderVertex[{xc_, yc_}, name_, {w_, h_}] := Block[{

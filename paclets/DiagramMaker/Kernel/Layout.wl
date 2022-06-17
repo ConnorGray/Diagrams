@@ -14,12 +14,16 @@ LayoutDiagram[
 	algo : _?StringQ : "RowLayout"
 ] := Replace[algo, {
 	"RowLayout" :> doRowLayout[diagram],
+	"GraphLayout" :> doGraphLayout[diagram],
 	_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 }]
 
 (*========================================================*)
 (* Layout algorithm implementations                       *)
 (*========================================================*)
+
+$textWidth = 256.0;
+$padding = 8.0;
 
 (*====================================*)
 (* Row Layout                         *)
@@ -32,7 +36,6 @@ doRowLayout[
 		arrows:{___DiaArrow}
 	]
 ] := Module[{
-	$textWidth = 256.0,
 	$margin = 32.0,
 	$padding = 8.0,
 	xOffset,
@@ -103,6 +106,100 @@ doRowLayout[
 (*====================================*)
 (* Graph Layout                       *)
 (*====================================*)
+
+(* Layout all diagram boxes based on their Graph[..] layout. *)
+doGraphLayout[
+	diagram:Diagram[
+		boxes:{___DiaBox},
+		arrows:{___DiaArrow}
+	]
+] := Module[{
+	graph,
+	embedding,
+	vertices,
+	placedBoxes = <||>,
+	placedArrows = {}
+},
+	graph = DiagramGraph[diagram];
+	RaiseAssert[GraphQ[graph]];
+
+	embedding = GraphEmbedding[
+		graph,
+		(* FIXME: Support this as a GraphLayout option. *)
+		{"LayeredEmbedding"}
+	];
+	vertices = VertexList[graph];
+
+	RaiseAssert[MatchQ[embedding, {{_?NumberQ, _?NumberQ} ...}]];
+	RaiseAssert[MatchQ[vertices, {___?StringQ}]];
+	RaiseAssert[Length[embedding] === Length[vertices]];
+
+	embedding = Association[Rule @@@ Transpose[{vertices, embedding}]];
+
+	RaiseAssert[MatchQ[embedding, <| (_?StringQ -> {_, _}) ...|>]];
+
+	(*-------------*)
+	(* Place boxes *)
+	(*-------------*)
+
+	Scan[
+		Replace[{
+			box:DiaBox[id_?StringQ] :> Module[{
+				embeddingPos,
+				borderLeft, borderRight,
+				textLeft, textRight,
+				textWidth, textHeight,
+				placedBox
+			},
+				{borderLeft, borderBottom} = {100, 50} * Lookup[embedding, id, RaiseError["FIXME"]];
+
+				textLeft = borderLeft + $padding;
+
+				{textWidth, textHeight} =
+					RaiseConfirm @ RenderedTextSize[id, $textWidth];
+
+				(* Note: Add fudge factor to prevent text wrapping done by Skia,
+				         even though we're using the width it told us. *)
+				textWidth = textWidth + 1.0;
+
+				textRight = textLeft + textWidth;
+				borderRight = textRight + $padding;
+
+				placedBox = PlacedBox[
+					box,
+					(* Text rectangle *)
+					Rectangle[
+						{textLeft, borderBottom + $padding},
+						{textRight, borderBottom + $padding + textHeight}
+					],
+					(* Border rectangle *)
+					Rectangle[
+						{borderLeft, borderBottom},
+						{borderRight, borderBottom + $padding + textHeight + $padding}
+					]
+				];
+
+				AssociateTo[placedBoxes, id -> placedBox];
+			],
+			other_ :> RaiseError["unexpected diagram box structure: ``", other]
+		}],
+		boxes
+	];
+
+	(*--------------*)
+	(* Place arrows *)
+	(*--------------*)
+
+	placedArrows = placeArrowsBasedOnBoxes[arrows, placedBoxes];
+
+	RaiseAssert[Length[placedArrows] === Length[arrows]];
+	RaiseAssert[Length[placedBoxes] === Length[boxes]];
+
+	PlacedDiagram[
+		placedBoxes,
+		placedArrows
+	]
+]
 
 (*====================================*)
 (* Common                             *)
