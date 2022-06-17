@@ -1,5 +1,9 @@
 use crate::{
     diagram::{Arrow, Box, Id, Text, Theme},
+    graphics::{
+        Command, Coord, Directive, Graphics, Line, Primitive, RGBColor,
+        Rectangle,
+    },
     Diagram,
 };
 
@@ -82,56 +86,11 @@ fn parse_theme_options(opts: &[Expr]) -> Result<Theme, String> {
 }
 
 fn get_color(expr: &Expr) -> Result<skia::Color, String> {
-    match expr.kind() {
-        ExprKind::Normal(normal) => {
-            if !normal.has_head(&Symbol::new("System`RGBColor")) {
-                return Err(format!(
-                    "unrecognized color specification: {}",
-                    expr
-                ));
-            }
-
-            let elems = normal.elements();
-
-            if elems.len() != 3 {
-                return Err(format!(
-                    "invalid RGBColor[..]: wrong number of arguments: {}",
-                    expr
-                ));
-            }
-
-            let r = elems[0]
-                .try_number()
-                .ok_or_else(|| format!("invalid red channel"))?;
-            let g = elems[1]
-                .try_number()
-                .ok_or_else(|| format!("invalid green channel"))?;
-            let b = elems[2]
-                .try_number()
-                .ok_or_else(|| format!("invalid blue channel"))?;
-
-            fn to_u8_color(num: Number) -> Result<u8, String> {
-                let value: f64 = match num {
-                    Number::Real(real) => *real,
-                    Number::Integer(int) => int as f64,
-                };
-
-                let value = (255.0 * value) as u8;
-
-                Ok(value)
-            }
-
-            let (r, g, b) = (to_u8_color(r)?, to_u8_color(g)?, to_u8_color(b)?);
-
-            Ok(skia::Color::from_rgb(r, g, b))
-        },
-        ExprKind::Integer(_)
-        | ExprKind::Real(_)
-        | ExprKind::String(_)
-        | ExprKind::Symbol(_) => {
-            return Err("unrecognized color specification".into())
-        },
+    if let Ok(RGBColor { r, g, b }) = RGBColor::try_from(expr) {
+        return Ok(skia::Color::from_rgb(r, g, b));
     }
+
+    return Err("unrecognized color specification".into());
 }
 
 impl TryFrom<&Expr> for Box {
@@ -252,4 +211,226 @@ impl TryFrom<&Expr> for Rule {
             rhs: e.elements()[1].clone(),
         })
     }
+}
+
+impl TryFrom<&Expr> for Graphics {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        let arg: &Expr =
+            &try_headed_len(e, Symbol::new("System`Graphics"), 1)?[0];
+
+        let commands = try_headed(arg, Symbol::new("System`List"))?;
+
+        let commands = commands
+            .into_iter()
+            .map(Command::try_from)
+            .collect::<Result<Vec<_>, String>>()?;
+
+        Ok(Graphics { commands })
+    }
+}
+
+impl TryFrom<&Expr> for Command {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        if let Ok(primitive) = Primitive::try_from(e) {
+            return Ok(Command::Primitive(primitive));
+        }
+
+        if let Ok(directive) = Directive::try_from(e) {
+            return Ok(Command::Directive(directive));
+        }
+
+        return Err(format!("unrecognized graphics command: {}", e));
+    }
+}
+
+impl TryFrom<&Expr> for Primitive {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        if let Ok(line) = Line::try_from(e) {
+            return Ok(Primitive::Line(line));
+        }
+
+        if let Ok(rect) = Rectangle::try_from(e) {
+            return Ok(Primitive::Rectangle(rect));
+        }
+
+        Err(format!("unrecognized graphics primitive: {}", e))
+    }
+}
+
+impl TryFrom<&Expr> for Directive {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        if let Ok(rgb) = RGBColor::try_from(e) {
+            return Ok(Directive::RGBColor(rgb));
+        }
+
+        if let Ok(args) = try_headed(e, Symbol::new("System`AbsoluteThickness"))
+        {
+            if args.len() != 1 {
+                return Err(format!("expected AbsoluteThickness[_]"));
+            }
+
+            let arg = &args[0];
+
+            let num = arg.try_number().ok_or_else(|| {
+                format!("expected thickness to be a number, got: {}", arg)
+            })?;
+
+            return Ok(Directive::AbsoluteThickness(as_real(num) as f32));
+        }
+
+        if let Ok(args) = try_headed(e, Symbol::new("System`EdgeForm")) {
+            let directives = args
+                .into_iter()
+                .map(Directive::try_from)
+                .collect::<Result<Vec<_>, _>>()?;
+
+            return Ok(Directive::EdgeForm(directives));
+        }
+
+        return Err(format!("unrecognized graphics directive: {}", e));
+    }
+}
+
+impl TryFrom<&Expr> for RGBColor {
+    type Error = String;
+
+    fn try_from(expr: &Expr) -> Result<Self, Self::Error> {
+        let normal = expr
+            .try_normal()
+            .ok_or_else(|| format!("expected RGBColor[..]"))?;
+
+        if !normal.has_head(&Symbol::new("System`RGBColor")) {
+            return Err(format!("unrecognized color specification: {}", expr));
+        }
+
+        let elems = normal.elements();
+
+        if elems.len() != 3 {
+            return Err(format!(
+                "invalid RGBColor[..]: wrong number of arguments: {}",
+                expr
+            ));
+        }
+
+        let r = elems[0]
+            .try_number()
+            .ok_or_else(|| format!("invalid red channel"))?;
+        let g = elems[1]
+            .try_number()
+            .ok_or_else(|| format!("invalid green channel"))?;
+        let b = elems[2]
+            .try_number()
+            .ok_or_else(|| format!("invalid blue channel"))?;
+
+        let to_u8_color = RGBColor::to_u8_color;
+
+        let (r, g, b) = (to_u8_color(r), to_u8_color(g), to_u8_color(b));
+
+        Ok(RGBColor { r, g, b })
+    }
+}
+
+impl TryFrom<&Expr> for Rectangle {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        let args = try_headed_len(e, Symbol::new("System`Rectangle"), 2)?;
+
+        let mins = Coord::try_from(&args[0])?;
+        let maxs = Coord::try_from(&args[1])?;
+
+        // FIXME: Parse this from the expression;
+        let rounding_radius = 0.0;
+
+        Ok(Rectangle {
+            left: mins.x,
+            right: maxs.x,
+            top: maxs.y,
+            bottom: mins.y,
+
+            rounding_radius,
+        })
+    }
+}
+
+impl TryFrom<&Expr> for Line {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        let arg = try_headed_len(e, Symbol::new("System`Line"), 1)?;
+        let arg = &arg[0];
+
+        let elems = try_headed(arg, Symbol::new("System`List"))?;
+
+        let coords = elems
+            .into_iter()
+            .map(Coord::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Line { coords })
+    }
+}
+fn as_real(num: Number) -> f64 {
+    match num {
+        Number::Real(real) => *real,
+        Number::Integer(int) => int as f64,
+    }
+}
+
+impl TryFrom<&Expr> for Coord {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        let args = try_headed_len(e, Symbol::new("System`List"), 2)?;
+
+        let x = args[0].try_number().ok_or_else(|| {
+            format!("expected coordinate to be a number, got: {}", args[0])
+        })?;
+        let y = args[1].try_number().ok_or_else(|| {
+            format!("expected coordinate to be a number, got: {}", args[1])
+        })?;
+
+        let x = as_real(x) as f32;
+        let y = as_real(y) as f32;
+
+        Ok(Coord { x, y })
+    }
+}
+
+fn try_headed(e: &Expr, head: Symbol) -> Result<&[Expr], String> {
+    let e = match e.try_normal() {
+        Some(value) => value,
+        None => return Err(format!("expected {}[..]", head.symbol_name())),
+    };
+
+    if !e.has_head(&head) {
+        return Err(format!("expected {}[..]", head.symbol_name()));
+    }
+
+    Ok(e.elements())
+}
+
+fn try_headed_len(
+    e: &Expr,
+    head: Symbol,
+    len: usize,
+) -> Result<&[Expr], String> {
+    let elems = try_headed(e, head.clone())?;
+
+    if elems.len() != len {
+        return Err(format!(
+            "expected {}[..] with length {len}",
+            head.symbol_name()
+        ));
+    }
+
+    Ok(elems)
 }

@@ -1,4 +1,5 @@
 pub mod diagram;
+pub mod graphics;
 pub mod layout;
 
 mod from_expr;

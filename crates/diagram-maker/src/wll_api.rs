@@ -5,6 +5,7 @@ use wolfram_library_link::{
 };
 
 use crate::{
+    graphics::Graphics,
     layout::{layout, LayoutAlgorithm},
     Diagram,
 };
@@ -27,6 +28,21 @@ fn diagram_image(link: &mut Link) {
     let placed = layout(&diagram, LayoutAlgorithm::Row);
 
     let png_data: Vec<u8> = placed.render_to_png_bytes();
+
+    link.put_u8_array(png_data.as_slice(), &[png_data.len()])
+        .unwrap();
+}
+
+#[export(wstp)]
+fn graphics_image(link: &mut Link) {
+    let args = link.get_expr().unwrap();
+    let args = args.try_normal().unwrap();
+    assert!(args.has_head(&Symbol::new("System`List")));
+    let args = args.elements();
+
+    let graphics = Graphics::try_from(&args[0]).unwrap();
+
+    let png_data: Vec<u8> = graphics.render_to_png_bytes();
 
     link.put_u8_array(png_data.as_slice(), &[png_data.len()])
         .unwrap();

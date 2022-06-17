@@ -10,6 +10,8 @@ DiaArrow::usage = "DiaArrow[..] is a diagram element that defines a relationship
 DiagramImage::usage = "DiagramImage[diagram] returns an image containing the graphical representation of diagram."
 DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing the relations between diagram elements blocks."
 
+DiagramGraphicsImage
+
 Begin["`Private`"]
 
 $functions = LibraryFunctionLoad[
@@ -52,6 +54,16 @@ Subgraphs[graph_Graph] := Map[
 
 DiagramImage[args___] := Module[{result},
 	result = $functions["diagram_image"][args];
+
+	Replace[result, {
+		bytes:{___?IntegerQ} :> ImportByteArray[ByteArray[bytes], "PNG"]
+	}]
+]
+
+(*----------------------------------------------------------------------------*)
+
+DiagramGraphicsImage[args___] := Module[{result},
+	result = $functions["graphics_image"][args];
 
 	Replace[result, {
 		bytes:{___?IntegerQ} :> ImportByteArray[ByteArray[bytes], "PNG"]
