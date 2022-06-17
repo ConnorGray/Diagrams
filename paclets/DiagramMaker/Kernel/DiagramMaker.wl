@@ -53,7 +53,7 @@ Diagram /: MakeBoxes[
 	BoxForm`ArrangeSummaryBox[
 		Diagram,
 		obj,
-		ImageCrop[DiagramImage[obj]],
+		DiagramImage[obj],
 		{
 			BoxForm`SummaryItem[{"Boxes: ", Length[boxes]}],
 			BoxForm`SummaryItem[{"Arrows: ", Length[arrows]}]
@@ -76,7 +76,7 @@ DiagramImage[args___] := Module[{result},
 	result = $functions["diagram_image"][args];
 
 	Replace[result, {
-		bytes:{___?IntegerQ} :> ImportByteArray[ByteArray[bytes], "PNG"]
+		bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
 	}]
 ]
 
@@ -86,7 +86,7 @@ DiagramGraphicsImage[args___] := Module[{result},
 	result = $functions["graphics_image"][args];
 
 	Replace[result, {
-		bytes:{___?IntegerQ} :> ImportByteArray[ByteArray[bytes], "PNG"]
+		bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
 	}]
 ]
 
