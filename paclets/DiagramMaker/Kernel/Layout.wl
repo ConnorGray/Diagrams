@@ -152,7 +152,7 @@ doRowsLayout[
 		   tries to put nodes on parallel horizontal lines, so this will give us
 		   rows. *)
 		rows = GroupBy[embedding, Last];
-		rows = Map[Keys, Values[Sort[rows]]];
+		rows = Map[Keys, Values[KeySort[rows]]];
 
 		Reverse[rows]
 	];
