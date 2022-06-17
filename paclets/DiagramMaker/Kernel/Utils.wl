@@ -2,6 +2,7 @@ BeginPackage["DiagramMaker`Utils`"]
 
 RectangleWidth
 RectangleHeight
+RectangleSize
 
 Begin["`Private`"]
 
@@ -14,6 +15,8 @@ RectangleHeight[arg_] := Replace[arg, {
 	Rectangle[{_, yMin_?NumberQ}, {_, yMax_?NumberQ}] :> Abs[yMax - yMin],
 	_ :> RaiseError["unable to get height of rectangle: ``", arg]
 }]
+
+RectangleSize[arg_] := {RectangleWidth[arg], RectangleHeight[arg]}
 
 
 End[]

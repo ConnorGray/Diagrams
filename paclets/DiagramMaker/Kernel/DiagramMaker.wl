@@ -80,7 +80,30 @@ Subgraphs[graph_Graph] := Map[
 Options[DiagramImage] = {Method -> Automatic}
 
 DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], {
-	Automatic :> Module[{placed, graphics},
+	Automatic :> Module[{placed, graphics, center},
+		placed = LayoutDiagram[diagram];
+		graphics = RenderPlacedDiagramToGraphics[placed];
+
+		RaiseAssert[ListQ[graphics]];
+
+		graphics = ReplaceAll[graphics,
+			SizedText[str_?StringQ, rect:Rectangle[min_, max_]] :> (
+				center = Mean[{min, max}];
+				size = RectangleSize[rect];
+
+				(* FIXME:
+					Compute this font size based on the overall size of
+					the graphic. *)
+				Splice[{
+					FontSize -> Scaled[0.05],
+					Inset[Text[str], center, Automatic, size]
+				}]
+			)
+		];
+
+		Graphics[graphics]
+	],
+	"alpha-v2" :> Module[{placed, graphics},
 		placed = LayoutDiagram[diagram];
 		graphics = RenderPlacedDiagramToGraphics[placed];
 

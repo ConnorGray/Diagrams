@@ -182,7 +182,7 @@ doRowsLayout[
 		rows = GroupBy[embedding, Last];
 		rows = Map[Keys, Values[KeySort[rows]]];
 
-		Reverse[rows]
+		rows
 	];
 
 	RaiseAssert[MatchQ[rows, {{___?StringQ} ...}]];
