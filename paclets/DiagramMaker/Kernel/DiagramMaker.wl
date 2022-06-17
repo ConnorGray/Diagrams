@@ -72,13 +72,23 @@ Subgraphs[graph_Graph] := Map[
 
 (*----------------------------------------------------------------------------*)
 
-DiagramImage[args___] := Module[{result},
-	result = $functions["diagram_image"][args];
+Options[DiagramImage] = {Method -> Automatic}
 
-	Replace[result, {
-		bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
-	}]
-]
+DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], {
+	Automatic :> Module[{placed, graphics},
+		placed = LayoutDiagram[diagram];
+		graphics = RenderPlacedDiagramToGraphics[placed];
+
+		DiagramGraphicsImage[Graphics[N @ Flatten @ graphics]]
+	],
+	"alpha-v1" :> Module[{result},
+		result = $functions["diagram_image"][diagram];
+
+		Replace[result, {
+			bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
+		}]
+	]
+}]
 
 (*----------------------------------------------------------------------------*)
 
