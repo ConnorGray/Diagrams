@@ -49,6 +49,7 @@ RenderPlacedDiagramToGraphics[
 					(* FaceForm[Lookup[theme, "BoxBackground", RaiseError["FIXME"]]], *)
 					Lookup[theme, "BoxBackground", RaiseError["FIXME"]],
 					EdgeForm[Lookup[theme, "BoxBorder", RaiseError["FIXME"]]],
+					AbsoluteThickness[4.0],
 					borderRect
 				}];
 

@@ -70,7 +70,6 @@ fn rendered_text_size(args: Vec<Expr>) -> Expr {
         .try_into()
         .unwrap_or_else(|_| panic!("expected 2 arguments, got {}", args.len()));
 
-
     let text = match text.kind() {
         ExprKind::String(text) => text,
         _ => panic!("expected 1st argument to be String, got: {text}"),

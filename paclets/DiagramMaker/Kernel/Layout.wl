@@ -151,7 +151,7 @@ doGraphLayout[
 				textWidth, textHeight,
 				placedBox
 			},
-				{borderLeft, borderBottom} = {100, 50} * Lookup[embedding, id, RaiseError["FIXME"]];
+				{borderLeft, borderBottom} = {150, 100} * Lookup[embedding, id, RaiseError["FIXME"]];
 
 				textLeft = borderLeft + $padding;
 

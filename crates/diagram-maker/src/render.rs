@@ -349,7 +349,7 @@ fn make_paragraph(text: &str, color: Color) -> Paragraph {
         let mut paint = Paint::default();
         paint.set_color(color);
         ts.set_foreground_color(paint);
-        ts.set_font_size(20.0);
+        ts.set_font_size(30.0);
         ts
     };
     paragraph_builder.push_style(&ts);
