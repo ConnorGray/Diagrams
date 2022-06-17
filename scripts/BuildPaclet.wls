@@ -21,8 +21,7 @@ If[FileNameTake[$repositoryDir] =!= "diagram-maker",
 
 result = PacletBuild[
 	FileNameJoin[{$repositoryDir, "paclets", "DiagramMaker"}],
-	FileNameJoin[{$repositoryDir, "build"}],
-	OverwriteTarget -> True
+	FileNameJoin[{$repositoryDir, "build"}]
 ];
 
 If[FailureQ[result],
