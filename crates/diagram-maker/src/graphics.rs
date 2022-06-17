@@ -14,6 +14,7 @@ pub enum Command {
 pub enum Primitive {
     Line(Line),
     Rectangle(Rectangle),
+    SizedText(SizedText),
 }
 
 #[derive(Debug)]
@@ -40,6 +41,12 @@ pub struct Rectangle {
     pub right: f32,
 
     pub rounding_radius: f32,
+}
+
+#[derive(Debug)]
+pub struct SizedText {
+    pub string: String,
+    pub rect: Rectangle,
 }
 
 /// An (x, y) coordinate.
@@ -72,6 +79,21 @@ impl Rectangle {
         let Rectangle { left, right, top, bottom, rounding_radius: _ } = *self;
 
         skia::Rect { left, right, top, bottom }
+    }
+
+    #[rustfmt::skip]
+    pub(crate) fn to_layout_rect(&self) -> crate::layout::Rect {
+        let Rectangle { left, right, top, bottom, rounding_radius: _ } = *self;
+
+        crate::layout::Rect {
+            left,
+            right,
+            // Flip the top and bottom values, because WL graphics place the
+            // origin at the bottom left, but Skia places the origin in the
+            // top left.
+            top: bottom,
+            bottom: top
+        }
     }
 }
 

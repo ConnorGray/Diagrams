@@ -2,7 +2,7 @@ use crate::{
     diagram::{Arrow, Box, Id, Text, Theme},
     graphics::{
         Command, Coord, Directive, Graphics, Line, Primitive, RGBColor,
-        Rectangle,
+        Rectangle, SizedText,
     },
     Diagram,
 };
@@ -259,6 +259,10 @@ impl TryFrom<&Expr> for Primitive {
             return Ok(Primitive::Rectangle(rect));
         }
 
+        if let Ok(sized_text) = SizedText::try_from(e) {
+            return Ok(Primitive::SizedText(sized_text));
+        }
+
         Err(format!("unrecognized graphics primitive: {}", e))
     }
 }
@@ -378,6 +382,30 @@ impl TryFrom<&Expr> for Line {
         Ok(Line { coords })
     }
 }
+
+impl TryFrom<&Expr> for SizedText {
+    type Error = String;
+
+    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
+        let args =
+            try_headed_len(e, Symbol::new("DiagramMaker`Render`SizedText"), 2)?;
+
+        let text = match args[0].kind() {
+            ExprKind::String(s) => s.clone(),
+            _ => return Err(format!("expected SizedText[_String, _]")),
+        };
+
+        let rect = match Rectangle::try_from(&args[1]) {
+            Ok(rect) => rect,
+            Err(err) => {
+                return Err(format!("expected SizedText[_, _Rectangle]: {err}"))
+            },
+        };
+
+        Ok(SizedText { string: text, rect })
+    }
+}
+
 fn as_real(num: Number) -> f64 {
     match num {
         Number::Real(real) => *real,

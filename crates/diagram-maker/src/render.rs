@@ -13,7 +13,9 @@ use skia::{
 use cgmath::{InnerSpace, Rad, Vector2};
 
 use crate::{
-    graphics::{Command, Coord, Directive, Graphics, Line, Primitive},
+    graphics::{
+        Command, Coord, Directive, Graphics, Line, Primitive, SizedText,
+    },
     layout::{self, PlacedArrow, PlacedBox, PlacedDiagram},
     Error,
 };
@@ -207,6 +209,20 @@ impl Graphics {
                     canvas.draw_round_rect(rect.to_skia(), rr, rr, &fill);
                     canvas.draw_round_rect(rect.to_skia(), rr, rr, &border);
                 },
+                Command::Primitive(Primitive::SizedText(SizedText {
+                    string,
+                    rect,
+                })) => {
+                    draw_text(
+                        canvas,
+                        string,
+                        rect.to_layout_rect(),
+                        state.color(Form::Face),
+                    );
+                },
+                //----------------------
+                // Directives
+                //----------------------
                 Command::Directive(Directive::AbsoluteThickness(
                     abs_thickness,
                 )) => {

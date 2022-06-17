@@ -3,6 +3,7 @@ BeginPackage["DiagramMaker`"]
 (* Declare your package's public symbols here. *)
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."
+PlacedDiagram::usage = "PlacedDiagram[boxes, arrows]"
 
 DiaBox::usage = "DiaBox[..] is a diagram element of a generic box."
 DiaArrow::usage = "DiaArrow[..] is a diagram element that defines a relationship between two diagram box elements."
@@ -10,9 +11,28 @@ DiaArrow::usage = "DiaArrow[..] is a diagram element that defines a relationship
 DiagramImage::usage = "DiagramImage[diagram] returns an image containing the graphical representation of diagram."
 DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing the relations between diagram elements blocks."
 
+LayoutDiagram::usage = "LayoutDiagram[diagram] uses a suitable layout algorithm to produce a PlacedDiagram"
+
+RenderPlacedDiagramToGraphics
+
 DiagramGraphicsImage
 
+RenderedTextSize
+
+(*--------*)
+(* Errors *)
+(*--------*)
+
+DiagramMaker::error = "``"
+DiagramMaker::assertfail = "``"
+
 Begin["`Private`"]
+
+
+Needs["DiagramMaker`Errors`"]
+Needs["DiagramMaker`Layout`"]
+Needs["DiagramMaker`Render`"]
+
 
 $functions = LibraryFunctionLoad[
 	"libdiagram_maker_wll",
@@ -69,6 +89,11 @@ DiagramGraphicsImage[args___] := Module[{result},
 		bytes:{___?IntegerQ} :> ImportByteArray[ByteArray[bytes], "PNG"]
 	}]
 ]
+
+(*----------------------------------------------------------------------------*)
+
+RenderedTextSize[args___] :=
+	$functions["rendered_text_size"][args]
 
 (*----------------------------------------------------------------------------*)
 

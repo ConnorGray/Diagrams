@@ -1,3 +1,4 @@
+use wolfram_expr::ExprKind;
 use wolfram_library_link::{
     self as wll, export,
     expr::{Expr, Symbol},
@@ -46,4 +47,37 @@ fn graphics_image(link: &mut Link) {
 
     link.put_u8_array(png_data.as_slice(), &[png_data.len()])
         .unwrap();
+}
+
+/// Returns the width and height in pixels that is occupied by rendering the
+/// given text using Skia.
+#[export(wstp)]
+fn rendered_text_size(args: Vec<Expr>) -> Expr {
+    if args.len() != 2 {
+        panic!("expected 2 arguments, got {}", args.len());
+    }
+
+    let [text, width]: &[Expr; 2] = args
+        .as_slice()
+        .try_into()
+        .unwrap_or_else(|_| panic!("expected 2 arguments, got {}", args.len()));
+
+
+    let text = match text.kind() {
+        ExprKind::String(text) => text,
+        _ => panic!("expected 1st argument to be String, got: {text}"),
+    };
+
+    let width = match *width.kind() {
+        ExprKind::Integer(value) => value as f32,
+        ExprKind::Real(value) => *value as f32,
+        _ => panic!("expected 2nd argument to be a number, got: {width}"),
+    };
+
+    let (width, height) = crate::render::rendered_text_size(text, width);
+
+    Expr::list(vec![
+        Expr::real(f64::from(width)),
+        Expr::real(f64::from(height)),
+    ])
 }
