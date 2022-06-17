@@ -1,7 +1,5 @@
 BeginPackage["DiagramMaker`Render`"]
 
-RenderPlacedDiagramToGraphics
-
 DefaultTheme
 
 SizedText::usage = "SizedText[s, rect]"
@@ -35,6 +33,10 @@ RenderPlacedDiagramToGraphics[
 	graphics = {},
 	theme = Replace[theme0, Automatic :> $DefaultTheme]
 },
+	(*------------*)
+	(* Draw boxes *)
+	(*------------*)
+
 	Scan[
 		Replace[{
 			PlacedBox[
@@ -59,6 +61,28 @@ RenderPlacedDiagramToGraphics[
 			other_ :> RaiseError["unexpected diagram placed box structure: ``", other]
 		}],
 		boxes
+	];
+
+	(*-------------*)
+	(* Draw arrows *)
+	(*-------------*)
+
+	Scan[
+		Replace[{
+			PlacedArrow[
+				DiaArrow[___],
+				startPoint:{_?NumberQ, _?NumberQ},
+				endPoint:{_?NumberQ, _?NumberQ}
+			] :> Module[{},
+				AppendTo[graphics, {
+					Lookup[theme, "ArrowStroke", RaiseError["FIXME"]],
+					Line[{startPoint, endPoint}]
+					(* Arrow[{startPoint, endPoint}] *)
+				}];
+			],
+			other_ :> RaiseError["unexpected diagram placed arrow structure: ``", other]
+		}],
+		arrows
 	];
 
 	graphics

@@ -134,6 +134,16 @@ impl GraphicsState {
         .unwrap_or(2.0)
     }
 
+    fn line_color(&self) -> skia::Color {
+        let GraphicsState {
+            general,
+            edges: _,
+            faces: _,
+        } = self;
+
+        general.color.unwrap_or(Color::BLACK)
+    }
+
     fn color(&self, form: Form) -> skia::Color {
         let GraphicsState {
             general,
@@ -171,7 +181,7 @@ impl Graphics {
                         paint.set_anti_alias(true);
                         paint
                             .set_style(paint::Style::Stroke)
-                            .set_color(state.color(Form::Edge))
+                            .set_color(state.line_color())
                             .set_stroke_width(
                                 state.absolute_thickness(Form::Edge),
                             );
