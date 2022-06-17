@@ -7,6 +7,7 @@ Begin["`Private`"]
 
 Needs["DiagramMaker`"]
 Needs["DiagramMaker`Errors`"]
+Needs["DiagramMaker`Utils`"]
 
 
 LayoutDiagram[
@@ -105,7 +106,7 @@ doRowLayout[
 					Rectangle[{borderLeft, 0.0}, {borderRight, $padding + textHeight + $padding}]
 				];
 
-				xOffset += rectangleWidth[placedBox[[2]]] + $margin;
+				xOffset += RectangleWidth[placedBox[[2]]] + $margin;
 
 				AssociateTo[placedBoxes, id -> placedBox];
 			],
@@ -233,7 +234,7 @@ doRowsLayout[
 								]
 							];
 
-							xOffset += rectangleWidth[placedBox[[2]]] + $margin;
+							xOffset += RectangleWidth[placedBox[[2]]] + $margin;
 
 							AssociateTo[placedBoxes, id -> placedBox];
 						],
@@ -452,11 +453,11 @@ boxAttachmentPoint[
 			x = Replace[attachment, {
 				Left :> borderLeft,
 				Right :> borderRight,
-				Top | Bottom :> borderLeft + lerpFactor * rectangleWidth[borderRect]
+				Top | Bottom :> borderLeft + lerpFactor * RectangleWidth[borderRect]
 			}];
 
 			y = Replace[attachment, {
-				Left | Right :> borderBottom + lerpFactor * rectangleHeight[borderRect],
+				Left | Right :> borderBottom + lerpFactor * RectangleHeight[borderRect],
 				Top :> borderTop,
 				Bottom :> borderBottom
 			}];
@@ -531,16 +532,6 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 (*====================================*)
 (* Utility functions                  *)
 (*====================================*)
-
-rectangleWidth[arg_] := Replace[arg, {
-	Rectangle[{xMin_?NumberQ, _}, {xMax_?NumberQ, _}] :> Abs[xMax - xMin],
-	_ :> RaiseError["unable to get width of rectangle: ``", arg]
-}]
-
-rectangleHeight[arg_] := Replace[arg, {
-	Rectangle[{_, yMin_?NumberQ}, {_, yMax_?NumberQ}] :> Abs[yMax - yMin],
-	_ :> RaiseError["unable to get height of rectangle: ``", arg]
-}]
 
 rectangleSidePoints[
 	rect:Rectangle[{left_, bottom_}, {right_, top_}],

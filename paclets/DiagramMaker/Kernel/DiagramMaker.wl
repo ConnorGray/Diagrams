@@ -34,6 +34,7 @@ Begin["`Private`"]
 Needs["DiagramMaker`Errors`"]
 Needs["DiagramMaker`Layout`"]
 Needs["DiagramMaker`Render`"]
+Needs["DiagramMaker`Utils`"]
 
 
 $functions = LibraryFunctionLoad[
