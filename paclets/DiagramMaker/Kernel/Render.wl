@@ -77,8 +77,7 @@ RenderPlacedDiagramToGraphics[
 			] :> Module[{},
 				AppendTo[graphics, {
 					Lookup[theme, "ArrowStroke", RaiseError["FIXME"]],
-					Line[{startPoint, endPoint}]
-					(* Arrow[{startPoint, endPoint}] *)
+					Arrow[{startPoint, endPoint}]
 				}];
 			],
 			other_ :> RaiseError["unexpected diagram placed arrow structure: ``", other]
