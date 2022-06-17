@@ -237,8 +237,10 @@ placeArrowsBasedOnBoxes[
 				];
 
 				(* FIXME: Use the `closest_sides()` algorithm for this. *)
-				autoStartSide = Right;
-				autoEndSide = Left;
+				{autoStartSide, autoEndSide} = closestSides[
+					startBox[[3]],
+					endBox[[3]]
+				];
 
 				startAt = autoStartSide;
 				endAt = autoEndSide;
@@ -303,6 +305,43 @@ boxAttachmentPoint[
 	point
 ]
 
+closestSides[
+	a_Rectangle,
+	b_Rectangle
+] := Module[{
+	sides,
+	best
+},
+	sides = {Left, Right, Top, Bottom};
+
+	best = {Infinity, {Left, Left}};
+
+	Do[
+		Module[{
+			aPoints = rectangleSidePoints[a, aSide],
+			bPoints = rectangleSidePoints[b, bSide],
+			distance
+		},
+			RaiseAssert[MatchQ[
+				aPoints,
+				{{_?NumberQ, _?NumberQ}, {_?NumberQ, _?NumberQ}}
+			]];
+
+			distance = sidesDistanceFactor[aPoints, bPoints];
+
+			RaiseAssert[NumberQ[distance]];
+
+			If[distance < best[[1]],
+				best = {distance, {aSide, bSide}};
+			];
+		],
+		{aSide, sides},
+		{bSide, sides}
+	];
+
+	best[[2]]
+]
+
 (*====================================*)
 (* Utility functions                  *)
 (*====================================*)
@@ -317,6 +356,35 @@ rectangleHeight[arg_] := Replace[arg, {
 	_ :> RaiseError["unable to get height of rectangle: ``", arg]
 }]
 
+rectangleSidePoints[
+	rect:Rectangle[{left_, bottom_}, {right_, top_}],
+	side_
+] := Module[{
+	topLeft = {left, top},
+	topRight = {right, top},
+	bottomLeft = {left, bottom},
+	bottomRight = {right, bottom}
+},
+	Replace[side, {
+		Left :> {bottomLeft, topLeft},
+		Right :> {bottomRight, topRight},
+		Top :> {topLeft, topRight},
+		Bottom :> {bottomLeft, bottomRight},
+		other_ :> RaiseError["unrecognized rectangle side specification: ``", other]
+	}]
+]
+
+(****************************************)
+
+sidesDistanceFactor[
+	{a0:{_, _}, a1:{_, _}},
+	{b0:{_, _}, b1:{_, _}}
+] := Plus[
+	EuclideanDistance[a0, b0],
+	EuclideanDistance[a0, b1],
+	EuclideanDistance[a1, b0],
+	EuclideanDistance[a1, b1]
+]
 
 End[]
 
