@@ -11,6 +11,14 @@ use crate::{
     Diagram,
 };
 
+#[allow(dead_code, non_snake_case)]
+pub(crate) fn Print(message: &str) {
+    let _ = wll::evaluate(&Expr::normal(
+        Symbol::new("System`Print"),
+        vec![Expr::string(message)],
+    ));
+}
+
 #[export(wstp, hidden)]
 fn load_diagram_maker_functions(args: Vec<Expr>) -> Expr {
     assert_eq!(args.len(), 0);
