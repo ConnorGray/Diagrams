@@ -11,13 +11,38 @@ Needs["DiagramMaker`Errors`"]
 
 LayoutDiagram[
 	diagram_Diagram,
-	algo : _?StringQ : "RowsLayout"
-] := Replace[algo, {
-	"RowLayout" :> doRowLayout[diagram],
-	"RowsLayout" :> doRowsLayout[diagram],
-	"GraphLayout" :> doGraphLayout[diagram],
-	_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
-}]
+	algo0 : _?StringQ : Automatic
+] := Module[{
+	diagramOpts = Options[diagram],
+	algo,
+	result
+},
+	algo = Replace[algo0, Automatic :> OptionValue[Diagram, diagramOpts, DiagramLayout]];
+
+	(* Default to "RowsLayout". *)
+	algo = Replace[algo, Automatic :> "RowsLayout"];
+
+	result = Replace[algo, {
+		"RowLayout" :> doRowLayout[diagram],
+		"RowsLayout" :> doRowsLayout[diagram],
+		"GraphLayout" :> doGraphLayout[diagram],
+		_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
+	}];
+
+	RaiseAssert[
+		MatchQ[result, PlacedDiagram[_?AssociationQ, _?ListQ]],
+		"diagram layout implementation for `` did not return expected result: ``",
+		InputForm[algo],
+		InputForm[result]
+	];
+
+	result
+]
+
+(*------------------------------------*)
+
+LayoutDiagram[args___] :=
+	RaiseError["unexpected arguments to LayoutDiagram: ``", InputForm[{args}]]
 
 (*========================================================*)
 (* Layout algorithm implementations                       *)
@@ -35,7 +60,8 @@ $margin = 32.0;
 doRowLayout[
 	Diagram[
 		boxes:{___DiaBox},
-		arrows:{___DiaArrow}
+		arrows:{___DiaArrow},
+		___?OptionQ
 	]
 ] := Module[{
 	xOffset,
@@ -111,7 +137,8 @@ doRowLayout[
 doRowsLayout[
 	diagram:Diagram[
 		boxes:{___DiaBox},
-		arrows:{___DiaArrow}
+		arrows:{___DiaArrow},
+		___?OptionQ
 	]
 ] := Module[{
 	rows,
@@ -249,7 +276,8 @@ doRowsLayout[
 doGraphLayout[
 	diagram:Diagram[
 		boxes:{___DiaBox},
-		arrows:{___DiaArrow}
+		arrows:{___DiaArrow},
+		___?OptionQ
 	]
 ] := Module[{
 	graph,

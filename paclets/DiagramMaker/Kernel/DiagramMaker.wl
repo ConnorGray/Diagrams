@@ -13,6 +13,8 @@ DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing
 
 LayoutDiagram::usage = "LayoutDiagram[diagram] uses a suitable layout algorithm to produce a PlacedDiagram"
 
+DiagramLayout::usage = "DiagramLayout is an option to Diagram and related functions that specifies what layout to use."
+
 RenderPlacedDiagramToGraphics
 
 DiagramGraphicsImage
@@ -44,6 +46,8 @@ $functions = LibraryFunctionLoad[
 Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 
 (*----------------------------------------------------------------------------*)
+
+Options[Diagram] = {DiagramLayout -> Automatic};
 
 Diagram /: MakeBoxes[
 	obj : Diagram[boxes:{___}, arrows:{___}, opts___?OptionQ],
@@ -110,7 +114,8 @@ RenderedTextSize[args___] :=
 DiagramGraph[
 	Diagram[
 		boxes:{___DiaBox},
-		arrows:{___DiaArrow}
+		arrows:{___DiaArrow},
+		___?OptionQ
 	]
 ] := Module[{vertices, edges},
 	vertices = Cases[
@@ -134,6 +139,11 @@ DiagramGraph[
 
 	Graph[vertices, edges, VertexLabels -> "Name"]
 ]
+
+(*------------------------------------*)
+
+DiagramGraph[args___] :=
+	RaiseError["unexpected arguments to DiagramGraph: ``", InputForm[{args}]]
 
 (****************************************)
 
