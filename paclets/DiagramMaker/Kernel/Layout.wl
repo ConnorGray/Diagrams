@@ -11,9 +11,10 @@ Needs["DiagramMaker`Errors`"]
 
 LayoutDiagram[
 	diagram_Diagram,
-	algo : _?StringQ : "RowLayout"
+	algo : _?StringQ : "RowsLayout"
 ] := Replace[algo, {
 	"RowLayout" :> doRowLayout[diagram],
+	"RowsLayout" :> doRowsLayout[diagram],
 	"GraphLayout" :> doGraphLayout[diagram],
 	_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 }]
@@ -22,8 +23,9 @@ LayoutDiagram[
 (* Layout algorithm implementations                       *)
 (*========================================================*)
 
-$textWidth = 256.0;
+$textWidth = 300.0;
 $padding = 8.0;
+$margin = 32.0;
 
 (*====================================*)
 (* Row Layout                         *)
@@ -36,8 +38,6 @@ doRowLayout[
 		arrows:{___DiaArrow}
 	]
 ] := Module[{
-	$margin = 32.0,
-	$padding = 8.0,
 	xOffset,
 	placedBoxes,
 	placedArrows
@@ -86,6 +86,144 @@ doRowLayout[
 			other_ :> RaiseError["unexpected diagram box structure: ``", other]
 		}],
 		boxes
+	];
+
+	(*--------------*)
+	(* Place arrows *)
+	(*--------------*)
+
+	placedArrows = placeArrowsBasedOnBoxes[arrows, placedBoxes];
+
+	RaiseAssert[Length[placedArrows] === Length[arrows]];
+	RaiseAssert[Length[placedBoxes] === Length[boxes]];
+
+	PlacedDiagram[
+		placedBoxes,
+		placedArrows
+	]
+]
+
+(*====================================*)
+(* Rows Layout                        *)
+(*====================================*)
+
+(* Layout all diagram boxes in a series of rows. *)
+doRowsLayout[
+	diagram:Diagram[
+		boxes:{___DiaBox},
+		arrows:{___DiaArrow}
+	]
+] := Module[{
+	rows,
+	boxesById = makeBoxesById[boxes],
+	xOffset = 0.0,
+	yOffset = 0.0,
+	placedBoxes = <||>,
+	placedArrows = {}
+},
+	rows = Module[{
+		graph,
+		embedding,
+		vertices
+	},
+		graph = DiagramGraph[diagram];
+		RaiseAssert[GraphQ[graph]];
+
+		embedding = GraphEmbedding[
+			graph,
+			(* FIXME: Support this as a GraphLayout option. *)
+			{"LayeredEmbedding"}
+		];
+		vertices = VertexList[graph];
+
+		RaiseAssert[
+			MatchQ[embedding, {{_?NumberQ, _?NumberQ} ...}],
+			"unexpected embedding value: ``",
+			embedding
+		];
+		RaiseAssert[MatchQ[vertices, {___?StringQ}]];
+		RaiseAssert[Length[embedding] === Length[vertices]];
+
+		embedding = Association[Rule @@@ Transpose[{vertices, embedding}]];
+
+		RaiseAssert[MatchQ[embedding, <| (_?StringQ -> {_, _}) ...|>]];
+
+		(* Group the vertices by their Y coordinate. The "LayeredEmbedding"
+		   tries to put nodes on parallel horizontal lines, so this will give us
+		   rows. *)
+		rows = GroupBy[embedding, Last];
+		rows = Map[Keys, Values[Sort[rows]]];
+
+		Reverse[rows]
+	];
+
+	RaiseAssert[MatchQ[rows, {{___?StringQ} ...}]];
+
+	(*-------------*)
+	(* Place boxes *)
+	(*-------------*)
+
+	Scan[
+		Replace[{
+			row:{___?StringQ} :> Module[{},
+				Scan[
+					Replace[{
+						id_?StringQ :> Module[{
+							box,
+							borderLeft, borderRight,
+							textLeft, textRight,
+							textWidth, textHeight,
+							placedBox
+						},
+							box = Lookup[boxesById, id, RaiseError["FIXME"]];
+
+							RaiseAssert[MatchQ[box, DiaBox[id]]];
+
+							borderLeft = xOffset;
+							textLeft = xOffset + $padding;
+
+							{textWidth, textHeight} =
+								RaiseConfirm @ RenderedTextSize[id, $textWidth];
+
+							(* Note: Add fudge factor to prevent text wrapping done by Skia,
+									even though we're using the width it told us. *)
+							textWidth = textWidth + 1.0;
+
+							textRight = textLeft + textWidth;
+							borderRight = textRight + $padding;
+
+							placedBox = PlacedBox[
+								box,
+								(* Text rectangle *)
+								Rectangle[
+									{textLeft, yOffset + $padding},
+									{textRight, yOffset + $padding + textHeight}
+								],
+								(* Border rectangle *)
+								Rectangle[
+									{borderLeft, yOffset},
+									{borderRight, yOffset + $padding + textHeight + $padding}
+								]
+							];
+
+							xOffset += rectangleWidth[placedBox[[2]]] + $margin;
+
+							AssociateTo[placedBoxes, id -> placedBox];
+						],
+						other_ :> RaiseError["unexpected diagram box structure: ``", other]
+					}],
+					row
+				];
+
+				(* Start the next row at the far left. *)
+				xOffset = 0;
+				(* Place the next row higher up. *)
+				(* FIXME: Compute this offset using the maximum height of the
+					boxes in the previous row. *)
+				yOffset += 100.0;
+			]
+		}],
+		rows
 	];
 
 	(*--------------*)
@@ -340,6 +478,26 @@ closestSides[
 	];
 
 	best[[2]]
+]
+
+makeBoxesById[boxes:{___DiaBox}] := Module[{
+	boxesById = <||>
+},
+	Scan[
+		Replace[{
+			box:DiaBox[id_?StringQ] :> (
+				If[KeyMemberQ[boxesById, id],
+					RaiseError["boxes list contains conflicting IDs: ``", id];
+				];
+
+				AssociateTo[boxesById, id -> box];
+			),
+			other_ :> RaiseError["unexpected diagram box structure: ``", other]
+		}],
+		boxes
+	];
+
+	boxesById
 ]
 
 (*====================================*)
