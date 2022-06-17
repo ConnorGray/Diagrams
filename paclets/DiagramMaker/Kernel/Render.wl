@@ -42,15 +42,18 @@ RenderPlacedDiagramToGraphics[
 			PlacedBox[
 				DiaBox[id_?StringQ],
 				textRect_Rectangle,
-				borderRect_Rectangle
+				(* Border rect *)
+				Rectangle[min_, max_]
 			] :> (
 				(* Draw the background and border first. *)
 				AppendTo[graphics, {
 					(* FaceForm[Lookup[theme, "BoxBackground", RaiseError["FIXME"]]], *)
 					Lookup[theme, "BoxBackground", RaiseError["FIXME"]],
-					EdgeForm[Lookup[theme, "BoxBorder", RaiseError["FIXME"]]],
-					AbsoluteThickness[4.0],
-					borderRect
+					EdgeForm[{
+						Lookup[theme, "BoxBorder", RaiseError["FIXME"]],
+						AbsoluteThickness[4.0]
+					}],
+					Rectangle[min, max, RoundingRadius -> 3]
 				}];
 
 				(* Finally draw the text. *)
@@ -77,6 +80,7 @@ RenderPlacedDiagramToGraphics[
 			] :> Module[{},
 				AppendTo[graphics, {
 					Lookup[theme, "ArrowStroke", RaiseError["FIXME"]],
+					AbsoluteThickness[4.0],
 					Arrow[{startPoint, endPoint}]
 				}];
 			],
