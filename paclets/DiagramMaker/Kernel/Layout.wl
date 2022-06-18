@@ -80,31 +80,12 @@ doRowLayout[
 	Scan[
 		Replace[{
 			box:DiaBox[id_?StringQ] :> Module[{
-				borderLeft, borderRight,
-				textLeft, textRight,
-				textWidth, textHeight,
+				textRect, borderRect,
 				placedBox
 			},
-				borderLeft = xOffset;
-				textLeft = xOffset + $padding;
+				{textRect, borderRect} = makeBoxRectangles[id, {xOffset, 0}];
 
-				{textWidth, textHeight} =
-					RaiseConfirm @ RenderedTextSize[id, $textWidth];
-
-				(* Note: Add fudge factor to prevent text wrapping done by Skia,
-				         even though we're using the width it told us. *)
-				textWidth = textWidth + 1.0;
-
-				textRight = textLeft + textWidth;
-				borderRight = textRight + $padding;
-
-				placedBox = PlacedBox[
-					box,
-					(* Text rectangle *)
-					Rectangle[{textLeft, $padding}, {textRight, $padding + textHeight}],
-					(* Border rectangle *)
-					Rectangle[{borderLeft, 0.0}, {borderRight, $padding + textHeight + $padding}]
-				];
+				placedBox = PlacedBox[box, textRect, borderRect];
 
 				xOffset += RectangleWidth[placedBox[[2]]] + $margin;
 
@@ -198,7 +179,6 @@ doRowsLayout[
 					Replace[{
 						id_?StringQ :> Module[{
 							box,
-							textWidth, textHeight,
 							textRect, borderRect,
 							placedBox
 						},
@@ -206,25 +186,10 @@ doRowsLayout[
 
 							RaiseAssert[MatchQ[box, DiaBox[id]]];
 
-							{textWidth, textHeight} =
-								RaiseConfirm @ RenderedTextSize[id, $textWidth];
-
-							(* Note: Add fudge factor to prevent text wrapping done by Skia,
-									even though we're using the width it told us. *)
-							textWidth = textWidth + 1.0;
-
-							textRect = Rectangle[{0, 0}, {textWidth, textHeight}];
-							textRect = AbsoluteTranslate[textRect, {$padding, $padding}];
-							textRect = AbsoluteTranslate[textRect, {xOffset, yOffset}];
-
-							borderRect = Rectangle[
-								{0, 0},
-								{
-									$padding + textWidth + $padding,
-									$padding + textHeight + $padding
-								}
+							{textRect, borderRect} = makeBoxRectangles[
+								id,
+								{xOffset, yOffset}
 							];
-							borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];
 
 							placedBox = PlacedBox[box, textRect, borderRect];
 
@@ -306,39 +271,15 @@ doGraphLayout[
 	Scan[
 		Replace[{
 			box:DiaBox[id_?StringQ] :> Module[{
-				embeddingPos,
-				borderLeft, borderRight,
-				textLeft, textRight,
-				textWidth, textHeight,
+				borderLeft, borderBottom,
+				textRect, borderRect,
 				placedBox
 			},
 				{borderLeft, borderBottom} = {150, 100} * Lookup[embedding, id, RaiseError["FIXME"]];
 
-				textLeft = borderLeft + $padding;
+				{textRect, borderRect} = makeBoxRectangles[id, {borderLeft, borderBottom}];
 
-				{textWidth, textHeight} =
-					RaiseConfirm @ RenderedTextSize[id, $textWidth];
-
-				(* Note: Add fudge factor to prevent text wrapping done by Skia,
-				         even though we're using the width it told us. *)
-				textWidth = textWidth + 1.0;
-
-				textRight = textLeft + textWidth;
-				borderRight = textRight + $padding;
-
-				placedBox = PlacedBox[
-					box,
-					(* Text rectangle *)
-					Rectangle[
-						{textLeft, borderBottom + $padding},
-						{textRight, borderBottom + $padding + textHeight}
-					],
-					(* Border rectangle *)
-					Rectangle[
-						{borderLeft, borderBottom},
-						{borderRight, borderBottom + $padding + textHeight + $padding}
-					]
-				];
+				placedBox = PlacedBox[box, textRect, borderRect];
 
 				AssociateTo[placedBoxes, id -> placedBox];
 			],
@@ -521,6 +462,36 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 	];
 
 	boxesById
+]
+
+makeBoxRectangles[
+	str_?StringQ,
+	{xOffset_, yOffset_}
+] := Module[{
+	textWidth, textHeight,
+	textRect, borderRect
+},
+	{textWidth, textHeight} =
+		RaiseConfirm @ RenderedTextSize[str, $textWidth];
+
+	(* Note: Add fudge factor to prevent text wrapping done by Skia,
+			even though we're using the width it told us. *)
+	textWidth = textWidth + 1.0;
+
+	textRect = Rectangle[{0, 0}, {textWidth, textHeight}];
+	textRect = AbsoluteTranslate[textRect, {$padding, $padding}];
+	textRect = AbsoluteTranslate[textRect, {xOffset, yOffset}];
+
+	borderRect = Rectangle[
+		{0, 0},
+		{
+			$padding + textWidth + $padding,
+			$padding + textHeight + $padding
+		}
+	];
+	borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];
+
+	{textRect, borderRect}
 ]
 
 (*====================================*)
