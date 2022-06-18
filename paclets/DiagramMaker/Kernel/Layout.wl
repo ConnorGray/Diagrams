@@ -198,17 +198,13 @@ doRowsLayout[
 					Replace[{
 						id_?StringQ :> Module[{
 							box,
-							borderLeft, borderRight,
-							textLeft, textRight,
 							textWidth, textHeight,
+							textRect, borderRect,
 							placedBox
 						},
 							box = Lookup[boxesById, id, RaiseError["FIXME"]];
 
 							RaiseAssert[MatchQ[box, DiaBox[id]]];
-
-							borderLeft = xOffset;
-							textLeft = xOffset + $padding;
 
 							{textWidth, textHeight} =
 								RaiseConfirm @ RenderedTextSize[id, $textWidth];
@@ -217,22 +213,20 @@ doRowsLayout[
 									even though we're using the width it told us. *)
 							textWidth = textWidth + 1.0;
 
-							textRight = textLeft + textWidth;
-							borderRight = textRight + $padding;
+							textRect = Rectangle[{0, 0}, {textWidth, textHeight}];
+							textRect = AbsoluteTranslate[textRect, {$padding, $padding}];
+							textRect = AbsoluteTranslate[textRect, {xOffset, yOffset}];
 
-							placedBox = PlacedBox[
-								box,
-								(* Text rectangle *)
-								Rectangle[
-									{textLeft, yOffset + $padding},
-									{textRight, yOffset + $padding + textHeight}
-								],
-								(* Border rectangle *)
-								Rectangle[
-									{borderLeft, yOffset},
-									{borderRight, yOffset + $padding + textHeight + $padding}
-								]
+							borderRect = Rectangle[
+								{0, 0},
+								{
+									$padding + textWidth + $padding,
+									$padding + textHeight + $padding
+								}
 							];
+							borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];
+
+							placedBox = PlacedBox[box, textRect, borderRect];
 
 							xOffset += RectangleWidth[placedBox[[2]]] + $margin;
 
@@ -562,6 +556,29 @@ sidesDistanceFactor[
 	EuclideanDistance[a1, b0],
 	EuclideanDistance[a1, b1]
 ]
+
+(****************************************)
+
+AbsoluteTranslate[
+	primitives_?ListQ,
+	vector:{_, _}
+] := Map[
+	AbsoluteTranslate[#, vector] &,
+	primitives
+]
+
+AbsoluteTranslate[
+	Line[pts:{{Except[_List], Except[_List]} ...}],
+	vector:{_, _}
+] :=
+	Line[pts + vector]
+
+AbsoluteTranslate[
+	Rectangle[min:{_, _}, max:{_, _}, opts___],
+	vector:{_, _}
+] :=
+	Rectangle[min + vector, max + vector, opts]
+
 
 End[]
 
