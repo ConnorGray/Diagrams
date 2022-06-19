@@ -79,11 +79,13 @@ doRowLayout[
 
 	Scan[
 		Replace[{
-			box:DiaBox[id_?StringQ] :> Module[{
+			box_DiaBox :> Module[{
+				id = DiaElementId[box],
+				text = DiaElementText[box],
 				textRect, borderRect,
 				placedBox
 			},
-				{textRect, borderRect} = makeBoxRectangles[id, {xOffset, 0}];
+				{textRect, borderRect} = makeBoxRectangles[text, {xOffset, 0}];
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 
@@ -185,12 +187,14 @@ doRowsLayout[
 			row:{___DiaBox} :> Module[{},
 				Scan[
 					Replace[{
-						box:DiaBox[id_?StringQ] :> Module[{
+						box_DiaBox :> Module[{
+							id = DiaElementId[box],
+							text = DiaElementText[box],
 							textRect, borderRect,
 							placedBox
 						},
 							{textRect, borderRect} = makeBoxRectangles[
-								id,
+								text,
 								{xOffset, yOffset}
 							];
 
@@ -273,14 +277,16 @@ doGraphLayout[
 
 	Scan[
 		Replace[{
-			box:DiaBox[id_?StringQ] :> Module[{
+			box_DiaBox :> Module[{
+				id = DiaElementId[box],
+				text = DiaElementText[box],
 				borderLeft, borderBottom,
 				textRect, borderRect,
 				placedBox
 			},
 				{borderLeft, borderBottom} = {150, 100} * Lookup[embedding, id, RaiseError["FIXME"]];
 
-				{textRect, borderRect} = makeBoxRectangles[id, {borderLeft, borderBottom}];
+				{textRect, borderRect} = makeBoxRectangles[text, {borderLeft, borderBottom}];
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 

@@ -21,6 +21,9 @@ DiagramGraphicsImage
 
 RenderedTextSize
 
+DiaElementId::usage = "DiaElementId[elem] will return the unique identifer associated with a diagram element."
+DiaElementText::usage = "DiaElementText[elem] will return the textual description associated with a diagram element, if applicable."
+
 (*--------*)
 (* Errors *)
 (*--------*)
@@ -224,6 +227,24 @@ DiagramGraph[
 
 	(* todo[] *)
 ]
+
+(*====================================*)
+(* Box property accessors             *)
+(*====================================*)
+
+(*====================================*)
+
+DiaElementId[DiaBox[id_?StringQ]] := id
+
+DiaElementId[args___] :=
+	RaiseError["unexpected arguments to DiaElementId: ``", InputForm[{args}]]
+
+(*====================================*)
+
+DiaElementText[DiaBox[id_?StringQ]] := id
+
+DiaElementText[args___] :=
+	RaiseError["unexpected arguments to DiaElementText: ``", InputForm[{args}]]
 
 
 End[] (* End `Private` *)
