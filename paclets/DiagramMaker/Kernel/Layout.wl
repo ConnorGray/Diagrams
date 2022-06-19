@@ -237,7 +237,13 @@ doRowsLayout[
 	(* Place arrows *)
 	(*--------------*)
 
-	placedArrows = placeArrowsBasedOnBoxes[arrows, placedBoxes];
+	placedArrows = placeArrowsBasedOnBoxes[
+		arrows,
+		placedBoxes,
+		(* Only permit arrows placed automatically to attach to the bottom or
+		   top edge of a box. *)
+		{Top, Bottom}
+	];
 
 	RaiseAssert[Length[placedArrows] === Length[arrows]];
 	RaiseAssert[Length[placedBoxes] === Length[boxes]];
@@ -331,7 +337,8 @@ doGraphLayout[
 
 placeArrowsBasedOnBoxes[
 	arrows:{___DiaArrow},
-	placedBoxes_
+	placedBoxes_,
+	sides : _ : Automatic
 ] := Module[{},
 	Map[
 		Replace[{
@@ -363,7 +370,8 @@ placeArrowsBasedOnBoxes[
 				(* FIXME: Use the `closest_sides()` algorithm for this. *)
 				{autoStartSide, autoEndSide} = closestSides[
 					startBox[[3]],
-					endBox[[3]]
+					endBox[[3]],
+					sides
 				];
 
 				startAt = autoStartSide;
@@ -431,13 +439,14 @@ boxAttachmentPoint[
 
 closestSides[
 	a_Rectangle,
-	b_Rectangle
+	b_Rectangle,
+	(* The sides that will be considered as possible attachment points. *)
+	sides0 : (Automatic | _?ListQ) : Automatic
 ] := Module[{
 	sides,
 	best
 },
-	sides = {Left, Right, Top, Bottom};
-
+	sides = Replace[sides0, Automatic -> {Left, Right, Top, Bottom}];
 	best = {Infinity, {Left, Left}};
 
 	Do[
