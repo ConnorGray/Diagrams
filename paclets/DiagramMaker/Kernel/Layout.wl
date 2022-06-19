@@ -168,24 +168,27 @@ doRowsLayout[
 
 	RaiseAssert[MatchQ[rows, {{___?StringQ} ...}]];
 
+	rows = Map[
+		id |-> Lookup[boxesById, id, RaiseError["FIXME"]],
+		rows,
+		{2}
+	];
+
+	RaiseAssert[MatchQ[rows, {{DiaBox[__] ...} ...}]];
+
 	(*-------------*)
 	(* Place boxes *)
 	(*-------------*)
 
 	Scan[
 		Replace[{
-			row:{___?StringQ} :> Module[{},
+			row:{___DiaBox} :> Module[{},
 				Scan[
 					Replace[{
-						id_?StringQ :> Module[{
-							box,
+						box:DiaBox[id_?StringQ] :> Module[{
 							textRect, borderRect,
 							placedBox
 						},
-							box = Lookup[boxesById, id, RaiseError["FIXME"]];
-
-							RaiseAssert[MatchQ[box, DiaBox[id]]];
-
 							{textRect, borderRect} = makeBoxRectangles[
 								id,
 								{xOffset, yOffset}
