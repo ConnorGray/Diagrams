@@ -127,6 +127,7 @@ doRowsLayout[
 ] := Module[{
 	rows,
 	boxesById = makeBoxesById[boxes],
+	maxRowWidth = 0,
 	xOffset = 0.0,
 	yOffset = 0.0,
 	placedBoxes = <||>,
@@ -182,9 +183,21 @@ doRowsLayout[
 	(* Place boxes *)
 	(*-------------*)
 
+	maxRowWidth = Max @ Map[RowWidth, rows];
+
+	RaiseAssert[Positive[maxRowWidth]];
+
 	Scan[
 		Replace[{
-			row:{___DiaBox} :> Module[{},
+			row:{___DiaBox} :> Module[{
+				rowWidth = RowWidth[row]
+			},
+				RaiseAssert[PossibleZeroQ[xOffset]];
+
+				(* Shift this row to the right by the required amount to
+				   horizontally center it with whatever the widest row is. *)
+				xOffset = (maxRowWidth - rowWidth) / 2.0;
+
 				Scan[
 					Replace[{
 						box_DiaBox :> Module[{
@@ -473,6 +486,10 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 	boxesById
 ]
 
+(*====================================*)
+
+makeBoxRectangles[str_?StringQ] := makeBoxRectangles[str, {0, 0}]
+
 makeBoxRectangles[
 	str_?StringQ,
 	{xOffset_, yOffset_}
@@ -501,6 +518,27 @@ makeBoxRectangles[
 	borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];
 
 	{textRect, borderRect}
+]
+
+(*====================================*)
+
+(* Returns the total width of `row` if the boxes were layed out next to each
+   other in a row with padding of `$padding`. *)
+RowWidth[row:{___DiaBox}] := Module[{
+	boxWidths,
+	totalPadding
+},
+	(* Get the border rect width for each box in this row. *)
+	boxWidths = Map[
+		box |-> RectangleWidth[makeBoxRectangles[DiaElementText[box]][[2]]],
+		row
+	];
+
+	RaiseAssert[MatchQ[boxWidths, {___?NumberQ}], "boxWidths: ``", boxWidths];
+
+	totalPadding = $padding * (Length[row] - 1);
+
+	Total[boxWidths] + totalPadding
 ]
 
 (*====================================*)
