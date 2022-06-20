@@ -62,7 +62,7 @@ DoRowsLayout[
 
 							placedBox = PlacedBox[box, textRect, borderRect];
 
-							xOffset += RectangleWidth[placedBox[[2]]] + $margin;
+							xOffset += RectangleWidth[borderRect] + $margin;
 
 							AssociateTo[placedBoxes, id -> placedBox];
 						],

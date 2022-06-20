@@ -51,15 +51,6 @@ DoEqualWidthRowsLayout[
 				extraPadding /= Length[row];
 				extraPadding /= 2;
 
-				(* TODO:
-					There is a slight misalignment if we don't add this extra
-					padding on the non-widest rows. Where does this factor come
-					from? Is adding this fudge actually correct?
-				*)
-				If[rowWidth =!= maxRowWidth,
-					extraPadding += $BoxPadding / 2;
-				];
-
 				RaiseAssert[NumberQ[extraPadding]];
 
 				Scan[
@@ -84,7 +75,7 @@ DoEqualWidthRowsLayout[
 
 							placedBox = PlacedBox[box, textRect, borderRect];
 
-							xOffset += RectangleWidth[placedBox[[2]]] + $margin;
+							xOffset += RectangleWidth[borderRect] + $margin;
 
 							AssociateTo[placedBoxes, id -> placedBox];
 						],

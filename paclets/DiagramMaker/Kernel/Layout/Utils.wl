@@ -378,10 +378,10 @@ MakeBoxRectangles[
 (*====================================*)
 
 (* Returns the total width of `row` if the boxes were layed out next to each
-   other in a row with padding of `$BoxPadding`. *)
+   other in a row with padding of `$BoxPadding` and margin of `$margin`. *)
 RowWidth[row:{___DiaBox}] := Module[{
 	boxWidths,
-	totalPadding
+	totalMargin
 },
 	(* Get the border rect width for each box in this row. *)
 	boxWidths = Map[
@@ -391,9 +391,9 @@ RowWidth[row:{___DiaBox}] := Module[{
 
 	RaiseAssert[MatchQ[boxWidths, {___?NumberQ}], "boxWidths: ``", boxWidths];
 
-	totalPadding = $BoxPadding * (Length[row] - 1);
+	totalMargin = $margin * (Length[row] - 1);
 
-	Total[boxWidths] + totalPadding
+	Total[boxWidths] + totalMargin
 ]
 
 (*====================================*)
