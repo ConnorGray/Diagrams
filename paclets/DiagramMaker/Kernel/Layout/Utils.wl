@@ -336,8 +336,10 @@ MakeBoxRectangles[str_?StringQ] := MakeBoxRectangles[str, {0, 0}]
 
 MakeBoxRectangles[
 	str_?StringQ,
-	{xOffset_, yOffset_}
+	{xOffset_, yOffset_},
+	padding0 : _ : Automatic
 ] := Module[{
+	padding = Replace[padding0, Automatic :> $BoxPadding],
 	textWidth, textHeight,
 	textRect, borderRect
 },
@@ -349,14 +351,14 @@ MakeBoxRectangles[
 	textWidth = textWidth + 1.0;
 
 	textRect = Rectangle[{0, 0}, {textWidth, textHeight}];
-	textRect = AbsoluteTranslate[textRect, {$BoxPadding, $BoxPadding}];
+	textRect = AbsoluteTranslate[textRect, {padding, padding}];
 	textRect = AbsoluteTranslate[textRect, {xOffset, yOffset}];
 
 	borderRect = Rectangle[
 		{0, 0},
 		{
-			$BoxPadding + textWidth + $BoxPadding,
-			$BoxPadding + textHeight + $BoxPadding
+			padding + textWidth + padding,
+			padding + textHeight + padding
 		}
 	];
 	borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];
