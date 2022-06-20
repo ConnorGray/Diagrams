@@ -4,7 +4,7 @@ PlacedBox::usage = "PlacedBox[box, textRect, borderRect]"
 PlacedArrow::usage = "PlacedBox[arrow, startPoint, endPoint]"
 
 $textWidth = 300.0;
-$padding = 8.0;
+$BoxPadding = 8.0;
 $margin = 32.0;
 
 Begin["`Private`"]

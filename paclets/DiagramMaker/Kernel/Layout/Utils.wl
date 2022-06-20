@@ -349,14 +349,14 @@ MakeBoxRectangles[
 	textWidth = textWidth + 1.0;
 
 	textRect = Rectangle[{0, 0}, {textWidth, textHeight}];
-	textRect = AbsoluteTranslate[textRect, {$padding, $padding}];
+	textRect = AbsoluteTranslate[textRect, {$BoxPadding, $BoxPadding}];
 	textRect = AbsoluteTranslate[textRect, {xOffset, yOffset}];
 
 	borderRect = Rectangle[
 		{0, 0},
 		{
-			$padding + textWidth + $padding,
-			$padding + textHeight + $padding
+			$BoxPadding + textWidth + $BoxPadding,
+			$BoxPadding + textHeight + $BoxPadding
 		}
 	];
 	borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];
@@ -367,7 +367,7 @@ MakeBoxRectangles[
 (*====================================*)
 
 (* Returns the total width of `row` if the boxes were layed out next to each
-   other in a row with padding of `$padding`. *)
+   other in a row with padding of `$BoxPadding`. *)
 RowWidth[row:{___DiaBox}] := Module[{
 	boxWidths,
 	totalPadding
@@ -380,7 +380,7 @@ RowWidth[row:{___DiaBox}] := Module[{
 
 	RaiseAssert[MatchQ[boxWidths, {___?NumberQ}], "boxWidths: ``", boxWidths];
 
-	totalPadding = $padding * (Length[row] - 1);
+	totalPadding = $BoxPadding * (Length[row] - 1);
 
 	Total[boxWidths] + totalPadding
 ]
