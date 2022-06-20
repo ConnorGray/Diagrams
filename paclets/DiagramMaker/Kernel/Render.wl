@@ -74,13 +74,14 @@ RenderPlacedDiagramToGraphics[
 	Scan[
 		Replace[{
 			PlacedArrow[
-				DiaArrow[___],
+				arrow:DiaArrow[___],
 				startPoint:{_?NumberQ, _?NumberQ},
 				endPoint:{_?NumberQ, _?NumberQ}
 			] :> Module[{},
 				AppendTo[graphics, {
 					Lookup[theme, "ArrowStroke", RaiseError["FIXME"]],
 					AbsoluteThickness[4.0],
+					DiaElementDirectives[arrow],
 					Arrow[{startPoint, endPoint}]
 				}];
 			],
@@ -91,6 +92,18 @@ RenderPlacedDiagramToGraphics[
 
 	graphics
 ]
+
+(*====================================*)
+(* Helper functions                   *)
+(*====================================*)
+
+DiaElementDirectives[DiaArrow[_, _, directive_]] := directive
+
+DiaElementDirectives[_DiaArrow] := {}
+
+DiaElementDirectives[args___] :=
+	RaiseError["unexpected arguments to DiaElementDirectives: ``", InputForm[{args}]]
+
 
 End[]
 EndPackage[]

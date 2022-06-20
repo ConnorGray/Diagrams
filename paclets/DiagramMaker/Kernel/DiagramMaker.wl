@@ -158,7 +158,8 @@ DiagramGraph[
 		arrow_DiaArrow :> Replace[arrow, {
 			DiaArrow[
 				lhs_?StringQ -> rhs_?StringQ,
-				_?StringQ
+				_?StringQ,
+				___
 			] :> DirectedEdge[lhs, rhs],
 			other_ :> RaiseError["unexpected DiaArrow structure: ``", other]
 		}]

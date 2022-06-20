@@ -375,7 +375,7 @@ placeArrowsBasedOnBoxes[
 		Replace[{
 			arrow:DiaArrow[
 				start_?StringQ -> end_?StringQ,
-				label_?StringQ
+				___
 			] :> Module[{
 				startBox, endBox,
 				autoStartSide, autoEndSide,
@@ -425,7 +425,7 @@ placeArrowsBasedOnBoxes[
 		Replace[{
 			arrow:DiaArrow[
 				start_?StringQ -> end_?StringQ,
-				label_?StringQ
+				___
 			] :> Module[{
 				startBox,
 				endBox,
