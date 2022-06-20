@@ -31,6 +31,7 @@ LayoutDiagram[
 	result = Replace[algo, {
 		"Row" :> DoRowLayout[diagram],
 		"Rows" :> DoRowsLayout[diagram],
+		"EqualWidthRows" :> DoEqualWidthRowsLayout[diagram],
 		"Graph" :> DoGraphLayout[diagram],
 		_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 	}];

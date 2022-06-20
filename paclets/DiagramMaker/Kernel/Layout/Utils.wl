@@ -339,10 +339,17 @@ MakeBoxRectangles[
 	{xOffset_, yOffset_},
 	padding0 : _ : Automatic
 ] := Module[{
-	padding = Replace[padding0, Automatic :> $BoxPadding],
+	xPadding, yPadding,
 	textWidth, textHeight,
 	textRect, borderRect
 },
+	{xPadding, yPadding} = Replace[padding0, {
+		Automatic :> {$BoxPadding, $BoxPadding},
+		padding_?NumberQ :> {padding, padding},
+		{x_?NumberQ, y_?NumberQ} :> {x, y},
+		other_ :> RaiseError["unrecognized rectangle padding specification: ``", other]
+	}];
+
 	{textWidth, textHeight} =
 		RaiseConfirm @ RenderedTextSize[str, $textWidth];
 
@@ -351,14 +358,14 @@ MakeBoxRectangles[
 	textWidth = textWidth + 1.0;
 
 	textRect = Rectangle[{0, 0}, {textWidth, textHeight}];
-	textRect = AbsoluteTranslate[textRect, {padding, padding}];
+	textRect = AbsoluteTranslate[textRect, {xPadding, yPadding}];
 	textRect = AbsoluteTranslate[textRect, {xOffset, yOffset}];
 
 	borderRect = Rectangle[
 		{0, 0},
 		{
-			padding + textWidth + padding,
-			padding + textHeight + padding
+			xPadding + textWidth + xPadding,
+			yPadding + textHeight + yPadding
 		}
 	];
 	borderRect = AbsoluteTranslate[borderRect, {xOffset, yOffset}];

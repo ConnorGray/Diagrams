@@ -3,12 +3,14 @@ BeginPackage["DiagramMaker`Layouts`"]
 $DiagramLayouts = {
 	"Row",
 	"Rows",
-	"Graph"
+	"Graph",
+	"EqualWidthRows"
 }
 
 DoRowLayout
 DoRowsLayout
 DoGraphLayout
+DoEqualWidthRowsLayout
 
 Begin["`Private`"]
 
