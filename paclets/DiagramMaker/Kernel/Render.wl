@@ -31,7 +31,12 @@ RenderPlacedDiagramToGraphics[
 	theme0 : (_?AssociationQ | Automatic) : Automatic
 ] := Module[{
 	graphics = {},
-	theme = Replace[theme0, Automatic :> $DefaultTheme]
+	theme = Replace[theme0, {
+		Automatic :> $DefaultTheme,
+		(* If custom theme rules were specified, use defaults from $DefaultTheme.
+		   Rules in `theme0` will override those in $DefaultTheme. *)
+		_?AssociationQ :> Join[$DefaultTheme, theme0]
+	}]
 },
 	(*------------*)
 	(* Draw boxes *)

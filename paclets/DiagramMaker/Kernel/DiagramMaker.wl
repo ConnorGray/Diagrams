@@ -14,6 +14,7 @@ DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing
 LayoutDiagram::usage = "LayoutDiagram[diagram] uses a suitable layout algorithm to produce a PlacedDiagram"
 
 DiagramLayout::usage = "DiagramLayout is an option to Diagram and related functions that specifies what layout to use."
+DiagramTheme::usage  = "DiagramTheme is an option to Diagram and related functions that specifies an overall theme for visualization elements and styles."
 
 RenderPlacedDiagramToGraphics
 
@@ -51,7 +52,10 @@ Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 
 (*----------------------------------------------------------------------------*)
 
-Options[Diagram] = {DiagramLayout -> Automatic};
+Options[Diagram] = {
+	DiagramLayout -> Automatic,
+	DiagramTheme -> Automatic
+};
 
 Diagram /: MakeBoxes[
 	obj : Diagram[boxes:{___}, arrows:{___}, opts___?OptionQ],
@@ -83,9 +87,14 @@ Subgraphs[graph_Graph] := Map[
 Options[DiagramImage] = {Method -> Automatic}
 
 DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], {
-	Automatic :> Module[{placed, graphics, center},
+	Automatic :> Module[{
+		theme = RaiseConfirm @ Lookup[Options[diagram], DiagramTheme, Automatic],
+		placed,
+		graphics,
+		center
+	},
 		placed = LayoutDiagram[diagram];
-		graphics = RenderPlacedDiagramToGraphics[placed];
+		graphics = RenderPlacedDiagramToGraphics[placed, theme];
 
 		RaiseAssert[ListQ[graphics]];
 
