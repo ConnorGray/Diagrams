@@ -4,7 +4,8 @@ PlaceArrowsBasedOnBoxes
 
 RowWidth
 
-makeBoxesById
+GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
+
 makeBoxRectangles
 
 
@@ -15,6 +16,8 @@ Needs["DiagramMaker`Errors`"]
 Needs["DiagramMaker`Layout`"]
 Needs["DiagramMaker`Utils`"]
 
+
+(*======================================*)
 
 PlaceArrowsBasedOnBoxes[
 	arrows:{___DiaArrow},
@@ -151,6 +154,77 @@ PlaceArrowsBasedOnBoxes[
 		}],
 		arrows
 	]
+]
+
+(*======================================*)
+
+(* Group the elements of `boxes` by the row they occupy in a Graph layout. *)
+(*
+	Many Graph[..] layout algorithms will lay out graph nodes along shared
+	horizontal lines. Graph layout algorithms that do not quantize nodes to
+	parallel lines are not compatible with this function.
+
+	This function is a slightly kludgy way of letting Graph[..] to the heavy
+	lifting for a first approximation of the diagram layout, which can then
+	further refined based on e.g. box sizes.
+*)
+GroupBoxesByGraphRow[
+	diagram:Diagram[
+		boxes:{___DiaBox},
+		{___DiaArrow},
+		___?OptionQ
+	]
+] := Module[{
+	rows,
+	boxesById = makeBoxesById[boxes]
+},
+	rows = Module[{
+		graph,
+		embedding,
+		vertices
+	},
+		graph = DiagramGraph[diagram];
+		RaiseAssert[GraphQ[graph]];
+
+		embedding = GraphEmbedding[
+			graph,
+			(* FIXME: Support this as a GraphLayout option. *)
+			{"LayeredEmbedding"}
+		];
+		vertices = VertexList[graph];
+
+		RaiseAssert[
+			MatchQ[embedding, {{_?NumberQ, _?NumberQ} ...}],
+			"unexpected embedding value: ``",
+			embedding
+		];
+		RaiseAssert[MatchQ[vertices, {___?StringQ}]];
+		RaiseAssert[Length[embedding] === Length[vertices]];
+
+		embedding = Association[Rule @@@ Transpose[{vertices, embedding}]];
+
+		RaiseAssert[MatchQ[embedding, <| (_?StringQ -> {_, _}) ...|>]];
+
+		(* Group the vertices by their Y coordinate. The "LayeredEmbedding"
+		   tries to put nodes on parallel horizontal lines, so this will give us
+		   rows. *)
+		rows = GroupBy[embedding, Last];
+		rows = Map[Keys, Values[KeySort[rows]]];
+
+		rows
+	];
+
+	RaiseAssert[MatchQ[rows, {{___?StringQ} ...}]];
+
+	rows = Map[
+		id |-> Lookup[boxesById, id, RaiseError["FIXME"]],
+		rows,
+		{2}
+	];
+
+	RaiseAssert[MatchQ[rows, {{DiaBox[__] ...} ...}]];
+
+	rows
 ]
 
 (*========================================================*)

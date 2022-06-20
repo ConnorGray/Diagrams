@@ -18,56 +18,13 @@ DoRowsLayout[
 	]
 ] := Module[{
 	rows,
-	boxesById = makeBoxesById[boxes],
 	maxRowWidth = 0,
 	xOffset = 0.0,
 	yOffset = 0.0,
 	placedBoxes = <||>,
 	placedArrows = {}
 },
-	rows = Module[{
-		graph,
-		embedding,
-		vertices
-	},
-		graph = DiagramGraph[diagram];
-		RaiseAssert[GraphQ[graph]];
-
-		embedding = GraphEmbedding[
-			graph,
-			(* FIXME: Support this as a GraphLayout option. *)
-			{"LayeredEmbedding"}
-		];
-		vertices = VertexList[graph];
-
-		RaiseAssert[
-			MatchQ[embedding, {{_?NumberQ, _?NumberQ} ...}],
-			"unexpected embedding value: ``",
-			embedding
-		];
-		RaiseAssert[MatchQ[vertices, {___?StringQ}]];
-		RaiseAssert[Length[embedding] === Length[vertices]];
-
-		embedding = Association[Rule @@@ Transpose[{vertices, embedding}]];
-
-		RaiseAssert[MatchQ[embedding, <| (_?StringQ -> {_, _}) ...|>]];
-
-		(* Group the vertices by their Y coordinate. The "LayeredEmbedding"
-		   tries to put nodes on parallel horizontal lines, so this will give us
-		   rows. *)
-		rows = GroupBy[embedding, Last];
-		rows = Map[Keys, Values[KeySort[rows]]];
-
-		rows
-	];
-
-	RaiseAssert[MatchQ[rows, {{___?StringQ} ...}]];
-
-	rows = Map[
-		id |-> Lookup[boxesById, id, RaiseError["FIXME"]],
-		rows,
-		{2}
-	];
+	rows = GroupBoxesByGraphRow[diagram];
 
 	RaiseAssert[MatchQ[rows, {{DiaBox[__] ...} ...}]];
 
