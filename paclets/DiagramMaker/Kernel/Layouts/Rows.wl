@@ -129,7 +129,7 @@ DoRowsLayout[
 	(* Place arrows *)
 	(*--------------*)
 
-	placedArrows = placeArrowsBasedOnBoxes[
+	placedArrows = PlaceArrowsBasedOnBoxes[
 		arrows,
 		placedBoxes,
 		(* Only permit arrows placed automatically to attach to the bottom or

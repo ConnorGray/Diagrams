@@ -1,8 +1,9 @@
 BeginPackage["DiagramMaker`Layout`Utils`"]
 
+PlaceArrowsBasedOnBoxes
+
 RowWidth
 
-placeArrowsBasedOnBoxes
 makeBoxesById
 makeBoxRectangles
 
@@ -15,7 +16,7 @@ Needs["DiagramMaker`Layout`"]
 Needs["DiagramMaker`Utils`"]
 
 
-placeArrowsBasedOnBoxes[
+PlaceArrowsBasedOnBoxes[
 	arrows:{___DiaArrow},
 	placedBoxes_,
 	sides : _ : Automatic

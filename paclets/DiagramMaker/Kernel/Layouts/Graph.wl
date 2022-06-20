@@ -71,7 +71,7 @@ DoGraphLayout[
 	(* Place arrows *)
 	(*--------------*)
 
-	placedArrows = placeArrowsBasedOnBoxes[arrows, placedBoxes];
+	placedArrows = PlaceArrowsBasedOnBoxes[arrows, placedBoxes];
 
 	RaiseAssert[Length[placedArrows] === Length[arrows]];
 	RaiseAssert[Length[placedBoxes] === Length[boxes]];
