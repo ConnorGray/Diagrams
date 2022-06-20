@@ -339,7 +339,88 @@ placeArrowsBasedOnBoxes[
 	arrows:{___DiaArrow},
 	placedBoxes_,
 	sides : _ : Automatic
-] := Module[{},
+] := Module[{
+	(*
+		<|
+			(* The number of arrows that start or end at this side of the box's
+			   border. *)
+			{"BoxId", Left} -> _?IntegerQ,
+			...
+		|>
+	*)
+	arrowsData = <||>,
+	(* This Association has the same structure as arrowsData, but counts up from
+	   0 as the layout is computed. *)
+	arrowsDataCounts = <||>,
+	placedArrows = {},
+	getSideLerpFactor
+},
+	getSideLerpFactor[boxId_?StringQ, side_] := Module[{
+		count = Lookup[arrowsDataCounts, Key @ {boxId, side}, 0],
+		total = RaiseConfirm @ Lookup[arrowsData, Key @ {boxId, side}]
+	},
+		(* Increase the lerp factor so that the next arrow that starts or ends
+		   at this side will not touch the same point. *)
+		AssociateTo[arrowsDataCounts, {boxId, side} -> count + 1];
+
+		(count + 1) / (total + 1)
+	];
+
+	(*---------------------------------------------------------*)
+	(* Populate `arrowsData` with information about the number *)
+	(* of arrows that connect to each side of each box.        *)
+	(*---------------------------------------------------------*)
+
+	Scan[
+		Replace[{
+			arrow:DiaArrow[
+				start_?StringQ -> end_?StringQ,
+				label_?StringQ
+			] :> Module[{
+				startBox, endBox,
+				autoStartSide, autoEndSide,
+				startKey, endKey,
+				startValue, endValue
+			},
+				startBox = Lookup[
+					placedBoxes,
+					start,
+					RaiseError["arrow start does not refer to a known box: ``", start]
+				];
+
+				endBox = Lookup[
+					placedBoxes,
+					end,
+					RaiseError["arrow end does not refer to a known box: ``", end]
+				];
+
+				{autoStartSide, autoEndSide} = closestSides[
+					startBox[[3]],
+					endBox[[3]],
+					sides
+				];
+
+				startKey = {start, autoStartSide};
+				endKey = {end, autoEndSide};
+
+				startValue = Lookup[arrowsData, Key @ startKey, 0];
+				endValue = Lookup[arrowsData, Key @ endKey, 0];
+
+				startValue += 1;
+				endValue += 1;
+
+				AssociateTo[arrowsData, startKey -> startValue];
+				AssociateTo[arrowsData, endKey -> endValue];
+			],
+			other_ :> RaiseError["unexpected diagram arrow structure: ``", other]
+		}],
+		arrows
+	];
+
+	(*--------------------------------------*)
+	(* Compute the placement of each arrow. *)
+	(*--------------------------------------*)
+
 	Map[
 		Replace[{
 			arrow:DiaArrow[
@@ -367,15 +448,14 @@ placeArrowsBasedOnBoxes[
 					RaiseError["arrow end does not refer to a known box: ``", end]
 				];
 
-				(* FIXME: Use the `closest_sides()` algorithm for this. *)
 				{autoStartSide, autoEndSide} = closestSides[
 					startBox[[3]],
 					endBox[[3]],
 					sides
 				];
 
-				startAt = autoStartSide;
-				endAt = autoEndSide;
+				startAt = {autoStartSide, getSideLerpFactor[start, autoStartSide]};
+				endAt = {autoEndSide, getSideLerpFactor[end, autoEndSide]};
 
 				startPoint = boxAttachmentPoint[startBox, startAt];
 				endPoint = boxAttachmentPoint[endBox, endAt];
@@ -408,20 +488,21 @@ boxAttachmentPoint[
 	attachment_
 ] := Module[{
 	point,
-	(* TODO: support {side_, lerpFactor_} as a specification. *)
-	(* Linear interpolation factor. *)
-	lerpFactor = 0.5,
 	x, y
 },
 	point = Replace[attachment, {
-		Left | Right | Top | Bottom :> (
-			x = Replace[attachment, {
+		{
+			side : (Left | Right | Top | Bottom),
+			(* Linear interpolation factor. *)
+			lerpFactor_?NumberQ
+		} :> (
+			x = Replace[side, {
 				Left :> borderLeft,
 				Right :> borderRight,
 				Top | Bottom :> borderLeft + lerpFactor * RectangleWidth[borderRect]
 			}];
 
-			y = Replace[attachment, {
+			y = Replace[side, {
 				Left | Right :> borderBottom + lerpFactor * RectangleHeight[borderRect],
 				Top :> borderTop,
 				Bottom :> borderBottom
