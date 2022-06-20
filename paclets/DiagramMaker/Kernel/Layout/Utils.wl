@@ -337,6 +337,8 @@ MakeBoxRectangles[str_?StringQ] := MakeBoxRectangles[str, {0, 0}]
 MakeBoxRectangles[
 	str_?StringQ,
 	{xOffset_, yOffset_},
+	(* Empty space between the box's text rectangle and the box's border
+	   rectangle. *)
 	padding0 : _ : Automatic
 ] := Module[{
 	xPadding, yPadding,
