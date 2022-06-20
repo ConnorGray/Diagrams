@@ -216,7 +216,7 @@ GroupBoxesByGraphRow[
 	RaiseAssert[MatchQ[rows, {{___?StringQ} ...}]];
 
 	rows = Map[
-		id |-> Lookup[boxesById, id, RaiseError["FIXME"]],
+		id |-> RaiseConfirm @ Lookup[boxesById, id],
 		rows,
 		{2}
 	];

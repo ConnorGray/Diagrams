@@ -54,7 +54,7 @@ DoGraphLayout[
 				textRect, borderRect,
 				placedBox
 			},
-				{borderLeft, borderBottom} = {150, 100} * Lookup[embedding, id, RaiseError["FIXME"]];
+				{borderLeft, borderBottom} = {150, 100} * RaiseConfirm @ Lookup[embedding, id];
 
 				{textRect, borderRect} = MakeBoxRectangles[text, {borderLeft, borderBottom}];
 

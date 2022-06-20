@@ -52,10 +52,10 @@ RenderPlacedDiagramToGraphics[
 			] :> (
 				(* Draw the background and border first. *)
 				AppendTo[graphics, {
-					(* FaceForm[Lookup[theme, "BoxBackground", RaiseError["FIXME"]]], *)
-					Lookup[theme, "BoxBackground", RaiseError["FIXME"]],
+					(* FaceForm[RaiseConfirm @ Lookup[theme, "BoxBackground"]], *)
+					RaiseConfirm @ Lookup[theme, "BoxBackground"],
 					EdgeForm[{
-						Lookup[theme, "BoxBorder", RaiseError["FIXME"]],
+						RaiseConfirm @ Lookup[theme, "BoxBorder"],
 						AbsoluteThickness[4.0]
 					}],
 					Rectangle[min, max, RoundingRadius -> 3]
@@ -63,7 +63,7 @@ RenderPlacedDiagramToGraphics[
 
 				(* Finally draw the text. *)
 				AppendTo[graphics, {
-					Lookup[theme, "BoxTextColor", RaiseError["FIXME"]],
+					RaiseConfirm @ Lookup[theme, "BoxTextColor"],
 					SizedText[id, textRect]
 				}];
 			),
@@ -84,7 +84,7 @@ RenderPlacedDiagramToGraphics[
 				endPoint:{_?NumberQ, _?NumberQ}
 			] :> Module[{},
 				AppendTo[graphics, {
-					Lookup[theme, "ArrowStroke", RaiseError["FIXME"]],
+					RaiseConfirm @ Lookup[theme, "ArrowStroke"],
 					AbsoluteThickness[4.0],
 					DiaElementDirectives[arrow],
 					Arrow[{startPoint, endPoint}]
