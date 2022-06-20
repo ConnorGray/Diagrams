@@ -37,7 +37,7 @@ DoRowLayout[
 				textRect, borderRect,
 				placedBox
 			},
-				{textRect, borderRect} = makeBoxRectangles[text, {xOffset, 0}];
+				{textRect, borderRect} = MakeBoxRectangles[text, {xOffset, 0}];
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 

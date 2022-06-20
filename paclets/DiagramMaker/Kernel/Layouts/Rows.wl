@@ -55,7 +55,7 @@ DoRowsLayout[
 							textRect, borderRect,
 							placedBox
 						},
-							{textRect, borderRect} = makeBoxRectangles[
+							{textRect, borderRect} = MakeBoxRectangles[
 								text,
 								{xOffset, yOffset}
 							];

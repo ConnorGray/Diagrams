@@ -56,7 +56,7 @@ DoGraphLayout[
 			},
 				{borderLeft, borderBottom} = {150, 100} * Lookup[embedding, id, RaiseError["FIXME"]];
 
-				{textRect, borderRect} = makeBoxRectangles[text, {borderLeft, borderBottom}];
+				{textRect, borderRect} = MakeBoxRectangles[text, {borderLeft, borderBottom}];
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 

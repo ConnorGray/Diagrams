@@ -2,11 +2,10 @@ BeginPackage["DiagramMaker`Layout`Utils`"]
 
 PlaceArrowsBasedOnBoxes
 
-RowWidth
-
 GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
 
-makeBoxRectangles
+RowWidth
+MakeBoxRectangles
 
 
 Begin["`Private`"]
@@ -333,9 +332,9 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 
 (*====================================*)
 
-makeBoxRectangles[str_?StringQ] := makeBoxRectangles[str, {0, 0}]
+MakeBoxRectangles[str_?StringQ] := MakeBoxRectangles[str, {0, 0}]
 
-makeBoxRectangles[
+MakeBoxRectangles[
 	str_?StringQ,
 	{xOffset_, yOffset_}
 ] := Module[{
@@ -375,7 +374,7 @@ RowWidth[row:{___DiaBox}] := Module[{
 },
 	(* Get the border rect width for each box in this row. *)
 	boxWidths = Map[
-		box |-> RectangleWidth[makeBoxRectangles[DiaElementText[box]][[2]]],
+		box |-> RectangleWidth[MakeBoxRectangles[DiaElementText[box]][[2]]],
 		row
 	];
 
