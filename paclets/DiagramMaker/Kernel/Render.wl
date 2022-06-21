@@ -45,15 +45,21 @@ RenderPlacedDiagramToGraphics[
 	Scan[
 		Replace[{
 			PlacedBox[
-				DiaBox[id_?StringQ],
+				DiaBox[id_?StringQ, opts___?OptionQ],
 				textRect_Rectangle,
 				(* Border rect *)
 				Rectangle[min_, max_]
-			] :> (
+			] :> Module[{
+				background = Lookup[
+					{opts},
+					Background,
+					RaiseConfirm @ Lookup[theme, "BoxBackground"]
+				]
+			},
 				(* Draw the background and border first. *)
 				AppendTo[graphics, {
 					(* FaceForm[RaiseConfirm @ Lookup[theme, "BoxBackground"]], *)
-					RaiseConfirm @ Lookup[theme, "BoxBackground"],
+					background,
 					EdgeForm[{
 						RaiseConfirm @ Lookup[theme, "BoxBorder"],
 						AbsoluteThickness[4.0]
@@ -66,7 +72,7 @@ RenderPlacedDiagramToGraphics[
 					RaiseConfirm @ Lookup[theme, "BoxTextColor"],
 					SizedText[id, textRect]
 				}];
-			),
+			],
 			other_ :> RaiseError["unexpected diagram placed box structure: ``", other]
 		}],
 		boxes

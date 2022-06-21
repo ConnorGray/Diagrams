@@ -315,13 +315,15 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 },
 	Scan[
 		Replace[{
-			box:DiaBox[id_?StringQ] :> (
+			box_DiaBox :> Module[{
+				id = DiaElementId[box]
+			},
 				If[KeyMemberQ[boxesById, id],
 					RaiseError["boxes list contains conflicting IDs: ``", id];
 				];
 
 				AssociateTo[boxesById, id -> box];
-			),
+			],
 			other_ :> RaiseError["unexpected diagram box structure: ``", other]
 		}],
 		boxes

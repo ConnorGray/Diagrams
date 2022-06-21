@@ -157,7 +157,7 @@ DiagramGraph[
 	vertices = Cases[
 		boxes,
 		box_DiaBox :> Replace[box, {
-			DiaBox[id_?StringQ] :> id,
+			DiaBox[id_?StringQ, ___?OptionQ] :> id,
 			other_ :> RaiseError["unexpected DiaBox structure: ``", other]
 		}]
 	];
@@ -244,14 +244,14 @@ DiagramGraph[
 
 (*====================================*)
 
-DiaElementId[DiaBox[id_?StringQ]] := id
+DiaElementId[DiaBox[id_?StringQ, ___?OptionQ]] := id
 
 DiaElementId[args___] :=
 	RaiseError["unexpected arguments to DiaElementId: ``", InputForm[{args}]]
 
 (*====================================*)
 
-DiaElementText[DiaBox[id_?StringQ]] := id
+DiaElementText[DiaBox[id_?StringQ, ___?OptionQ]] := id
 
 DiaElementText[args___] :=
 	RaiseError["unexpected arguments to DiaElementText: ``", InputForm[{args}]]
