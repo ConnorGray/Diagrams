@@ -22,6 +22,9 @@ DiagramGraphicsImage
 
 RenderedTextSize
 
+DiagramBoxes::usage = "DiagramBoxes[diagram]"
+DiagramArrows::usage = "DiagramArrows[diagram]"
+
 DiaElementId::usage = "DiaElementId[elem] will return the unique identifer associated with a diagram element."
 DiaElementText::usage = "DiaElementText[elem] will return the textual description associated with a diagram element, if applicable."
 
@@ -148,12 +151,13 @@ RenderedTextSize[args___] :=
 (*----------------------------------------------------------------------------*)
 
 DiagramGraph[
-	Diagram[
-		boxes:{___DiaBox},
-		arrows:{___DiaArrow},
-		___?OptionQ
-	]
-] := Module[{vertices, edges},
+	diagram_Diagram
+] := Module[{
+	boxes = DiagramBoxes[diagram],
+	arrows = DiagramArrows[diagram],
+	vertices,
+	edges
+},
 	vertices = Cases[
 		boxes,
 		box_DiaBox :> Replace[box, {
@@ -239,8 +243,32 @@ DiagramGraph[
 ]
 
 (*====================================*)
-(* Box property accessors             *)
+(* Diagram property accessors         *)
 (*====================================*)
+
+DiagramBoxes[
+	diagram:Diagram[
+		boxes:{___DiaBox},
+		{___DiaArrow},
+		___?OptionQ
+	]
+] := boxes
+
+DiagramBoxes[args___] :=
+	RaiseError["unexpected arguments to DiagramBoxes: ``", InputForm[{args}]]
+
+(*====================================*)
+
+DiagramArrows[
+	diagram:Diagram[
+		{___DiaBox},
+		arrows:{___DiaArrow},
+		___?OptionQ
+	]
+] := arrows
+
+DiagramArrows[args___] :=
+	RaiseError["unexpected arguments to DiagramArrows: ``", InputForm[{args}]]
 
 (*====================================*)
 

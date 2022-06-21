@@ -167,13 +167,10 @@ PlaceArrowsBasedOnBoxes[
 	lifting for a first approximation of the diagram layout, which can then
 	further refined based on e.g. box sizes.
 *)
-GroupBoxesByGraphRow[
-	diagram:Diagram[
-		boxes:{___DiaBox},
-		{___DiaArrow},
-		___?OptionQ
-	]
-] := Module[{
+GroupBoxesByGraphRow[diagram_Diagram] := With[{
+	boxes = DiagramBoxes[diagram]
+},
+Module[{
 	rows,
 	boxesById = makeBoxesById[boxes]
 },
@@ -224,7 +221,7 @@ GroupBoxesByGraphRow[
 	RaiseAssert[MatchQ[rows, {{DiaBox[__] ...} ...}]];
 
 	rows
-]
+]]
 
 (*========================================================*)
 (* Helper functions                                       *)

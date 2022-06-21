@@ -11,12 +11,10 @@ Needs["DiagramMaker`Layouts`"]
 
 (* Layout all diagram boxes based on their Graph[..] layout. *)
 DoGraphLayout[
-	diagram:Diagram[
-		boxes:{___DiaBox},
-		arrows:{___DiaArrow},
-		___?OptionQ
-	]
+	diagram_Diagram
 ] := Module[{
+	boxes = DiagramBoxes[diagram],
+	arrows = DiagramArrows[diagram],
 	graph,
 	embedding,
 	vertices,

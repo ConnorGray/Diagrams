@@ -11,12 +11,10 @@ Needs["DiagramMaker`Layouts`"]
 
 (* Layout all diagram boxes in a series of rows. *)
 DoRowsLayout[
-	diagram:Diagram[
-		boxes:{___DiaBox},
-		arrows:{___DiaArrow},
-		___?OptionQ
-	]
+	diagram_Diagram
 ] := Module[{
+	boxes = DiagramBoxes[diagram],
+	arrows = DiagramArrows[diagram],
 	rows,
 	maxRowWidth = 0,
 	xOffset = 0.0,
