@@ -7,6 +7,8 @@ $textWidth = 300.0;
 $BoxPadding = 8.0;
 $margin = 32.0;
 
+$DebugDiagramLayout = False
+
 Begin["`Private`"]
 
 Needs["DiagramMaker`"]

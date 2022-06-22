@@ -73,6 +73,14 @@ RenderPlacedDiagramToGraphics[
 					RaiseConfirm @ Lookup[theme, "BoxTextColor"],
 					SizedText[id, textRect]
 				}];
+
+				If[TrueQ[DiagramMaker`Layout`$DebugDiagramLayout],
+					AppendTo[graphics, {
+						FaceForm[Transparent],
+						EdgeForm[Directive[Dashed, Red]],
+						textRect
+					}];
+				];
 			],
 			other_ :> RaiseError["unexpected diagram placed box structure: ``", other]
 		}],
