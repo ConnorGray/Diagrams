@@ -29,6 +29,8 @@ DiagramArrows::usage = "DiagramArrows[diagram]"
 DiagramElementId::usage = "DiagramElementId[elem] will return the unique identifer associated with a diagram element."
 DiagramElementText::usage = "DiagramElementText[elem] will return the textual description associated with a diagram element, if applicable."
 
+DiagramArrowIds::usage = "DiagramArrowIds[arrow] will return the id of the start and end element connected by arrow."
+
 (*--------*)
 (* Errors *)
 (*--------*)
@@ -189,6 +191,16 @@ DiagramGraph[
 				_?StringQ,
 				___
 			] :> DirectedEdge[lhs, rhs],
+			DiaArrow[
+				lhs_?StringQ -> {rhs_?StringQ, Nearest},
+				_?StringQ,
+				___
+			] :> DirectedEdge[lhs, rhs],
+			DiaArrow[
+				{lhs_?StringQ, Nearest} -> rhs_?StringQ,
+				_?StringQ,
+				___
+			] :> DirectedEdge[lhs, rhs],
 			other_ :> RaiseError["unexpected DiaArrow structure: ``", other]
 		}]
 	];
@@ -314,6 +326,22 @@ DiagramElementText[DiaBox[id_?StringQ, ___?OptionQ]] := id
 
 DiagramElementText[args___] :=
 	RaiseError["unexpected arguments to DiagramElementText: ``", InputForm[{args}]]
+
+(*====================================*)
+
+DiagramArrowIds[arrow_DiaArrow] := Replace[arrow, {
+	DiaArrow[lhs_?StringQ -> rhs_?StringQ, ___] :> {lhs, rhs},
+	DiaArrow[lhs_?StringQ -> {rhs_?StringQ, Nearest}, ___] :> {lhs, rhs},
+	DiaArrow[{lhs_?StringQ, Nearest} -> rhs_?StringQ, ___] :> {lhs, rhs},
+	DiaArrow[{lhs_?StringQ, Nearest} -> {rhs_?StringQ, Nearest}, ___] :> RaiseError[
+		"unsupported use of {_, Nearest} specification on both diagram arrow sides: ``",
+		InputForm[arrow]
+	],
+	_ :> RaiseError["unexpected DiaArrow structure: ``", InputForm[arrow]]
+}]
+
+DiagramArrowIds[args___] :=
+	RaiseError["unexpected arguments to DiagramArrowIds: ``", InputForm[{args}]]
 
 
 End[] (* End `Private` *)

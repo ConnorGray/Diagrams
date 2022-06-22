@@ -36,8 +36,22 @@ PlaceArrowsBasedOnBoxes[
 	   0 as the layout is computed. *)
 	arrowsDataCounts = <||>,
 	placedArrows = {},
+	(* Functions *)
+	incrSideAttachmentCount,
 	getSideLerpFactor
 },
+	incrSideAttachmentCount[id_?StringQ, side_] := Module[{
+		key, value
+	},
+		key = {id, side};
+
+		value = Lookup[arrowsData, Key @ key, 0];
+		value += 1;
+
+		AssociateTo[arrowsData, key -> value];
+	];
+	incrSideAttachmentCount[args___] := RaiseError["bad args: ", {args}];
+
 	getSideLerpFactor[boxId_?StringQ, side_] := Module[{
 		count = Lookup[arrowsDataCounts, Key @ {boxId, side}, 0],
 		total = RaiseConfirm @ Lookup[arrowsData, Key @ {boxId, side}]
@@ -55,48 +69,47 @@ PlaceArrowsBasedOnBoxes[
 	(*---------------------------------------------------------*)
 
 	Scan[
-		Replace[{
-			arrow:DiaArrow[
-				start_?StringQ -> end_?StringQ,
-				___
-			] :> Module[{
-				startBox, endBox,
-				autoStartSide, autoEndSide,
-				startKey, endKey,
-				startValue, endValue
-			},
-				startBox = Lookup[
-					placedBoxes,
-					start,
-					RaiseError["arrow start does not refer to a known box: ``", start]
-				];
+		arrow |-> Module[{
+			startSpec,     endSpec,
+			startId,       endId,
+			startBox,      endBox,
+			autoStartSide, autoEndSide
+		},
+			{startSpec, endSpec} = Replace[arrow, {
+				DiaArrow[lhs_ -> rhs_, ___] :> {lhs, rhs},
+				_ :> RaiseError["invalid diagram arrow specification: ", arrow]
+			}];
 
-				endBox = Lookup[
-					placedBoxes,
-					end,
-					RaiseError["arrow end does not refer to a known box: ``", end]
-				];
+			{startId, endId} = DiagramArrowIds[arrow];
 
-				{autoStartSide, autoEndSide} = closestSides[
-					startBox[[3]],
-					endBox[[3]],
-					sides
-				];
+			startBox = Lookup[
+				placedBoxes,
+				startId,
+				RaiseError["arrow start does not refer to a known box: ``", startId]
+			];
 
-				startKey = {start, autoStartSide};
-				endKey = {end, autoEndSide};
+			endBox = Lookup[
+				placedBoxes,
+				endId,
+				RaiseError["arrow end does not refer to a known box: ``", endId]
+			];
 
-				startValue = Lookup[arrowsData, Key @ startKey, 0];
-				endValue = Lookup[arrowsData, Key @ endKey, 0];
+			{autoStartSide, autoEndSide} = closestSides[
+				startBox[[3]],
+				endBox[[3]],
+				sides
+			];
 
-				startValue += 1;
-				endValue += 1;
+			RaiseAssert @ MatchQ[autoStartSide, Left | Right | Top | Bottom];
 
-				AssociateTo[arrowsData, startKey -> startValue];
-				AssociateTo[arrowsData, endKey -> endValue];
-			],
-			other_ :> RaiseError["unexpected diagram arrow structure: ``", other]
-		}],
+			(* FIXME:
+				The logic in this function for automatically distributing arrow
+				attachment points along a side doesn't take into account points
+				whose location is determined using more specific specifications
+				like {_, Nearest}. *)
+			incrSideAttachmentCount[startId, autoStartSide];
+			incrSideAttachmentCount[endId, autoEndSide];
+		],
 		arrows
 	];
 
@@ -105,52 +118,66 @@ PlaceArrowsBasedOnBoxes[
 	(*--------------------------------------*)
 
 	Map[
-		Replace[{
-			arrow:DiaArrow[
-				start_?StringQ -> end_?StringQ,
-				___
-			] :> Module[{
-				startBox,
-				endBox,
-				autoStartSide,
-				autoEndSide,
-				startAt,
-				endAt,
-				startPoint,
-				endPoint
-			},
-				startBox = Lookup[
-					placedBoxes,
-					start,
-					RaiseError["arrow start does not refer to a known box: ``", start]
-				];
+		arrow |-> Module[{
+			startSpec,     endSpec,
+			startId,       endId,
+			startBox,      endBox,
+			autoStartSide, autoEndSide,
+			startAt,       endAt,
+			startPoint,    endPoint
+		},
+			{startSpec, endSpec} = Replace[arrow, {
+				DiaArrow[lhs_ -> rhs_, ___] :> {lhs, rhs},
+				_ :> RaiseError["invalid diagram arrow specification: ", arrow]
+			}];
 
-				endBox = Lookup[
-					placedBoxes,
-					end,
-					RaiseError["arrow end does not refer to a known box: ``", end]
-				];
+			{startId, endId} = DiagramArrowIds[arrow];
 
-				{autoStartSide, autoEndSide} = closestSides[
-					startBox[[3]],
-					endBox[[3]],
-					sides
-				];
+			startBox = Lookup[
+				placedBoxes,
+				startId,
+				RaiseError["arrow start does not refer to a known box: ``", startId]
+			];
 
-				startAt = {autoStartSide, getSideLerpFactor[start, autoStartSide]};
-				endAt = {autoEndSide, getSideLerpFactor[end, autoEndSide]};
+			endBox = Lookup[
+				placedBoxes,
+				endId,
+				RaiseError["arrow end does not refer to a known box: ``", endId]
+			];
 
-				startPoint = boxAttachmentPoint[startBox, startAt];
-				endPoint = boxAttachmentPoint[endBox, endAt];
+			{autoStartSide, autoEndSide} = closestSides[
+				startBox[[3]],
+				endBox[[3]],
+				sides
+			];
 
-				PlacedArrow[
-					arrow,
+			startAt = {autoStartSide, getSideLerpFactor[startId, autoStartSide]};
+			endAt = {autoEndSide, getSideLerpFactor[endId, autoEndSide]};
+
+			startPoint = boxAttachmentPoint[startBox, startAt];
+			endPoint = boxAttachmentPoint[endBox, endAt];
+
+			{startPoint, endPoint} = Replace[startSpec -> endSpec, {
+				(_?StringQ -> _?StringQ) :> {startPoint, endPoint},
+				(_?StringQ -> {_?StringQ, Nearest}) :> {
 					startPoint,
+					RegionNearest[endBox[[3]], startPoint]
+				},
+				({_?StringQ, Nearest} -> _?StringQ) :> {
+					RegionNearest[startBox[[3]], endPoint],
 					endPoint
-				]
-			],
-			other_ :> RaiseError["unexpected diagram arrow structure: ``", other]
-		}],
+				},
+				{{lhs_?StringQ, Nearest} -> {rhs_?StringQ, Nearest}} :> RaiseError[
+					"unsupported use of {_, Nearest} specification on both diagram arrow sides: ``",
+					InputForm[arrow]
+				],
+				_ :> RaiseError["unsupported diagram arrow attachment specification(s): ``", arrow]
+			}];
+
+			RaiseAssert @ MatchQ[{startPoint, endPoint}, {{_?NumberQ, _?NumberQ} ..}];
+
+			PlacedArrow[arrow, startPoint, endPoint]
+		],
 		arrows
 	]
 ]
