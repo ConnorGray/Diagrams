@@ -37,7 +37,9 @@ DoRowsLayout[
 	Scan[
 		Replace[{
 			row:{___DiaBox} :> Module[{
-				rowWidth = RowWidth[row]
+				rowWidth = RowWidth[row],
+				(* The maximum height of a box in this row. *)
+				rowMaxHeight = 0
 			},
 				RaiseAssert[PossibleZeroQ[xOffset]];
 
@@ -62,6 +64,8 @@ DoRowsLayout[
 
 							xOffset += RectangleWidth[borderRect] + $margin;
 
+							rowMaxHeight = Max[rowMaxHeight, RectangleHeight[borderRect]];
+
 							AssociateTo[placedBoxes, id -> placedBox];
 						],
 						other_ :> RaiseError["unexpected diagram box structure: ``", other]
@@ -69,12 +73,12 @@ DoRowsLayout[
 					row
 				];
 
+				RaiseAssert[NumberQ[rowMaxHeight]];
+
 				(* Start the next row at the far left. *)
 				xOffset = 0;
 				(* Place the next row higher up. *)
-				(* FIXME: Compute this offset using the maximum height of the
-					boxes in the previous row. *)
-				yOffset += 100.0;
+				yOffset += $margin + rowMaxHeight;
 			]
 		}],
 		rows
