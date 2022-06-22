@@ -97,8 +97,7 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 		theme = RaiseConfirm @ Lookup[Options[diagram], DiagramTheme, Automatic],
 		placed,
 		graphics,
-		title = DiagramTitle[diagram],
-		center
+		title = DiagramTitle[diagram]
 	},
 		placed = LayoutDiagram[diagram];
 		graphics = RenderPlacedDiagramToGraphics[placed, theme];
@@ -106,18 +105,7 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 		RaiseAssert[ListQ[graphics]];
 
 		graphics = ReplaceAll[graphics,
-			SizedText[str_?StringQ, rect:Rectangle[min_, max_]] :> (
-				center = Mean[{min, max}];
-				size = RectangleSize[rect];
-
-				(* FIXME:
-					Compute this font size based on the overall size of
-					the graphic. *)
-				Splice[{
-					FontSize -> Scaled[0.05],
-					Inset[Text[str], center, Automatic, size]
-				}]
-			)
+			sizedText_SizedText :> makeSizedTextInset[sizedText]
 		];
 
 		If[StringQ[title],
@@ -149,6 +137,132 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 		}]
 	]
 }]
+
+(*------------------------------------*)
+
+makeSizedTextInset[sizedText_SizedText] := Module[{
+	str,
+	rect, min, max,
+	center,
+	width, height,
+	fontSize
+},
+	{str, rect, min, max} = Replace[sizedText, {
+		SizedText[str_?StringQ, rect:Rectangle[min_, max_]] :> {str, rect, min, max},
+		other_ :> RaiseError["unexpected SizedText specification: ``", sizedText]
+	}];
+
+	center = Mean[{min, max}];
+	{width, height} = RectangleSize[rect];
+
+	(* Note:
+		Font size in Wolfram graphics can be specified in one of two
+		ways:
+
+			FontSize -> _?NumberQ
+			FontSize -> Scaled[_?NumberQ]
+
+		The units of the first specification are printers points,
+		which are based on the physical size-in-inches of the users
+		screen. When using the first specification, the
+		size-in-inches of the rendered text will be the same no
+		matter what the size-in-inches of the overall graphic is. If
+		the user resizes the graphic larger or smaller, the text
+		will not change size.
+
+		The units of the second specification are scaled based on
+		the plot range of the graphic: if the user resizes the
+		graphic larger or smaller, the text will resize to be the
+		same size relative to the overall graphic.
+
+		Using the first specification makes manual positioning and
+		layout of text in a graphic essentially impossible, because
+		the text will appear to change size relative to the overall
+		graphic if the user resizes it. E.g. at the extreme end, if
+		the user makes the graphic very small, the text will still
+		be the same physical size, and would likely spill over and
+		cover up the other elements in the diagram graphic.
+
+		Using the second specification is a bit better, because the
+		text will be the same relative size if the graphic is made
+		smaller or larger, meaning that it will appear to stay in
+		the position that we placed it in no matter how the user
+		resizes the graphic.
+
+		However, using scaled coordinates leaves one problem
+		unsolved: what should the actual value passed to Scaled[..]
+		be?
+
+		Scaled[..] takes a value that is a percentage of the plot
+		range. For almost all graphics primitives, it is relatively
+		straightforward to determine the scaled size from the
+		absolute size in graphics system coordinates: you just
+		divide the x and y coordinates that appear explicitly in the
+		primitive specification by the width and height,
+		respectively, of the overall graphic.
+
+		However, the Text[..] primitive is unique, in that the size
+		of the rendered text is not specified in any argument that
+		Text accepts. Compare with e.g. Point or Line or Rectangle,
+		which all take explicit positions as arguments, so their
+		inherent size within graphics coordinate space is clear and
+		unambiguous.
+
+		The only way to adjust the size of text is to set the
+		FontSize option, which, as mentioned, takes units of either
+		printers points or scaled units. Determining the right
+		scaling factor is made further difficult by the fact that
+		the scaling factor doesn't scale the overall width of the
+		complete rendered text string, it effectively scales the
+		point size of the font to the plot range, which means that
+		the final width of the text is based on the font metrics of
+		each individual font.
+
+		If we want our text `str` to fill the complete area of the
+		`textRect` computed during layout, we need to know the font
+		metrics of each letter in `str` to get the total width of
+		the string in printers points, and then do
+		1/totalPrintersPoints to get the optimal Scaled[..] factor.
+
+		At the moment, I don't know a good way to get the precise
+		font metrics, so the calculation below is an approximation.
+
+		The code below uses:
+			Inset[Graphics[{FontSize -> fontSize, Text[...]}]]
+
+		instead of just {FontSize -> fontSize, Text[...]} so that
+		the Scaled[..] coordinates only need to be computed in
+		terms of the rendered size of `str`, not the rendered size
+		of the overall diagram graphic.
+	*)
+	(* FIXME:
+		Determine the correct font metrics to make this factor precise, and
+		instead of using StringLength of the entire string (which is incorrect)
+		if there are multiple lines, use the widest line. *)
+	fontSize = Scaled[1.75 / StringLength[str]];
+
+	(* FIXME:
+		Compute this font size based on the overall size of
+		the graphic. *)
+	Inset[
+		Graphics[{
+			FontSize -> fontSize,
+			Text[str, {width, height} / 2]
+		},
+			Frame -> False,
+			PlotRange -> {{0, width}, {0, height}},
+			PlotRangePadding -> 0,
+			ImagePadding -> 0
+		],
+		center,
+		Automatic,
+		{width, height},
+		Background -> If[TrueQ[DiagramMaker`Layout`$DebugDiagramLayout],
+			Directive[Opacity[0.2], Red],
+			Automatic
+		]
+	]
+]
 
 (*----------------------------------------------------------------------------*)
 
