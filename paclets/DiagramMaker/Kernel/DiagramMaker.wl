@@ -22,6 +22,7 @@ DiagramGraphicsImage
 
 RenderedTextSize
 
+DiagramTitle::usage = "DiagramTitle[diagram]"
 DiagramBoxes::usage = "DiagramBoxes[diagram]"
 DiagramArrows::usage = "DiagramArrows[diagram]"
 
@@ -94,6 +95,7 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 		theme = RaiseConfirm @ Lookup[Options[diagram], DiagramTheme, Automatic],
 		placed,
 		graphics,
+		title = DiagramTitle[diagram],
 		center
 	},
 		placed = LayoutDiagram[diagram];
@@ -116,7 +118,20 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 			)
 		];
 
-		Graphics[graphics]
+		If[StringQ[title],
+			Labeled[
+				Graphics[graphics],
+				title,
+				Top,
+				Frame -> True,
+				FrameMargins -> 10,
+				Background -> LightGray,
+				RoundingRadius -> 6,
+				Spacings -> 4
+			]
+			,
+			Graphics[graphics]
+		]
 	],
 	"alpha-v2" :> Module[{placed, graphics},
 		placed = LayoutDiagram[diagram];
@@ -246,8 +261,23 @@ DiagramGraph[
 (* Diagram property accessors         *)
 (*====================================*)
 
+DiagramTitle[
+	diagram:Diagram[
+		Optional[title_?StringQ, None],
+		{___DiaBox},
+		{___DiaArrow},
+		___?OptionQ
+	]
+] := title
+
+DiagramTitle[args___] :=
+	RaiseError["unexpected arguments to DiagramTitle: ``", InputForm[{args}]]
+
+(*====================================*)
+
 DiagramBoxes[
 	diagram:Diagram[
+		Optional[_?StringQ, None],
 		boxes:{___DiaBox},
 		{___DiaArrow},
 		___?OptionQ
@@ -261,6 +291,7 @@ DiagramBoxes[args___] :=
 
 DiagramArrows[
 	diagram:Diagram[
+		Optional[_?StringQ, None],
 		{___DiaBox},
 		arrows:{___DiaArrow},
 		___?OptionQ

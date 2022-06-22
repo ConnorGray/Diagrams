@@ -19,6 +19,7 @@ LayoutDiagram[
 	diagram_Diagram,
 	algo0 : _?StringQ : Automatic
 ] := Module[{
+	title = DiagramTitle[diagram],
 	diagramOpts = Options[diagram],
 	algo,
 	result
@@ -35,6 +36,14 @@ LayoutDiagram[
 		"Graph" :> DoGraphLayout[diagram],
 		_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 	}];
+
+	If[
+		And[
+			StringQ[title],
+			MatchQ[result, PlacedDiagram[boxes_?ListQ, arrows_?ListQ]]
+		],
+		result = PlacedDiagram[title, boxes, arrows]
+	];
 
 	RaiseAssert[
 		MatchQ[result, PlacedDiagram[_?AssociationQ, _?ListQ]],

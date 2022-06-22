@@ -25,6 +25,7 @@ $DefaultTheme = <|
 
 RenderPlacedDiagramToGraphics[
 	PlacedDiagram[
+		Optional[_?StringQ, None],
 		boxes:<| (_?StringQ -> _PlacedBox) ... |>,
 		arrows:{___PlacedArrow}
 	],
