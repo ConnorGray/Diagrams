@@ -26,8 +26,8 @@ DiagramTitle::usage = "DiagramTitle[diagram]"
 DiagramBoxes::usage = "DiagramBoxes[diagram]"
 DiagramArrows::usage = "DiagramArrows[diagram]"
 
-DiaElementId::usage = "DiaElementId[elem] will return the unique identifer associated with a diagram element."
-DiaElementText::usage = "DiaElementText[elem] will return the textual description associated with a diagram element, if applicable."
+DiagramElementId::usage = "DiagramElementId[elem] will return the unique identifer associated with a diagram element."
+DiagramElementText::usage = "DiagramElementText[elem] will return the textual description associated with a diagram element, if applicable."
 
 (*--------*)
 (* Errors *)
@@ -303,17 +303,17 @@ DiagramArrows[args___] :=
 
 (*====================================*)
 
-DiaElementId[DiaBox[id_?StringQ, ___?OptionQ]] := id
+DiagramElementId[DiaBox[id_?StringQ, ___?OptionQ]] := id
 
-DiaElementId[args___] :=
-	RaiseError["unexpected arguments to DiaElementId: ``", InputForm[{args}]]
+DiagramElementId[args___] :=
+	RaiseError["unexpected arguments to DiagramElementId: ``", InputForm[{args}]]
 
 (*====================================*)
 
-DiaElementText[DiaBox[id_?StringQ, ___?OptionQ]] := id
+DiagramElementText[DiaBox[id_?StringQ, ___?OptionQ]] := id
 
-DiaElementText[args___] :=
-	RaiseError["unexpected arguments to DiaElementText: ``", InputForm[{args}]]
+DiagramElementText[args___] :=
+	RaiseError["unexpected arguments to DiagramElementText: ``", InputForm[{args}]]
 
 
 End[] (* End `Private` *)

@@ -313,7 +313,7 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 	Scan[
 		Replace[{
 			box_DiaBox :> Module[{
-				id = DiaElementId[box]
+				id = DiagramElementId[box]
 			},
 				If[KeyMemberQ[boxesById, id],
 					RaiseError["boxes list contains conflicting IDs: ``", id];
@@ -384,7 +384,7 @@ RowWidth[row:{___DiaBox}] := Module[{
 },
 	(* Get the border rect width for each box in this row. *)
 	boxWidths = Map[
-		box |-> RectangleWidth[MakeBoxRectangles[DiaElementText[box]][[2]]],
+		box |-> RectangleWidth[MakeBoxRectangles[DiagramElementText[box]][[2]]],
 		row
 	];
 

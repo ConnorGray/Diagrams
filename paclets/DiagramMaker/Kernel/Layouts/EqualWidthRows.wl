@@ -54,8 +54,8 @@ DoEqualWidthRowsLayout[
 				Scan[
 					Replace[{
 						box_DiaBox :> Module[{
-							id = DiaElementId[box],
-							text = DiaElementText[box],
+							id = DiagramElementId[box],
+							text = DiagramElementText[box],
 							textRect, borderRect,
 							placedBox
 						},

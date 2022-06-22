@@ -93,7 +93,7 @@ RenderPlacedDiagramToGraphics[
 				AppendTo[graphics, {
 					RaiseConfirm @ Lookup[theme, "ArrowStroke"],
 					AbsoluteThickness[4.0],
-					DiaElementDirectives[arrow],
+					DiagramElementDirectives[arrow],
 					Arrow[{startPoint, endPoint}]
 				}];
 			],
@@ -109,12 +109,12 @@ RenderPlacedDiagramToGraphics[
 (* Helper functions                   *)
 (*====================================*)
 
-DiaElementDirectives[DiaArrow[_, _, directive_]] := directive
+DiagramElementDirectives[DiaArrow[_, _, directive_]] := directive
 
-DiaElementDirectives[_DiaArrow] := {}
+DiagramElementDirectives[_DiaArrow] := {}
 
-DiaElementDirectives[args___] :=
-	RaiseError["unexpected arguments to DiaElementDirectives: ``", InputForm[{args}]]
+DiagramElementDirectives[args___] :=
+	RaiseError["unexpected arguments to DiagramElementDirectives: ``", InputForm[{args}]]
 
 
 End[]
