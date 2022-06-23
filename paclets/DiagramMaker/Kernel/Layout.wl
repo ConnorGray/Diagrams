@@ -19,25 +19,39 @@ Needs["DiagramMaker`Layouts`"]
 
 LayoutDiagram[
 	diagram_Diagram,
-	algo0 : _?StringQ : Automatic
+	algoSpec0 : _?StringQ : Automatic
 ] := Module[{
 	title = DiagramTitle[diagram],
 	diagramOpts = Options[diagram],
 	algo,
+	algoOpts,
 	result
 },
-	algo = Replace[algo0, Automatic :> OptionValue[Diagram, diagramOpts, DiagramLayout]];
+	algo = Replace[algoSpec0, Automatic :> OptionValue[Diagram, diagramOpts, DiagramLayout]];
+
+	{algo, algoOpts} = Replace[algo, {
+		name : (Automatic | _?StringQ) :> {name, {}},
+		{name : (Automatic | _?StringQ), opts___?OptionQ} :> {name, {opts}},
+		_ :> RaiseError["Invalid diagram layout specification: ``", algo]
+	}];
 
 	(* Default to "RowsLayout". *)
 	algo = Replace[algo, Automatic :> "Rows"];
 
-	result = Replace[algo, {
-		"Row" :> DoRowLayout[diagram],
-		"Rows" :> DoRowsLayout[diagram],
-		"EqualWidthRows" :> DoEqualWidthRowsLayout[diagram],
-		"Graph" :> DoGraphLayout[diagram],
-		_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
-	}];
+	Block[{
+		$BoxPadding = Replace[
+			Lookup[algoOpts, BoxPadding, Automatic],
+			Automatic :> $BoxPadding
+		]
+	},
+		result = Replace[algo, {
+			"Row" :> DoRowLayout[diagram],
+			"Rows" :> DoRowsLayout[diagram],
+			"EqualWidthRows" :> DoEqualWidthRowsLayout[diagram],
+			"Graph" :> DoGraphLayout[diagram],
+			_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
+		}];
+	];
 
 	If[
 		And[

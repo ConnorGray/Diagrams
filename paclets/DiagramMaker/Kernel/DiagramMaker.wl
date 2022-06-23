@@ -21,6 +21,8 @@ DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing
 DiagramLayout::usage = "DiagramLayout is an option to Diagram and related functions that specifies what layout to use."
 DiagramTheme::usage  = "DiagramTheme is an option to Diagram and related functions that specifies an overall theme for visualization elements and styles."
 
+BoxPadding::usage = "BoxPadding is a suboption to DiagramLayout that specifies the amount of padding to use between a DiaBox's text and the box border."
+
 (*---------------------------------------------------------------*)
 (* Operations querying data in a Diagram[..] or diagram element. *)
 (*---------------------------------------------------------------*)
