@@ -101,6 +101,7 @@ RenderPlacedDiagramToGraphics[
 				AppendTo[graphics, {
 					RaiseConfirm @ Lookup[theme, "ArrowStroke"],
 					AbsoluteThickness[4.0],
+					Arrowheads[0.06],
 					Replace[
 						DiagramElementDirectives[arrow],
 						(* If the directives are a list, splice them in so that
