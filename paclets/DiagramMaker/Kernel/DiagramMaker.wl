@@ -1,6 +1,5 @@
 BeginPackage["DiagramMaker`"]
 
-(* Declare your package's public symbols here. *)
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."
 PlacedDiagram::usage = "PlacedDiagram[boxes, arrows]"
@@ -8,19 +7,23 @@ PlacedDiagram::usage = "PlacedDiagram[boxes, arrows]"
 DiaBox::usage = "DiaBox[..] is a diagram element of a generic box."
 DiaArrow::usage = "DiaArrow[..] is a diagram element that defines a relationship between two diagram box elements."
 
+(*---------------------------*)
+(* Operations on Diagram[..] *)
+(*---------------------------*)
+
 DiagramImage::usage = "DiagramImage[diagram] returns an image containing the graphical representation of diagram."
 DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing the relations between diagram elements blocks."
 
-LayoutDiagram::usage = "LayoutDiagram[diagram] uses a suitable layout algorithm to produce a PlacedDiagram"
+(*---------------------------------------------*)
+(* Options on Diagram[..] and diagram elements *)
+(*---------------------------------------------*)
 
 DiagramLayout::usage = "DiagramLayout is an option to Diagram and related functions that specifies what layout to use."
 DiagramTheme::usage  = "DiagramTheme is an option to Diagram and related functions that specifies an overall theme for visualization elements and styles."
 
-RenderPlacedDiagramToGraphics
-
-DiagramGraphicsImage
-
-RenderedTextSize
+(*---------------------------------------------------------------*)
+(* Operations querying data in a Diagram[..] or diagram element. *)
+(*---------------------------------------------------------------*)
 
 DiagramTitle::usage = "DiagramTitle[diagram]"
 DiagramBoxes::usage = "DiagramBoxes[diagram]"
@@ -31,12 +34,25 @@ DiagramElementText::usage = "DiagramElementText[elem] will return the textual de
 
 DiagramArrowIds::usage = "DiagramArrowIds[arrow] will return the id of the start and end element connected by arrow."
 
+(*--------------------------------------------*)
+(* Internal / intermediate diagram operations *)
+(*--------------------------------------------*)
+
+LayoutDiagram::usage = "LayoutDiagram[diagram] uses a suitable layout algorithm to produce a PlacedDiagram"
+
+RenderPlacedDiagramToGraphics
+
+DiagramGraphicsImage
+
+RenderedTextSize
+
 (*--------*)
 (* Errors *)
 (*--------*)
 
 DiagramMaker::error = "``"
 DiagramMaker::assertfail = "``"
+
 
 Begin["`Private`"]
 
