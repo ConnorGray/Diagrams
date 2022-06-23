@@ -36,6 +36,8 @@ DiagramElementText::usage = "DiagramElementText[elem] will return the textual de
 
 DiagramArrowIds::usage = "DiagramArrowIds[arrow] will return the id of the start and end element connected by arrow."
 
+AttachmentId::usage = "AttachmentId[spec] will return the element ID specified by spec."
+
 (*--------------------------------------------*)
 (* Internal / intermediate diagram operations *)
 (*--------------------------------------------*)
@@ -318,21 +320,10 @@ DiagramGraph[
 	edges = Cases[
 		arrows,
 		arrow_DiaArrow :> Replace[arrow, {
-			DiaArrow[
-				lhs_?StringQ -> rhs_?StringQ,
-				_?StringQ,
-				___
-			] :> DirectedEdge[lhs, rhs],
-			DiaArrow[
-				lhs_?StringQ -> {rhs_?StringQ, Nearest},
-				_?StringQ,
-				___
-			] :> DirectedEdge[lhs, rhs],
-			DiaArrow[
-				{lhs_?StringQ, Nearest} -> rhs_?StringQ,
-				_?StringQ,
-				___
-			] :> DirectedEdge[lhs, rhs],
+			DiaArrow[lhs_ -> rhs_, _?StringQ, ___] :> DirectedEdge[
+				AttachmentId[lhs],
+				AttachmentId[rhs]
+			],
 			other_ :> RaiseError["unexpected DiaArrow structure: ``", other]
 		}]
 	];
@@ -462,18 +453,29 @@ DiagramElementText[args___] :=
 (*====================================*)
 
 DiagramArrowIds[arrow_DiaArrow] := Replace[arrow, {
-	DiaArrow[lhs_?StringQ -> rhs_?StringQ, ___] :> {lhs, rhs},
-	DiaArrow[lhs_?StringQ -> {rhs_?StringQ, Nearest}, ___] :> {lhs, rhs},
-	DiaArrow[{lhs_?StringQ, Nearest} -> rhs_?StringQ, ___] :> {lhs, rhs},
+	(* Check for a few possibly common mistakes first. *)
 	DiaArrow[{lhs_?StringQ, Nearest} -> {rhs_?StringQ, Nearest}, ___] :> RaiseError[
 		"unsupported use of {_, Nearest} specification on both diagram arrow sides: ``",
 		InputForm[arrow]
 	],
+	DiaArrow[lhs_ -> rhs_, _?StringQ, ___] :> {AttachmentId[lhs], AttachmentId[rhs]},
 	_ :> RaiseError["unexpected DiaArrow structure: ``", InputForm[arrow]]
 }]
 
 DiagramArrowIds[args___] :=
 	RaiseError["unexpected arguments to DiagramArrowIds: ``", InputForm[{args}]]
+
+(*====================================*)
+
+AttachmentId[spec_] := Replace[spec, {
+	id_?StringQ :> id,
+	{id_?StringQ, Nearest} :> id,
+	_ :> RaiseError["unrecognized attachment specification: ``", spec]
+}]
+
+AttachmentId[args___] :=
+	RaiseError["unexpected arguments to AttachmentId: ``", InputForm[{args}]]
+
 
 
 End[] (* End `Private` *)
