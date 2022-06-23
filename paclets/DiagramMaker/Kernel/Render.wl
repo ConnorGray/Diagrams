@@ -101,7 +101,12 @@ RenderPlacedDiagramToGraphics[
 				AppendTo[graphics, {
 					RaiseConfirm @ Lookup[theme, "ArrowStroke"],
 					AbsoluteThickness[4.0],
-					DiagramElementDirectives[arrow],
+					Replace[
+						DiagramElementDirectives[arrow],
+						(* If the directives are a list, splice them in so that
+						   they can affect the Arrow[..] formatting. *)
+						dirs_?ListQ :> Splice[dirs]
+					],
 					Arrow[{startPoint, endPoint}]
 				}];
 			],

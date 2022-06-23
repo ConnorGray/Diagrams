@@ -7,6 +7,8 @@ PlacedDiagram::usage = "PlacedDiagram[boxes, arrows]"
 DiaBox::usage = "DiaBox[..] is a diagram element of a generic box."
 DiaArrow::usage = "DiaArrow[..] is a diagram element that defines a relationship between two diagram box elements."
 
+MakeDiagramPrimitives::usage = "MakeDiagramPrimitives[expr] will convert expr into the lower-level diagram primitive forms used by Diagram."
+
 (*---------------------------*)
 (* Operations on Diagram[..] *)
 (*---------------------------*)
@@ -37,6 +39,7 @@ DiagramElementText::usage = "DiagramElementText[elem] will return the textual de
 DiagramArrowIds::usage = "DiagramArrowIds[arrow] will return the id of the start and end element connected by arrow."
 
 AttachmentId::usage = "AttachmentId[spec] will return the element ID specified by spec."
+AttachmentQ::usage = "AttachmentQ[spec] will return True if spec is a valid diagram attachment specification, and False otherwise."
 
 (*--------------------------------------------*)
 (* Internal / intermediate diagram operations *)
@@ -82,6 +85,58 @@ Options[Diagram] = {
 	DiagramLayout -> Automatic,
 	DiagramTheme -> Automatic
 };
+
+(*--------------------------------------*)
+
+(* FIXME:
+	Should Diagram[..] actually eagerly evaluate the high-level element types
+	into primitives? Perhaps this should be delayed until rendering time? *)
+(*
+	If either the boxes or arrows field contains non-primitive forms, use
+	MakeDiagramPrimitives to reduce the forms to primitive ones.
+*)
+Diagram[
+	Optional[title_?StringQ, None],
+	boxes:{___},
+	arrows:{___},
+	opts___?OptionQ
+] /; Or[
+	MemberQ[boxes, Except[_DiaBox]],
+	MemberQ[arrows, Except[_DiaArrow]]
+] := Diagram[
+	Replace[title, None :> Sequence[]],
+	Map[ValidatedMakeDiagramPrimitives, boxes],
+	Map[ValidatedMakeDiagramPrimitives, arrows],
+	opts
+]
+
+
+(*
+	Validate that the return values of MakeDiagramPrimitives are in fact valid
+	diagram primitives. Doing this validation is particularly important for UX
+	because MakeDiagramPrimitives is intended to be overloaded by users, so we
+	want to be proactive and helpful about validating the forms they return to
+	us.
+*)
+(* TODO:
+	If we're reducing forms that should reduce to DiaArrow, we should be
+	validating that we didn't get a DiaBox[..], and vice versa. *)
+ValidatedMakeDiagramPrimitives[args___] := Module[{result},
+	result = MakeDiagramPrimitives[args];
+
+	Replace[result, {
+		DiaBox[id_?StringQ, Optional[text_?StringQ, None], ___?OptionQ] :> result,
+		(* FIXME: Validate these attachment specifications proactively. *)
+		DiaArrow[lhs_ -> rhs_, _?StringQ, Optional[_, None], ___?OptionQ] :> result,
+		_ :> RaiseError[
+			"MakeDiagramPrimitives of `` returned invalid diagram primitive: ``",
+			InputForm[args],
+			InputForm[result]
+		]
+	}]
+]
+
+(*======================================*)
 
 Diagram /: MakeBoxes[
 	obj : Diagram[boxes:{___}, arrows:{___}, opts___?OptionQ],
@@ -393,6 +448,21 @@ DiagramGraph[
 ]
 
 (*====================================*)
+
+MakeDiagramPrimitives[arrow_DiaArrow] := arrow
+MakeDiagramPrimitives[box_DiaBox] := box
+
+
+MakeDiagramPrimitives[elem_] :=
+	RaiseError[
+		"MakeDiagramPrimitives: unable to convert unrecognized diagram element form: ``.",
+		InputForm[{args}]
+	]
+
+MakeDiagramPrimitives[args___] :=
+	RaiseError["unexpected arguments to MakeDiagramPrimitives: ``", InputForm[{args}]]
+
+(*====================================*)
 (* Diagram property accessors         *)
 (*====================================*)
 
@@ -475,6 +545,19 @@ AttachmentId[spec_] := Replace[spec, {
 
 AttachmentId[args___] :=
 	RaiseError["unexpected arguments to AttachmentId: ``", InputForm[{args}]]
+
+(*------------------------------------*)
+
+AttachmentQ[spec_] := MatchQ[
+	spec,
+	Alternatives[
+		_?StringQ,
+		{_?StringQ, Nearest}
+	]
+]
+
+AttachmentQ[args___] :=
+	RaiseError["unexpected arguments to AttachmentQ: ``", InputForm[{args}]]
 
 
 
