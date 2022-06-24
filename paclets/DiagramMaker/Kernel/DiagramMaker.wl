@@ -141,9 +141,10 @@ ValidatedMakeDiagramPrimitives[args___] := Module[{result},
 Diagram /: MakeBoxes[
 	obj : Diagram[boxes:{___}, arrows:{___}, opts___?OptionQ],
 	form : StandardForm
-] := Module[{icon},
-	(* icon = Thumbnail[DiagramImage[obj]]; *)
-	BoxForm`ArrangeSummaryBox[
+] := Module[{},
+	ToBoxes @ Interpretation[DiagramImage[obj], obj]
+
+	(* BoxForm`ArrangeSummaryBox[
 		Diagram,
 		obj,
 		DiagramImage[obj],
@@ -153,7 +154,7 @@ Diagram /: MakeBoxes[
 		},
 		{},
 		form
-	]
+	] *)
 ]
 
 (*----------------------------------------------------------------------------*)
