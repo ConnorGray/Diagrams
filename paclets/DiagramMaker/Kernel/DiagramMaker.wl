@@ -517,6 +517,8 @@ DiagramElementId[args___] :=
 
 DiagramElementText[DiaBox[id_?StringQ, ___?OptionQ]] := id
 
+DiagramElementText[DiaArrow[_ -> _, id_?StringQ, Optional[_, None], ___?OptionQ]] := id
+
 DiagramElementText[args___] :=
 	RaiseError["unexpected arguments to DiagramElementText: ``", InputForm[{args}]]
 

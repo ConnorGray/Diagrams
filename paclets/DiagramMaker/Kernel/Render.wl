@@ -108,7 +108,13 @@ RenderPlacedDiagramToGraphics[
 						   they can affect the Arrow[..] formatting. *)
 						dirs_?ListQ :> Splice[dirs]
 					],
-					Arrow[{startPoint, endPoint}]
+					(* FIXME: Include arrow text in the diagram directly, instead
+						of hiding it behind a tooltip. Doing this properly will
+						require taking arrow labels into account during layout. *)
+					Tooltip[
+						Arrow[{startPoint, endPoint}],
+						DiagramElementText[arrow]
+					]
 				}];
 			],
 			other_ :> RaiseError["unexpected diagram placed arrow structure: ``", other]
