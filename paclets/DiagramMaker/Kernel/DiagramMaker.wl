@@ -457,7 +457,7 @@ MakeDiagramPrimitives[box_DiaBox] := box
 MakeDiagramPrimitives[elem_] :=
 	RaiseError[
 		"MakeDiagramPrimitives: unable to convert unrecognized diagram element form: ``.",
-		InputForm[{args}]
+		InputForm[{elem}]
 	]
 
 MakeDiagramPrimitives[args___] :=
