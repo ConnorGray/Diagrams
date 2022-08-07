@@ -11,7 +11,7 @@ Print["Using $InstallationDirectory: ", $InstallationDirectory];
 
 $repositoryDir = Directory[];
 
-If[FileNameTake[$repositoryDir] =!= "diagram-maker",
+If[FileNameTake[$repositoryDir] =!= "Diagrams",
 	Throw[StringForm["Unexpected repository root directory path: ``", $repositoryDir]]
 ];
 
