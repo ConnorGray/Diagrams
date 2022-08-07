@@ -1,20 +1,25 @@
-BeginPackage["DiagramMaker`Layout`Utils`"]
+Package["DiagramMaker`Layout`Utils`"]
 
-PlaceArrowsBasedOnBoxes
+PackageExport[{
+	PlaceArrowsBasedOnBoxes,
+	GroupBoxesByGraphRow,
+
+	RowWidth,
+
+	MakeBoxRectangles,
+
+	AbsoluteTranslate
+}]
 
 GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
 
-RowWidth
-MakeBoxRectangles
-
-
-Begin["`Private`"]
-
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Layout`"]
-Needs["DiagramMaker`Utils`"]
-
+PackageUse[DiagramMaker -> {
+	Diagram, DiagramBoxes, DiagramGraph, DiagramArrowIds, DiagramElementId,
+	DiagramElementText, DiaArrow, DiaBox, RenderedTextSize,
+	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},
+	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
+	Utils -> {RectangleWidth, RectangleHeight}
+}]
 
 (*======================================*)
 
@@ -379,7 +384,7 @@ MakeBoxRectangles[
 	}];
 
 	{textWidth, textHeight} =
-		RaiseConfirm @ RenderedTextSize[str, $textWidth];
+		RaiseConfirm @ RenderedTextSize[str, $TextWidth];
 
 	(* Note: Add fudge factor to prevent text wrapping done by Skia,
 			even though we're using the width it told us. *)
@@ -404,7 +409,7 @@ MakeBoxRectangles[
 (*====================================*)
 
 (* Returns the total width of `row` if the boxes were layed out next to each
-   other in a row with padding of `$BoxPadding` and margin of `$margin`. *)
+   other in a row with padding of `$BoxPadding` and margin of `$Margin`. *)
 RowWidth[row:{___DiaBox}] := Module[{
 	boxWidths,
 	totalMargin
@@ -417,7 +422,7 @@ RowWidth[row:{___DiaBox}] := Module[{
 
 	RaiseAssert[MatchQ[boxWidths, {___?NumberQ}], "boxWidths: ``", boxWidths];
 
-	totalMargin = $margin * (Length[row] - 1);
+	totalMargin = $Margin * (Length[row] - 1);
 
 	Total[boxWidths] + totalMargin
 ]
@@ -477,7 +482,3 @@ AbsoluteTranslate[
 	vector:{_, _}
 ] :=
 	Rectangle[min + vector, max + vector, opts]
-
-
-End[]
-EndPackage[]

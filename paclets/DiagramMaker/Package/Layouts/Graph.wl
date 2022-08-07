@@ -1,13 +1,18 @@
-BeginPackage["DiagramMaker`Layouts`Graph`"]
+Package["DiagramMaker`Layouts`Graph`"]
 
-Begin["`Private`"]
-
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Utils`"]
-Needs["DiagramMaker`Layout`"]
-Needs["DiagramMaker`Layout`Utils`"]
-Needs["DiagramMaker`Layouts`"]
+PackageUse[DiagramMaker -> {
+	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
+	PlacedDiagram, DiagramGraph, DiagramBoxes, DiagramArrows,
+	Layouts -> DoGraphLayout,
+	Layout -> {
+		PlacedBox,
+		Utils -> {
+			RowWidth, MakeBoxRectangles,PlaceArrowsBasedOnBoxes, GroupBoxesByGraphRow
+		}
+	},
+	Utils -> {RectangleWidth, RectangleHeight},
+	Errors -> {RaiseError, RaiseAssert, RaiseConfirm}
+}]
 
 (* Layout all diagram boxes based on their Graph[..] layout. *)
 DoGraphLayout[
@@ -79,8 +84,3 @@ DoGraphLayout[
 		placedArrows
 	]
 ]
-
-
-
-End[]
-EndPackage[]

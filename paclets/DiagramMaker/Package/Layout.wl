@@ -1,20 +1,33 @@
-BeginPackage["DiagramMaker`Layout`"]
+Package["DiagramMaker`Layout`"]
+
+PackageModule["Utils"]
+
+PackageExport[{
+	PlacedBox, PlacedArrow,
+
+	$TextWidth, $BoxPadding, $Margin,
+
+	$DebugDiagramLayout
+}]
 
 PlacedBox::usage = "PlacedBox[box, textRect, borderRect]"
 PlacedArrow::usage = "PlacedBox[arrow, startPoint, endPoint]"
 
-$textWidth = 300.0;
+$TextWidth = 300.0;
 $BoxPadding = 8.0;
-$margin = 32.0;
+$Margin = 32.0;
 
 $DebugDiagramLayout = False
 
-Begin["`Private`"]
 
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Utils`"]
-Needs["DiagramMaker`Layouts`"]
+PackageUse[DiagramMaker -> {
+	Diagram, DiagramLayout, DiagramTitle, LayoutDiagram, PlacedDiagram,
+	BoxPadding,
+	Errors -> {RaiseError, RaiseAssert},
+	Layouts -> {
+		DoRowLayout, DoRowsLayout, DoEqualWidthRowsLayout, DoGraphLayout
+	}
+}]
 
 
 LayoutDiagram[
@@ -75,7 +88,3 @@ LayoutDiagram[
 
 LayoutDiagram[args___] :=
 	RaiseError["unexpected arguments to LayoutDiagram: ``", InputForm[{args}]]
-
-
-End[]
-EndPackage[]

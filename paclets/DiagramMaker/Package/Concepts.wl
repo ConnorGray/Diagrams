@@ -1,4 +1,8 @@
-BeginPackage["DiagramMaker`Concepts`"]
+Package["DiagramMaker`Concepts`"]
+
+PackageExport[{
+	DiaFunctionPointer
+}]
 
 (* TODO:
 	Move this into a separate package. These are essentially 'plugins' that
@@ -10,11 +14,6 @@ BeginPackage["DiagramMaker`Concepts`"]
 	are based on function pointers.
 *)
 DiaFunctionPointer::usage = "DiaFunctionPointer[libA -> libB, name] represents pointer from libA to the function name in libB."
-
-Begin["`Private`"]
-
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
 
 (*====================================*)
 
@@ -51,9 +50,3 @@ DiaFunctionPointer /: MakeDiagramPrimitives[
 
 	DiaArrow[libA -> libB, name, $functionPointerArrowheads]
 ]
-
-
-
-
-End[]
-EndPackage[]

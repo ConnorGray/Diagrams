@@ -1,13 +1,19 @@
-BeginPackage["DiagramMaker`Layouts`EqualWidthRows`"]
+Package["DiagramMaker`Layouts`EqualWidthRows`"]
 
-Begin["`Private`"]
-
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Utils`"]
-Needs["DiagramMaker`Layout`"]
-Needs["DiagramMaker`Layout`Utils`"]
-Needs["DiagramMaker`Layouts`"]
+PackageUse[DiagramMaker -> {
+	Diagram, PlacedDiagram, DiagramBoxes, DiagramArrows, DiagramElementId,
+	DiagramElementText, DiaBox,
+	Layouts -> DoEqualWidthRowsLayout,
+	Layout -> {
+		$Margin, $BoxPadding, PlacedBox,
+		Utils -> {
+			RowWidth, GroupBoxesByGraphRow, MakeBoxRectangles,
+			PlaceArrowsBasedOnBoxes
+		}
+	},
+	Utils -> {RectangleWidth, RectangleHeight},
+	Errors -> {RaiseError, RaiseAssert}
+}]
 
 
 DoEqualWidthRowsLayout[
@@ -75,7 +81,7 @@ DoEqualWidthRowsLayout[
 
 							placedBox = PlacedBox[box, textRect, borderRect];
 
-							xOffset += RectangleWidth[borderRect] + $margin;
+							xOffset += RectangleWidth[borderRect] + $Margin;
 
 							rowMaxHeight = Max[rowMaxHeight, RectangleHeight[borderRect]];
 
@@ -91,7 +97,7 @@ DoEqualWidthRowsLayout[
 				(* Start the next row at the far left. *)
 				xOffset = 0;
 				(* Place the next row higher up. *)
-				yOffset += $margin + rowMaxHeight;
+				yOffset += $Margin + rowMaxHeight;
 			]
 		}],
 		rows
@@ -118,7 +124,3 @@ DoEqualWidthRowsLayout[
 	]
 ]
 
-
-
-End[]
-EndPackage[]

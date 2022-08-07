@@ -1,4 +1,11 @@
-BeginPackage["DiagramMaker`Errors`"]
+Package["DiagramMaker`Errors`"]
+
+PackageExport[{
+	RaiseError, RaiseAssert, RaiseConfirm, RaiseConfirmMatch,
+
+	$RaiseErrorTag,
+	$ExitOnExceptionPreHandler
+}]
 
 RaiseError::usage  = "RaiseError[formatStr, args___] throws a Failure object indicating an error encountered during the build process.";
 RaiseAssert::usage = "RaiseAssert[cond, formatStr, args___] throws a Failure object indicating a failed assertion encountered during the build process.";
@@ -9,7 +16,7 @@ $RaiseErrorTag
 
 $ExitOnExceptionPreHandler
 
-Begin["`Private`"]
+PackageUse[DiagramMaker -> DiagramMaker]
 
 (**********************************************************)
 
@@ -32,7 +39,7 @@ $RaiseErrorTag
 (* Generate a message and an exception. *)
 RaiseError[formatStr_?StringQ, args___] := (
 	Message[
-		DiagramMaker`DiagramMaker::error,
+		DiagramMaker::error,
 		(* Note: Use '@@' to avoid behavior described in bug #240412. *)
 		ToString[StringForm @@ {formatStr, args}]
 	];
@@ -80,7 +87,7 @@ RaiseAssert[
 	args___
 ] := If[!TrueQ[cond],
 	Message[
-		DiagramMaker`DiagramMaker::assertfail,
+		DiagramMaker::assertfail,
 		(* Note: Use '@@' to avoid behavior described in bug #240412. *)
 		ToString[StringForm @@ {formatStr, args}]
 	];
@@ -138,8 +145,3 @@ RaiseConfirmMatch[
 		}];
 	]
 ]
-
-
-End[]
-
-EndPackage[]

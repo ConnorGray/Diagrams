@@ -1,14 +1,21 @@
-BeginPackage["DiagramMaker`Render`"]
+Package["DiagramMaker`Render`"]
 
-DefaultTheme
+PackageExport[{
+	$DefaultTheme, DefaultTheme, SizedText, DiagramElementDirectives
+}]
+
+PackageUse[DiagramMaker -> {
+	PlacedDiagram, RenderPlacedDiagramToGraphics, DiaBox, DiaArrow,
+	DiagramElementText,
+	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow},
+	Errors -> {RaiseError, RaiseConfirm}
+}]
 
 SizedText::usage = "SizedText[s, rect]"
 
-Begin["`Private`"]
-
-Needs["DiagramMaker`"]
+(* Needs["DiagramMaker`"]
 Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Layout`"]
+Needs["DiagramMaker`Layout`"] *)
 
 rgbColor[r_Integer, g_Integer, b_Integer] := RGBColor @@ ({r, g, b} / 255)
 
@@ -74,7 +81,7 @@ RenderPlacedDiagramToGraphics[
 					SizedText[id, textRect]
 				}];
 
-				If[TrueQ[DiagramMaker`Layout`$DebugDiagramLayout],
+				If[TrueQ[$DebugDiagramLayout],
 					AppendTo[graphics, {
 						FaceForm[Transparent],
 						EdgeForm[Directive[Dashed, Red]],
@@ -135,7 +142,3 @@ DiagramElementDirectives[_DiaArrow] := {}
 
 DiagramElementDirectives[args___] :=
 	RaiseError["unexpected arguments to DiagramElementDirectives: ``", InputForm[{args}]]
-
-
-End[]
-EndPackage[]

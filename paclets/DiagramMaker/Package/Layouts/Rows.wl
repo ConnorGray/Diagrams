@@ -1,13 +1,21 @@
-BeginPackage["DiagramMaker`Layouts`Rows`"]
+Package["DiagramMaker`Layouts`Rows`"]
 
-Begin["`Private`"]
+PackageUse[DiagramMaker -> {
+	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
+	PlacedDiagram, DiagramBoxes, DiagramArrows,
+	Layouts -> DoRowsLayout,
+	Layout -> {
+		$Margin,
+		PlacedBox,
+		Utils -> {
+			RowWidth, MakeBoxRectangles, PlaceArrowsBasedOnBoxes,
+			GroupBoxesByGraphRow
+		}
+	},
+	Utils -> {RectangleWidth, RectangleHeight},
+	Errors -> {RaiseError, RaiseAssert}
+}]
 
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Utils`"]
-Needs["DiagramMaker`Layout`"]
-Needs["DiagramMaker`Layout`Utils`"]
-Needs["DiagramMaker`Layouts`"]
 
 (* Layout all diagram boxes in a series of rows. *)
 DoRowsLayout[
@@ -62,7 +70,7 @@ DoRowsLayout[
 
 							placedBox = PlacedBox[box, textRect, borderRect];
 
-							xOffset += RectangleWidth[borderRect] + $margin;
+							xOffset += RectangleWidth[borderRect] + $Margin;
 
 							rowMaxHeight = Max[rowMaxHeight, RectangleHeight[borderRect]];
 
@@ -78,7 +86,7 @@ DoRowsLayout[
 				(* Start the next row at the far left. *)
 				xOffset = 0;
 				(* Place the next row higher up. *)
-				yOffset += $margin + rowMaxHeight;
+				yOffset += $Margin + rowMaxHeight;
 			]
 		}],
 		rows
@@ -104,7 +112,3 @@ DoRowsLayout[
 		placedArrows
 	]
 ]
-
-
-End[]
-EndPackage[]

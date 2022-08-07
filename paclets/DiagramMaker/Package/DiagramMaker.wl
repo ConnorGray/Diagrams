@@ -1,5 +1,47 @@
-BeginPackage["DiagramMaker`"]
+Package["DiagramMaker`"]
 
+PackageModule["Errors"]
+PackageModule["Layout"]
+PackageModule["Layouts"]
+PackageModule["Render"]
+PackageModule["Utils"]
+
+PackageExport[{
+	DiagramMaker,
+
+	Diagram,
+	PlacedDiagram,
+
+	DiaBox, DiaArrow,
+
+	MakeDiagramPrimitives,
+
+	(* Operations on Diagram[..] *)
+	DiagramImage, DiagramGraph,
+
+	(* Options on Diagram[..] and diagram elements *)
+	DiagramLayout, DiagramTheme,
+
+	BoxPadding,
+
+	(* Operations querying data in a Diagram[..] or diagram element *)
+	DiagramTitle, DiagramBoxes, DiagramArrows,
+
+	DiagramElementId, DiagramElementText,
+
+	DiagramArrowIds,
+
+	AttachmentId, AttachmentQ,
+
+	(* Internal / intermediate diagram operations *)
+	LayoutDiagram,
+	RenderPlacedDiagramToGraphics,
+	DiagramGraphicsImage,
+	RenderedTextSize,
+
+	(* TODO: Remove these, they are unused? *)
+	Subgraphs, DiagramBlock, DiagramArrow
+}]
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."
 PlacedDiagram::usage = "PlacedDiagram[boxes, arrows]"
@@ -61,13 +103,12 @@ DiagramMaker::error = "``"
 DiagramMaker::assertfail = "``"
 
 
-Begin["`Private`"]
-
-
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Layout`"]
-Needs["DiagramMaker`Render`"]
-Needs["DiagramMaker`Utils`"]
+PackageUse[DiagramMaker -> {
+	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},
+	Render -> SizedText,
+	Utils -> {RectangleSize},
+	Layout -> {$DebugDiagramLayout}
+}]
 
 
 $functions = LibraryFunctionLoad[
@@ -105,8 +146,8 @@ Diagram[
 	MemberQ[arrows, Except[_DiaArrow]]
 ] := Diagram[
 	Replace[title, None :> Sequence[]],
-	Map[ValidatedMakeDiagramPrimitives, boxes],
-	Map[ValidatedMakeDiagramPrimitives, arrows],
+	Map[validatedMakeDiagramPrimitives, boxes],
+	Map[validatedMakeDiagramPrimitives, arrows],
 	opts
 ]
 
@@ -121,7 +162,7 @@ Diagram[
 (* TODO:
 	If we're reducing forms that should reduce to DiaArrow, we should be
 	validating that we didn't get a DiaBox[..], and vice versa. *)
-ValidatedMakeDiagramPrimitives[args___] := Module[{result},
+validatedMakeDiagramPrimitives[args___] := Module[{result},
 	result = MakeDiagramPrimitives[args];
 
 	Replace[result, {
@@ -333,7 +374,7 @@ makeSizedTextInset[sizedText_SizedText] := Module[{
 		center,
 		Automatic,
 		{width, height},
-		Background -> If[TrueQ[DiagramMaker`Layout`$DebugDiagramLayout],
+		Background -> If[TrueQ[$DebugDiagramLayout],
 			Directive[Opacity[0.2], Red],
 			Automatic
 		]
@@ -562,8 +603,3 @@ AttachmentQ[spec_] := MatchQ[
 AttachmentQ[args___] :=
 	RaiseError["unexpected arguments to AttachmentQ: ``", InputForm[{args}]]
 
-
-
-End[] (* End `Private` *)
-
-EndPackage[]

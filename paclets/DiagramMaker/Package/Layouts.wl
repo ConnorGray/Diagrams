@@ -1,4 +1,18 @@
-BeginPackage["DiagramMaker`Layouts`"]
+Package["DiagramMaker`Layouts`"]
+
+PackageModule["Row"]
+PackageModule["Rows"]
+PackageModule["Graph"]
+PackageModule["EqualWidthRows"]
+
+PackageExport[{
+	$DiagramLayouts,
+
+	DoRowLayout,
+	DoRowsLayout,
+	DoGraphLayout,
+	DoEqualWidthRowsLayout
+}]
 
 $DiagramLayouts = {
 	"Row",
@@ -6,19 +20,3 @@ $DiagramLayouts = {
 	"Graph",
 	"EqualWidthRows"
 }
-
-DoRowLayout
-DoRowsLayout
-DoGraphLayout
-DoEqualWidthRowsLayout
-
-Begin["`Private`"]
-
-Needs["DiagramMaker`Layouts`Row`"]
-Needs["DiagramMaker`Layouts`Rows`"]
-Needs["DiagramMaker`Layouts`Graph`"]
-Needs["DiagramMaker`Layouts`EqualWidthRows`"]
-
-
-End[]
-EndPackage[]

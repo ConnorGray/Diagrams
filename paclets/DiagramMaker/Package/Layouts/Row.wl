@@ -1,13 +1,17 @@
-BeginPackage["DiagramMaker`Layouts`Row`"]
+Package["DiagramMaker`Layouts`Row`"]
 
-Begin["`Private`"]
-
-Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Utils`"]
-Needs["DiagramMaker`Layout`"]
-Needs["DiagramMaker`Layout`Utils`"]
-Needs["DiagramMaker`Layouts`"]
+PackageUse[DiagramMaker -> {
+	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
+	PlacedDiagram,
+	Layouts -> DoRowLayout,
+	Layout -> {
+		$Margin,
+		PlacedBox,
+		Utils -> {MakeBoxRectangles, PlaceArrowsBasedOnBoxes}
+	},
+	Utils -> {RectangleWidth},
+	Errors -> {RaiseError, RaiseAssert}
+}]
 
 (* Layout all diagram boxes in a single row. *)
 DoRowLayout[
@@ -41,7 +45,7 @@ DoRowLayout[
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 
-				xOffset += RectangleWidth[borderRect] + $margin;
+				xOffset += RectangleWidth[borderRect] + $Margin;
 
 				AssociateTo[placedBoxes, id -> placedBox];
 			],
@@ -64,7 +68,3 @@ DoRowLayout[
 		placedArrows
 	]
 ]
-
-
-End[]
-EndPackage[]
