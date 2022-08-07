@@ -1,4 +1,4 @@
-Package["DiagramMaker`Layouts`"]
+Package["Diagrams`Layouts`"]
 
 PackageModule["Row"]
 PackageModule["Rows"]

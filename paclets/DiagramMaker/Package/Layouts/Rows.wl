@@ -1,6 +1,6 @@
-Package["DiagramMaker`Layouts`Rows`"]
+Package["Diagrams`Layouts`Rows`"]
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
 	PlacedDiagram, DiagramBoxes, DiagramArrows,
 	Layouts -> DoRowsLayout,

@@ -1,4 +1,4 @@
-Package["DiagramMaker`Utils`"]
+Package["Diagrams`Utils`"]
 
 PackageExport[{
 	RectangleWidth,
@@ -6,7 +6,7 @@ PackageExport[{
 	RectangleSize
 }]
 
-PackageUse[DiagramMaker -> {Errors -> RaiseError}]
+PackageUse[Diagrams -> {Errors -> RaiseError}]
 
 RectangleWidth[arg_] := Replace[arg, {
 	Rectangle[{xMin_?NumberQ, _}, {xMax_?NumberQ, _}] :> Abs[xMax - xMin],

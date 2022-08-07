@@ -1,4 +1,4 @@
-Package["DiagramMaker`Errors`"]
+Package["Diagrams`Errors`"]
 
 PackageExport[{
 	RaiseError, RaiseAssert, RaiseConfirm, RaiseConfirmMatch,
@@ -16,7 +16,7 @@ $RaiseErrorTag
 
 $ExitOnExceptionPreHandler
 
-PackageUse[DiagramMaker -> DiagramMaker]
+PackageUse[Diagrams -> Diagrams]
 
 (**********************************************************)
 
@@ -39,13 +39,13 @@ $RaiseErrorTag
 (* Generate a message and an exception. *)
 RaiseError[formatStr_?StringQ, args___] := (
 	Message[
-		DiagramMaker::error,
+		Diagrams::error,
 		(* Note: Use '@@' to avoid behavior described in bug #240412. *)
 		ToString[StringForm @@ {formatStr, args}]
 	];
 
 	Throw[
-		Failure["DiagramMakerError", <|
+		Failure["DiagramsError", <|
 			"MessageTemplate" -> formatStr,
 			"MessageParameters" -> {args}
 		|>],
@@ -54,7 +54,7 @@ RaiseError[formatStr_?StringQ, args___] := (
 )
 
 RaiseError[args___] := Throw[
-	Failure["DiagramMakerError", <|
+	Failure["DiagramsError", <|
 		"MessageTemplate" -> ToString[StringForm[
 			"Unknown error occurred: ``",
 			StringJoin[Map[ToString, {args}]]
@@ -87,13 +87,13 @@ RaiseAssert[
 	args___
 ] := If[!TrueQ[cond],
 	Message[
-		DiagramMaker::assertfail,
+		Diagrams::assertfail,
 		(* Note: Use '@@' to avoid behavior described in bug #240412. *)
 		ToString[StringForm @@ {formatStr, args}]
 	];
 
 	Throw[
-		Failure["DiagramMakerError", <|
+		Failure["DiagramsError", <|
 			"MessageTemplate" -> "RaiseAssert[..] failed: " <> formatStr,
 			"MessageParameters" -> {args}
 		|>],
@@ -110,7 +110,7 @@ RaiseAssert[cond_] :=
 	]
 
 RaiseAssert[args___] := Throw[
-	Failure["DiagramMakerError", <|
+	Failure["DiagramsError", <|
 		"MessageTemplate" -> ToString[StringForm[
 			"Malformed RaiseAssert[..] call: ``",
 			StringJoin[Map[ToString, {args}]]

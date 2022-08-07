@@ -1,6 +1,6 @@
-Package["DiagramMaker`Layouts`Graph`"]
+Package["Diagrams`Layouts`Graph`"]
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
 	PlacedDiagram, DiagramGraph, DiagramBoxes, DiagramArrows,
 	Layouts -> DoGraphLayout,

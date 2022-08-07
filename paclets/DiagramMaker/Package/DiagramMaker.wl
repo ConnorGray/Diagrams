@@ -1,4 +1,4 @@
-Package["DiagramMaker`"]
+Package["Diagrams`"]
 
 PackageModule["Errors"]
 PackageModule["Layout"]
@@ -7,7 +7,7 @@ PackageModule["Render"]
 PackageModule["Utils"]
 
 PackageExport[{
-	DiagramMaker,
+	Diagrams,
 
 	Diagram,
 	PlacedDiagram,
@@ -99,11 +99,11 @@ RenderedTextSize
 (* Errors *)
 (*--------*)
 
-DiagramMaker::error = "``"
-DiagramMaker::assertfail = "``"
+Diagrams::error = "``"
+Diagrams::assertfail = "``"
 
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},
 	Render -> SizedText,
 	Utils -> {RectangleSize},

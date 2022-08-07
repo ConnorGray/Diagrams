@@ -1,4 +1,4 @@
-Package["DiagramMaker`Concepts`"]
+Package["Diagrams`Concepts`"]
 
 PackageExport[{
 	DiaFunctionPointer

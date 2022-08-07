@@ -1,4 +1,4 @@
-Package["DiagramMaker`Layout`"]
+Package["Diagrams`Layout`"]
 
 PackageModule["Utils"]
 
@@ -20,7 +20,7 @@ $Margin = 32.0;
 $DebugDiagramLayout = False
 
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	Diagram, DiagramLayout, DiagramTitle, LayoutDiagram, PlacedDiagram,
 	BoxPadding,
 	Errors -> {RaiseError, RaiseAssert},

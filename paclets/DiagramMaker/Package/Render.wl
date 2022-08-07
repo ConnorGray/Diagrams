@@ -1,10 +1,10 @@
-Package["DiagramMaker`Render`"]
+Package["Diagrams`Render`"]
 
 PackageExport[{
 	$DefaultTheme, DefaultTheme, SizedText, DiagramElementDirectives
 }]
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	PlacedDiagram, RenderPlacedDiagramToGraphics, DiaBox, DiaArrow,
 	DiagramElementText,
 	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow},
@@ -13,9 +13,6 @@ PackageUse[DiagramMaker -> {
 
 SizedText::usage = "SizedText[s, rect]"
 
-(* Needs["DiagramMaker`"]
-Needs["DiagramMaker`Errors`"]
-Needs["DiagramMaker`Layout`"] *)
 
 rgbColor[r_Integer, g_Integer, b_Integer] := RGBColor @@ ({r, g, b} / 255)
 

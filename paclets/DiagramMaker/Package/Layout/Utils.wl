@@ -1,4 +1,4 @@
-Package["DiagramMaker`Layout`Utils`"]
+Package["Diagrams`Layout`Utils`"]
 
 PackageExport[{
 	PlaceArrowsBasedOnBoxes,
@@ -13,7 +13,7 @@ PackageExport[{
 
 GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	Diagram, DiagramBoxes, DiagramGraph, DiagramArrowIds, DiagramElementId,
 	DiagramElementText, DiaArrow, DiaBox, RenderedTextSize,
 	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},

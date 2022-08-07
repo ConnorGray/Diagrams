@@ -16,11 +16,11 @@ If[FileNameTake[$repositoryDir] =!= "diagram-maker",
 ];
 
 (*-------------------------------------------------------------*)
-(* Build the DiagramMaker paclet into $repositoryDir/build/ *)
+(* Build the Diagrams paclet into $repositoryDir/build/ *)
 (*-------------------------------------------------------------*)
 
 result = PacletBuild[
-	FileNameJoin[{$repositoryDir, "paclets", "DiagramMaker"}],
+	FileNameJoin[{$repositoryDir, "paclets", "Diagrams"}],
 	FileNameJoin[{$repositoryDir, "build"}]
 ];
 
@@ -34,7 +34,7 @@ If[FailureQ[result],
 (*-----------------------------------------------------------------------------------*)
 
 $dir = FileNameJoin[{
-    $repositoryDir, "build", "DiagramMaker", "LibraryResources", $SystemID
+    $repositoryDir, "build", "Diagrams", "LibraryResources", $SystemID
 }];
 
 CreateDirectory[$dir]

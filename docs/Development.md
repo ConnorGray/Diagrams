@@ -5,7 +5,7 @@ Diagram Maker project.
 
 ### Command quick reference
 
-**Build the main `DiagramMaker` paclet artifact:**
+**Build the main `Diagrams` paclet artifact:**
 
 ```shell
 $ cargo make paclet
@@ -21,7 +21,7 @@ $ cargo test
 
 The Diagram Maker project has two main "outputs":
 
-* The `DiagramMaker` Wolfram Language paclet, that is released via the [Wolfram Paclet
+* The `Diagrams` Wolfram Language paclet, that is released via the [Wolfram Paclet
   Repository](https://resources.wolframcloud.com/PacletRepository).
 * The `diagram-maker` Rust crate, which is released via [crates.io](https://crates.io).
 

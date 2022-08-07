@@ -1,6 +1,6 @@
-Package["DiagramMaker`Layouts`EqualWidthRows`"]
+Package["Diagrams`Layouts`EqualWidthRows`"]
 
-PackageUse[DiagramMaker -> {
+PackageUse[Diagrams -> {
 	Diagram, PlacedDiagram, DiagramBoxes, DiagramArrows, DiagramElementId,
 	DiagramElementText, DiaBox,
 	Layouts -> DoEqualWidthRowsLayout,
