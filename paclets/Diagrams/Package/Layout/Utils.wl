@@ -436,11 +436,17 @@ LayoutBoxContent[
 
 						RaiseAssert[result[[2]] === result[[3]]];
 
-						columnYOffset -= RectangleHeight[result[[2]]];
+						columnYOffset += RectangleHeight[result[[2]]];
 
 						result
 					],
-					columnElements
+					(* NOTE:
+						Visit the column items in reverse order so that we can
+						calculate offsets in the +Y direction instead of -Y.
+						This makes it easier to avoid placing anything beneath
+						the Y axis.
+					*)
+					Reverse[columnElements]
 				];
 
 				RaiseConfirmMatch[
