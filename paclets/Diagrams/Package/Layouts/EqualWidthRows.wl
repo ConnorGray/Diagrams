@@ -2,7 +2,7 @@ Package["Diagrams`Layouts`EqualWidthRows`"]
 
 PackageUse[Diagrams -> {
 	Diagram, PlacedDiagram, DiagramBoxes, DiagramArrows, DiagramElementId,
-	DiagramElementText, DiaBox,
+	DiagramElementContent, DiaBox,
 	Layouts -> DoEqualWidthRowsLayout,
 	Layout -> {
 		$Margin, $BoxPadding, PlacedBox,
@@ -63,12 +63,12 @@ DoEqualWidthRowsLayout[
 					Replace[{
 						box_DiaBox :> Module[{
 							id = DiagramElementId[box],
-							text = DiagramElementText[box],
+							content = DiagramElementContent[box],
 							textRect, borderRect,
 							placedBox
 						},
 							{textRect, borderRect} = MakeBoxRectangles[
-								text,
+								content,
 								{xOffset, yOffset},
 								{
 									(* Add extra padding to the X-axis so that

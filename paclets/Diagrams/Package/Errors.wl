@@ -2,6 +2,7 @@ Package["Diagrams`Errors`"]
 
 PackageExport[{
 	RaiseError, RaiseAssert, RaiseConfirm, RaiseConfirmMatch,
+	AddUnmatchedArgumentsHandler,
 
 	$RaiseErrorTag,
 	$ExitOnExceptionPreHandler
@@ -11,6 +12,8 @@ RaiseError::usage  = "RaiseError[formatStr, args___] throws a Failure object ind
 RaiseAssert::usage = "RaiseAssert[cond, formatStr, args___] throws a Failure object indicating a failed assertion encountered during the build process.";
 RaiseConfirm
 RaiseConfirmMatch::usage = "RaiseConfirmMatch[expr, form, formatStr, args___] returns expr if form matches expr, and raises an error otherwise."
+
+AddUnmatchedArgumentsHandler::usage = "AddUnmatchedArgumentsHandler[symbol] adds a downvalue to symbol that generates an error when no other downvalues match."
 
 $RaiseErrorTag
 
@@ -145,3 +148,15 @@ RaiseConfirmMatch[
 		}];
 	]
 ]
+
+(*========================================================*)
+
+Attributes[AddUnmatchedArgumentsHandler] = {HoldFirst}
+
+AddUnmatchedArgumentsHandler[symbol_Symbol] := (
+	symbol[args___] := RaiseError[
+		"``: unrecognized arguments: ``",
+		ToString[Unevaluated[symbol]],
+		InputForm[{args}]
+	]
+)

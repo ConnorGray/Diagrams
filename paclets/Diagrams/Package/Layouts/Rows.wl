@@ -1,14 +1,14 @@
 Package["Diagrams`Layouts`Rows`"]
 
 PackageUse[Diagrams -> {
-	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
+	Diagram, DiaBox, DiaArrow, DiagramElementContent, DiagramElementId,
 	PlacedDiagram, DiagramBoxes, DiagramArrows,
 	Layouts -> DoRowsLayout,
 	Layout -> {
 		$Margin,
 		PlacedBox,
 		Utils -> {
-			RowWidth, MakeBoxRectangles, PlaceArrowsBasedOnBoxes,
+			RowWidth, LayoutBoxContent, PlaceArrowsBasedOnBoxes,
 			GroupBoxesByGraphRow
 		}
 	},
@@ -59,16 +59,16 @@ DoRowsLayout[
 					Replace[{
 						box_DiaBox :> Module[{
 							id = DiagramElementId[box],
-							text = DiagramElementText[box],
-							textRect, borderRect,
+							content = DiagramElementContent[box],
+							placedContent, contentRect, borderRect,
 							placedBox
 						},
-							{textRect, borderRect} = MakeBoxRectangles[
-								text,
+							{placedContent, contentRect, borderRect} = LayoutBoxContent[
+								content,
 								{xOffset, yOffset}
 							];
 
-							placedBox = PlacedBox[box, textRect, borderRect];
+							placedBox = PlacedBox[box, placedContent, contentRect, borderRect];
 
 							xOffset += RectangleWidth[borderRect] + $Margin;
 

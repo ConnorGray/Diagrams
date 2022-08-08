@@ -6,9 +6,10 @@ PackageExport[{
 
 PackageUse[Diagrams -> {
 	PlacedDiagram, RenderPlacedDiagramToGraphics, DiaBox, DiaArrow,
-	DiagramElementText,
-	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow},
-	Errors -> {RaiseError, RaiseConfirm}
+	DiagramElementContent,
+	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow, Utils -> Bounded},
+	Utils -> {RectangleSize},
+	Errors -> {RaiseError, RaiseConfirm, RaiseConfirmMatch}
 }]
 
 SizedText::usage = "SizedText[s, rect]"
@@ -50,11 +51,17 @@ RenderPlacedDiagramToGraphics[
 	Scan[
 		Replace[{
 			PlacedBox[
-				DiaBox[id_?StringQ, opts___?OptionQ],
-				textRect_Rectangle,
+				DiaBox[
+					id_?StringQ,
+					Optional[content0:Except[_?OptionQ], None],
+					opts___?OptionQ
+				],
+				placedContent_?ListQ,
+				contentRect_Rectangle,
 				(* Border rect *)
 				Rectangle[min_, max_]
 			] :> Module[{
+				contentGraphics,
 				background = Lookup[
 					{opts},
 					Background,
@@ -72,17 +79,18 @@ RenderPlacedDiagramToGraphics[
 					Rectangle[min, max, RoundingRadius -> 3]
 				}];
 
-				(* Finally draw the text. *)
-				AppendTo[graphics, {
-					RaiseConfirm @ Lookup[theme, "BoxTextColor"],
-					SizedText[id, textRect]
-				}];
+				(* FIXME: Re-implement usage of the "BoxTextColor" theme property. *)
+				contentGraphics = placedContent /. Bounded[c_?ListQ, _Rectangle] :> c;
+
+				RaiseConfirmMatch[contentGraphics, _?ListQ];
+
+				AppendTo[graphics, contentGraphics];
 
 				If[TrueQ[$DebugDiagramLayout],
 					AppendTo[graphics, {
 						FaceForm[Transparent],
 						EdgeForm[Directive[Dashed, Red]],
-						textRect
+						contentRect
 					}];
 				];
 			],
@@ -117,7 +125,7 @@ RenderPlacedDiagramToGraphics[
 						require taking arrow labels into account during layout. *)
 					Tooltip[
 						Arrow[{startPoint, endPoint}],
-						DiagramElementText[arrow]
+						DiagramElementContent[arrow]
 					]
 				}];
 			],

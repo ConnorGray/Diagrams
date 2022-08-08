@@ -1,7 +1,7 @@
 Package["Diagrams`Layouts`Graph`"]
 
 PackageUse[Diagrams -> {
-	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
+	Diagram, DiaBox, DiaArrow, DiagramElementContent, DiagramElementId,
 	PlacedDiagram, DiagramGraph, DiagramBoxes, DiagramArrows,
 	Layouts -> DoGraphLayout,
 	Layout -> {
@@ -52,14 +52,14 @@ DoGraphLayout[
 		Replace[{
 			box_DiaBox :> Module[{
 				id = DiagramElementId[box],
-				text = DiagramElementText[box],
+				content = DiagramElementContent[box],
 				borderLeft, borderBottom,
 				textRect, borderRect,
 				placedBox
 			},
 				{borderLeft, borderBottom} = {150, 100} * RaiseConfirm @ Lookup[embedding, id];
 
-				{textRect, borderRect} = MakeBoxRectangles[text, {borderLeft, borderBottom}];
+				{textRect, borderRect} = MakeBoxRectangles[content, {borderLeft, borderBottom}];
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 

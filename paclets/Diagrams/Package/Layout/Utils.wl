@@ -6,17 +6,26 @@ PackageExport[{
 
 	RowWidth,
 
+	LayoutBoxContent,
 	MakeBoxRectangles,
 
-	AbsoluteTranslate
+	AbsoluteTranslate,
+	RectangleBoundingBox,
+	Bounded
 }]
 
 GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
 
+Bounded::usage = "Bounded[g, rect] represents a placed diagram element g whose content bounding box is rect."
+
 PackageUse[Diagrams -> {
 	Diagram, DiagramBoxes, DiagramGraph, DiagramArrowIds, DiagramElementId,
-	DiagramElementText, DiaArrow, DiaBox, RenderedTextSize,
-	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},
+	DiagramElementContent, DiaArrow, DiaBox, RenderedTextSize,
+	Errors -> {
+		RaiseError, RaiseConfirm, RaiseAssert, RaiseConfirmMatch,
+		AddUnmatchedArgumentsHandler
+	},
+	Render -> SizedText,
 	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
 	Utils -> {RectangleWidth, RectangleHeight}
 }]
@@ -179,7 +188,7 @@ PlaceArrowsBasedOnBoxes[
 				_ :> RaiseError["unsupported diagram arrow attachment specification(s): ``", arrow]
 			}];
 
-			RaiseAssert @ MatchQ[{startPoint, endPoint}, {{_?NumberQ, _?NumberQ} ..}];
+			RaiseConfirmMatch[{startPoint, endPoint}, {{_?NumberQ, _?NumberQ} ..}];
 
 			PlacedArrow[arrow, startPoint, endPoint]
 		],
@@ -261,7 +270,8 @@ Module[{
 
 boxAttachmentPoint[
 	PlacedBox[
-		_,
+		_DiaBox,
+		placedContent: _,
 		_Rectangle,
 		borderRect:Rectangle[
 			{borderLeft_, borderBottom_},
@@ -300,6 +310,10 @@ boxAttachmentPoint[
 
 	point
 ]
+
+AddUnmatchedArgumentsHandler[boxAttachmentPoint]
+
+(*====================================*)
 
 closestSides[
 	a_Rectangle,
@@ -363,15 +377,139 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 
 (*====================================*)
 
-MakeBoxRectangles[str_?StringQ] := MakeBoxRectangles[str, {0, 0}]
+LayoutBoxContent[boxContent: _] := LayoutBoxContent[boxContent, {0, 0}]
+
+LayoutBoxContent[
+	boxContent0: _,
+	{xOffset: _?NumberQ, yOffset: _?NumberQ},
+	(* Empty space between the box's text rectangle and the box's border
+	   rectangle. *)
+	padding0 : _ : Automatic
+] := Module[{
+	boxContent = Replace[boxContent0, element:Except[_?ListQ] :> {element}],
+	xPadding, yPadding,
+	elements = {},
+	contentBoundingRect,
+	borderRect
+},
+	RaiseConfirmMatch[elements, _?ListQ];
+
+	{xPadding, yPadding} = Replace[padding0, {
+		Automatic :> {$BoxPadding, $BoxPadding},
+		padding_?NumberQ :> {padding, padding},
+		{x_?NumberQ, y_?NumberQ} :> {x, y},
+		other_ :> RaiseError["unrecognized rectangle padding specification: ``", other]
+	}];
+
+	elements = Map[
+		element |-> Replace[element, {
+			str_?StringQ | Text[str_?StringQ] :> Module[{textWidth, textHeight, rect},
+				{textWidth, textHeight} =
+					RaiseConfirm @ RenderedTextSize[str, $TextWidth];
+
+				rect = Rectangle[{0, 0}, {textWidth, textHeight}];
+				rect = AbsoluteTranslate[rect, {xPadding, yPadding}];
+				rect = AbsoluteTranslate[rect, {xOffset, yOffset}];
+
+				Bounded[{SizedText[str, rect]}, rect]
+			],
+			Column[columnElements_?ListQ] :> Module[{
+				placedColumnElements,
+				columnYOffset = 0
+			},
+				placedColumnElements = Map[
+					columnElement |-> Module[{result},
+						result = LayoutBoxContent[
+							columnElement,
+							{xOffset, yOffset + columnYOffset},
+							(* Don't include inner box padding. *)
+							0
+						];
+						RaiseConfirmMatch[
+							result,
+							{
+								{Bounded[_?ListQ, _Rectangle]...},
+								_Rectangle,
+								_Rectangle
+							}
+						];
+
+						RaiseAssert[result[[2]] === result[[3]]];
+
+						columnYOffset -= RectangleHeight[result[[2]]];
+
+						result
+					],
+					columnElements
+				];
+
+				RaiseConfirmMatch[
+					placedColumnElements,
+					{{{___Bounded}, _Rectangle, _Rectangle}...}
+				];
+
+				boundingBoxes = Part[placedColumnElements, All, 2];
+				RaiseConfirmMatch[boundingBoxes, {Rectangle[__]...}];
+
+				placedColumnElements = Part[placedColumnElements, All, 1];
+
+				RaiseConfirmMatch[
+					placedColumnElements,
+					{{Bounded[{(_SizedText)...}, _Rectangle]...}...}
+				];
+
+				placedColumnElements = Part[placedColumnElements, All, 1, 1];
+
+				RaiseConfirmMatch[placedColumnElements, {{(_SizedText)...}...}];
+
+				placedColumnElements = Flatten[placedColumnElements];
+
+				RaiseConfirmMatch[placedColumnElements, {(_SizedText)...}];
+
+				columnBoundingBox = RectangleBoundingBox[boundingBoxes];
+
+				Bounded[placedColumnElements, columnBoundingBox]
+			],
+			other_ :> RaiseError[
+				"Unrecognized diagram box content element: ``",
+				InputForm[other]
+			]
+		}],
+		boxContent
+	];
+
+	RaiseConfirmMatch[elements, { Bounded[{(_SizedText)...}, _Rectangle]... }];
+
+	contentBoundingRect = RectangleBoundingBox[Part[elements, All, 2]];
+
+	borderRect = Rectangle[
+		contentBoundingRect[[1]] - {xPadding, yPadding},
+		contentBoundingRect[[2]] + {xPadding, yPadding}
+	];
+
+	{elements, contentBoundingRect, borderRect}
+]
+
+AddUnmatchedArgumentsHandler[LayoutBoxContent]
+
+(*====================================*)
+
+MakeBoxRectangles[elementContent: _] := MakeBoxRectangles[elementContent, {0, 0}]
 
 MakeBoxRectangles[
-	str_?StringQ,
+	elementContent: _,
 	{xOffset_, yOffset_},
 	(* Empty space between the box's text rectangle and the box's border
 	   rectangle. *)
 	padding0 : _ : Automatic
 ] := Module[{
+	str = Replace[elementContent, {
+		str_?StringQ :> str,
+		other_ :> RaiseError[
+			"Unsupported diagram element content type: ``",
+			InputForm[other]
+		]
+	}],
 	xPadding, yPadding,
 	textWidth, textHeight,
 	textRect, borderRect
@@ -406,6 +544,8 @@ MakeBoxRectangles[
 	{textRect, borderRect}
 ]
 
+AddUnmatchedArgumentsHandler[MakeBoxRectangles]
+
 (*====================================*)
 
 (* Returns the total width of `row` if the boxes were layed out next to each
@@ -416,7 +556,10 @@ RowWidth[row:{___DiaBox}] := Module[{
 },
 	(* Get the border rect width for each box in this row. *)
 	boxWidths = Map[
-		box |-> RectangleWidth[MakeBoxRectangles[DiagramElementText[box]][[2]]],
+		box |-> Replace[LayoutBoxContent[DiagramElementContent[box]], {
+			{_?ListQ, contentRect_Rectangle, borderRect_Rectangle} :> RectangleWidth[borderRect],
+			other_ :> RaiseError["Unexpected LayoutBoxContent return value: ``", other]
+		}],
 		row
 	];
 
@@ -482,3 +625,25 @@ AbsoluteTranslate[
 	vector:{_, _}
 ] :=
 	Rectangle[min + vector, max + vector, opts]
+
+(*====================================*)
+
+RectangleBoundingBox[rect_Rectangle] := rect;
+
+RectangleBoundingBox[rects:{___Rectangle}] := Module[{
+	minX, minY, maxX, maxY
+},
+	RaiseConfirmMatch[
+		rects,
+		{Rectangle[{_?NumberQ, _?NumberQ}, {_?NumberQ, _?NumberQ}]...}
+	];
+
+	minX = Min @ Part[rects, All, 1, 1];
+	minY = Min @ Part[rects, All, 1, 2];
+	maxX = Max @ Part[rects, All, 2, 1];
+	maxY = Max @ Part[rects, All, 2, 2];
+
+	Rectangle[{minX, minY}, {maxX, maxY}]
+]
+
+AddUnmatchedArgumentsHandler[RectangleBoundingBox]

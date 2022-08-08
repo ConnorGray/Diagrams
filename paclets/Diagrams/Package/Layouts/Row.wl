@@ -1,7 +1,7 @@
 Package["Diagrams`Layouts`Row`"]
 
 PackageUse[Diagrams -> {
-	Diagram, DiaBox, DiaArrow, DiagramElementText, DiagramElementId,
+	Diagram, DiaBox, DiaArrow, DiagramElementContent, DiagramElementId,
 	PlacedDiagram,
 	Layouts -> DoRowLayout,
 	Layout -> {
@@ -37,11 +37,11 @@ DoRowLayout[
 		Replace[{
 			box_DiaBox :> Module[{
 				id = DiagramElementId[box],
-				text = DiagramElementText[box],
+				content = DiagramElementContent[box],
 				textRect, borderRect,
 				placedBox
 			},
-				{textRect, borderRect} = MakeBoxRectangles[text, {xOffset, 0}];
+				{textRect, borderRect} = MakeBoxRectangles[content, {xOffset, 0}];
 
 				placedBox = PlacedBox[box, textRect, borderRect];
 

@@ -1,7 +1,8 @@
 Package["Diagrams`Concepts`"]
 
 PackageExport[{
-	DiaFunctionPointer
+	DiaFunctionPointer,
+	DiaPaclet
 }]
 
 (* TODO:
@@ -15,7 +16,15 @@ PackageExport[{
 *)
 DiaFunctionPointer::usage = "DiaFunctionPointer[libA -> libB, name] represents pointer from libA to the function name in libB."
 
-(*====================================*)
+DiaPaclet::usage = "DiaPaclet[paclet] represents a Wolfram paclet."
+
+
+PackageUse[Diagrams -> {
+	DiaBox, DiaArrow, AttachmentQ, MakeDiagramPrimitives,
+	Render -> {SizedText},
+	Errors -> {RaiseError, RaiseAssert, RaiseConfirmMatch}
+}]
+
 
 $functionPointerArrowheads = Arrowheads[{
 	{-Automatic, Automatic, {Graphics @ {
@@ -49,4 +58,41 @@ DiaFunctionPointer /: MakeDiagramPrimitives[
 	RaiseAssert[AttachmentQ[libA] && AttachmentQ[libB]];
 
 	DiaArrow[libA -> libB, name, $functionPointerArrowheads]
+]
+
+(*====================================*)
+
+DiaPaclet /: MakeDiagramPrimitives[
+	diaPaclet_DiaPaclet
+] := Module[{
+	paclet,
+	pacletName,
+	pacletVersion
+},
+	paclet = Replace[diaPaclet, {
+		DiaPaclet[paclet_] :> paclet,
+		_ :> RaiseError["unrecognized DiaPaclet specification: ``", diaPaclet]
+	}];
+
+	{pacletName, pacletVersion} = Replace[paclet, {
+		name_?StringQ :> {name, Missing["NotAvailable"]},
+		pacletObj_?PacletObjectQ :> {
+			RaiseConfirmMatch[pacletObj["Name"], _?StringQ],
+			pacletObj["Version"]
+		},
+		_ :> RaiseError["unexpected DiaPaclet paclet specification: ``", paclet]
+	}];
+
+	DiaBox[
+		pacletName,
+		Column[{
+			Text[pacletName],
+			If[StringQ[pacletVersion],
+				Text[RaiseConfirmMatch[paclet["Version"], _?StringQ]]
+				,
+				Nothing
+			]
+		}],
+		Background -> Lighter[Blend[{Green, Blue}], 0.7]
+	]
 ]

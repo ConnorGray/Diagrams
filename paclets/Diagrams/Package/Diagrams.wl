@@ -1,5 +1,6 @@
 Package["Diagrams`"]
 
+PackageModule["Concepts"]
 PackageModule["Errors"]
 PackageModule["Layout"]
 PackageModule["Layouts"]
@@ -27,7 +28,7 @@ PackageExport[{
 	(* Operations querying data in a Diagram[..] or diagram element *)
 	DiagramTitle, DiagramBoxes, DiagramArrows,
 
-	DiagramElementId, DiagramElementText,
+	DiagramElementId, DiagramElementContent,
 
 	DiagramArrowIds,
 
@@ -76,7 +77,7 @@ DiagramBoxes::usage = "DiagramBoxes[diagram]"
 DiagramArrows::usage = "DiagramArrows[diagram]"
 
 DiagramElementId::usage = "DiagramElementId[elem] will return the unique identifer associated with a diagram element."
-DiagramElementText::usage = "DiagramElementText[elem] will return the textual description associated with a diagram element, if applicable."
+DiagramElementContent::usage = "DiagramElementContent[elem] will return the textual or graphical content associated with a diagram element, if applicable."
 
 DiagramArrowIds::usage = "DiagramArrowIds[arrow] will return the id of the start and end element connected by arrow."
 
@@ -169,7 +170,7 @@ validatedMakeDiagramPrimitives[args___] := Module[{result},
 	result = MakeDiagramPrimitives[args];
 
 	Replace[result, {
-		DiaBox[id_?StringQ, Optional[text_?StringQ, None], ___?OptionQ] :> result,
+		DiaBox[id_?StringQ, Optional[content:Except[_?OptionQ], None], ___?OptionQ] :> result,
 		(* FIXME: Validate these attachment specifications proactively. *)
 		DiaArrow[lhs_ -> rhs_, _?StringQ, Optional[_, None], ___?OptionQ] :> result,
 		_ :> RaiseError[
@@ -418,7 +419,7 @@ DiagramGraph[
 	vertices = Cases[
 		boxes,
 		box_DiaBox :> Replace[box, {
-			DiaBox[id_?StringQ, ___?OptionQ] :> id,
+			DiaBox[id_?StringQ, Repeated[Except[_?OptionQ], {0, 1}], ___?OptionQ] :> id,
 			other_ :> RaiseError["unexpected DiaBox structure: ``", other]
 		}]
 	];
@@ -559,19 +560,24 @@ DiagramArrows[args___] :=
 
 (*====================================*)
 
-DiagramElementId[DiaBox[id_?StringQ, ___?OptionQ]] := id
+DiagramElementId[DiaBox[
+	id_?StringQ,
+	Optional[content:Except[_?OptionQ], None],
+	___?OptionQ
+]] := id
 
 DiagramElementId[args___] :=
 	RaiseError["unexpected arguments to DiagramElementId: ``", InputForm[{args}]]
 
 (*====================================*)
 
-DiagramElementText[DiaBox[id_?StringQ, ___?OptionQ]] := id
+DiagramElementContent[DiaBox[id_?StringQ,                            ___?OptionQ]] := id
+DiagramElementContent[DiaBox[id_?StringQ, content:Except[_?OptionQ], ___?OptionQ]] := content
 
-DiagramElementText[DiaArrow[_ -> _, id_?StringQ, Optional[_, None], ___?OptionQ]] := id
+DiagramElementContent[DiaArrow[_ -> _, id_?StringQ, Optional[_, None], ___?OptionQ]] := id
 
-DiagramElementText[args___] :=
-	RaiseError["unexpected arguments to DiagramElementText: ``", InputForm[{args}]]
+DiagramElementContent[args___] :=
+	RaiseError["unexpected arguments to DiagramElementContent: ``", InputForm[{args}]]
 
 (*====================================*)
 
