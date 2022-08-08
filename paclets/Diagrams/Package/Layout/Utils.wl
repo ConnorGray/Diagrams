@@ -9,6 +9,8 @@ PackageExport[{
 	LayoutBoxContent,
 	MakeBoxRectangles,
 
+	PlacedBoxBorderRectangle,
+
 	AbsoluteTranslate,
 	RectangleBoundingBox,
 	Bounded
@@ -109,8 +111,8 @@ PlaceArrowsBasedOnBoxes[
 			];
 
 			{autoStartSide, autoEndSide} = closestSides[
-				startBox[[3]],
-				endBox[[3]],
+				PlacedBoxBorderRectangle[startBox],
+				PlacedBoxBorderRectangle[endBox],
 				sides
 			];
 
@@ -160,8 +162,8 @@ PlaceArrowsBasedOnBoxes[
 			];
 
 			{autoStartSide, autoEndSide} = closestSides[
-				startBox[[3]],
-				endBox[[3]],
+				PlacedBoxBorderRectangle[startBox],
+				PlacedBoxBorderRectangle[endBox],
 				sides
 			];
 
@@ -175,10 +177,10 @@ PlaceArrowsBasedOnBoxes[
 				(_?StringQ -> _?StringQ) :> {startPoint, endPoint},
 				(_?StringQ -> {_?StringQ, Nearest}) :> {
 					startPoint,
-					RegionNearest[endBox[[3]], startPoint]
+					RegionNearest[PlacedBoxBorderRectangle[endBox], startPoint]
 				},
 				({_?StringQ, Nearest} -> _?StringQ) :> {
-					RegionNearest[startBox[[3]], endPoint],
+					RegionNearest[PlacedBoxBorderRectangle[startBox], endPoint],
 					endPoint
 				},
 				{{lhs_?StringQ, Nearest} -> {rhs_?StringQ, Nearest}} :> RaiseError[
@@ -575,6 +577,19 @@ RowWidth[row:{___DiaBox}] := Module[{
 
 	Total[boxWidths] + totalMargin
 ]
+
+(*====================================*)
+
+PlacedBoxBorderRectangle[
+	PlacedBox[
+		_DiaBox,
+		_,
+		_Rectangle, (* Content bounding rectangle. *)
+		borderRect_Rectangle
+	]
+] := borderRect
+
+AddUnmatchedArgumentsHandler[PlacedBoxBorderRectangle]
 
 (*====================================*)
 (* Utility functions                  *)
