@@ -124,7 +124,10 @@ Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 
 Options[Diagram] = {
 	DiagramLayout -> Automatic,
-	DiagramTheme -> Automatic
+	DiagramTheme -> Automatic,
+
+	(* Graphics options *)
+	Axes :> $DebugDiagramLayout
 };
 
 (*--------------------------------------*)
@@ -214,7 +217,11 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 		theme = RaiseConfirm @ Lookup[Options[diagram], DiagramTheme, Automatic],
 		placed,
 		graphics,
-		title = DiagramTitle[diagram]
+		title = DiagramTitle[diagram],
+		axes = Replace[Lookup[Options[diagram], Axes], {
+			_?MissingQ | Automatic :> TrueQ[$DebugDiagramLayout],
+			other_ :> other
+		}]
 	},
 		placed = LayoutDiagram[diagram];
 		graphics = RenderPlacedDiagramToGraphics[placed, theme];
@@ -225,9 +232,11 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 			sizedText_SizedText :> makeSizedTextInset[sizedText]
 		];
 
+		graphics = Graphics[graphics, Axes -> axes];
+
 		If[StringQ[title],
 			Labeled[
-				Graphics[graphics],
+				graphics,
 				title,
 				Top,
 				Frame -> True,
@@ -237,7 +246,7 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 				Spacings -> 4
 			]
 			,
-			Graphics[graphics]
+			graphics
 		]
 	],
 	"alpha-v2" :> Module[{placed, graphics},
