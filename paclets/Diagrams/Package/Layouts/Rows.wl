@@ -8,8 +8,8 @@ PackageUse[Diagrams -> {
 		$Margin,
 		PlacedBox,
 		Utils -> {
-			RowWidth, LayoutBoxContent, PlaceArrowsBasedOnBoxes,
-			GroupBoxesByGraphRow
+			MakePlacedBox, RowWidth, PlaceArrowsBasedOnBoxes,
+			PlacedBoxBorderRectangle, GroupBoxesByGraphRow
 		}
 	},
 	Utils -> {RectangleWidth, RectangleHeight},
@@ -59,19 +59,13 @@ DoRowsLayout[
 					Replace[{
 						box_DiaBox :> Module[{
 							id = DiagramElementId[box],
-							content = DiagramElementContent[box],
-							placedContent, contentRect, borderRect,
+							borderRect,
 							placedBox
 						},
-							{placedContent, contentRect, borderRect} = LayoutBoxContent[
-								content,
-								{xOffset, yOffset}
-							];
+							placedBox = MakePlacedBox[box, {xOffset, yOffset}];
 
-							placedBox = PlacedBox[box, placedContent, contentRect, borderRect];
-
+							borderRect = PlacedBoxBorderRectangle[placedBox];
 							xOffset += RectangleWidth[borderRect] + $Margin;
-
 							rowMaxHeight = Max[rowMaxHeight, RectangleHeight[borderRect]];
 
 							AssociateTo[placedBoxes, id -> placedBox];

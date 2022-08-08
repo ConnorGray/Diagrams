@@ -6,6 +6,7 @@ PackageExport[{
 
 	RowWidth,
 
+	MakePlacedBox,
 	LayoutBoxContent,
 
 	PlacedBoxBorderRectangle,
@@ -375,6 +376,27 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 
 	boxesById
 ]
+
+(*====================================*)
+
+MakePlacedBox[
+	box: _DiaBox,
+	offset: {_?NumberQ, _?NumberQ} : {0, 0},
+	padding: _ : Automatic
+] := Module[{
+	content,
+	placedContent,
+	contentRect, borderRect
+},
+	content = DiagramElementContent[box];
+
+	{placedContent, contentRect, borderRect} =
+		LayoutBoxContent[content, offset, padding];
+
+	PlacedBox[box, placedContent, contentRect, borderRect]
+]
+
+AddUnmatchedArgumentsHandler[MakePlacedBox]
 
 (*====================================*)
 

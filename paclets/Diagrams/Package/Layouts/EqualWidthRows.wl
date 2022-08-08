@@ -7,7 +7,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin, $BoxPadding, PlacedBox,
 		Utils -> {
-			RowWidth, GroupBoxesByGraphRow, LayoutBoxContent,
+			MakePlacedBox, PlacedBoxBorderRectangle, RowWidth, GroupBoxesByGraphRow,
 			PlaceArrowsBasedOnBoxes
 		}
 	},
@@ -63,13 +63,11 @@ DoEqualWidthRowsLayout[
 					Replace[{
 						box_DiaBox :> Module[{
 							id = DiagramElementId[box],
-							content = DiagramElementContent[box],
-							placedContent,
-							contentRect, borderRect,
+							borderRect,
 							placedBox
 						},
-							{placedContent, contentRect, borderRect} = LayoutBoxContent[
-								content,
+							placedBox = MakePlacedBox[
+								box,
 								{xOffset, yOffset},
 								{
 									(* Add extra padding to the X-axis so that
@@ -80,10 +78,8 @@ DoEqualWidthRowsLayout[
 								}
 							];
 
-							placedBox = PlacedBox[box, placedContent, contentRect, borderRect];
-
+							borderRect = PlacedBoxBorderRectangle[placedBox];
 							xOffset += RectangleWidth[borderRect] + $Margin;
-
 							rowMaxHeight = Max[rowMaxHeight, RectangleHeight[borderRect]];
 
 							AssociateTo[placedBoxes, id -> placedBox];
