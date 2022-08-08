@@ -7,7 +7,8 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		PlacedBox,
 		Utils -> {
-			RowWidth, MakeBoxRectangles,PlaceArrowsBasedOnBoxes, GroupBoxesByGraphRow
+			RowWidth, LayoutBoxContent, PlaceArrowsBasedOnBoxes,
+			GroupBoxesByGraphRow
 		}
 	},
 	Utils -> {RectangleWidth, RectangleHeight},
@@ -53,15 +54,19 @@ DoGraphLayout[
 			box_DiaBox :> Module[{
 				id = DiagramElementId[box],
 				content = DiagramElementContent[box],
+				placedContent,
 				borderLeft, borderBottom,
-				textRect, borderRect,
+				contentRect, borderRect,
 				placedBox
 			},
 				{borderLeft, borderBottom} = {150, 100} * RaiseConfirm @ Lookup[embedding, id];
 
-				{textRect, borderRect} = MakeBoxRectangles[content, {borderLeft, borderBottom}];
+				{placedContent, contentRect, borderRect} = LayoutBoxContent[
+					content,
+					{borderLeft, borderBottom}
+				];
 
-				placedBox = PlacedBox[box, textRect, borderRect];
+				placedBox = PlacedBox[box, placedContent, contentRect, borderRect];
 
 				AssociateTo[placedBoxes, id -> placedBox];
 			],

@@ -7,7 +7,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin,
 		PlacedBox,
-		Utils -> {MakeBoxRectangles, PlaceArrowsBasedOnBoxes}
+		Utils -> {LayoutBoxContent, PlaceArrowsBasedOnBoxes}
 	},
 	Utils -> {RectangleWidth},
 	Errors -> {RaiseError, RaiseAssert}
@@ -38,12 +38,16 @@ DoRowLayout[
 			box_DiaBox :> Module[{
 				id = DiagramElementId[box],
 				content = DiagramElementContent[box],
-				textRect, borderRect,
+				placedContent,
+				contentRect, borderRect,
 				placedBox
 			},
-				{textRect, borderRect} = MakeBoxRectangles[content, {xOffset, 0}];
+				{placedContent, contentRect, borderRect} = LayoutBoxContent[
+					content,
+					{xOffset, 0}
+				];
 
-				placedBox = PlacedBox[box, textRect, borderRect];
+				placedBox = PlacedBox[box, placedContent, contentRect, borderRect];
 
 				xOffset += RectangleWidth[borderRect] + $Margin;
 

@@ -10,7 +10,7 @@ PackageExport[{
 	$DebugDiagramLayout
 }]
 
-PlacedBox::usage = "PlacedBox[box, textRect, borderRect]"
+PlacedBox::usage = "PlacedBox[box, placedContent, contentRect, borderRect]"
 PlacedArrow::usage = "PlacedBox[arrow, startPoint, endPoint]"
 
 $TextWidth = 300.0;

@@ -7,7 +7,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin, $BoxPadding, PlacedBox,
 		Utils -> {
-			RowWidth, GroupBoxesByGraphRow, MakeBoxRectangles,
+			RowWidth, GroupBoxesByGraphRow, LayoutBoxContent,
 			PlaceArrowsBasedOnBoxes
 		}
 	},
@@ -64,10 +64,11 @@ DoEqualWidthRowsLayout[
 						box_DiaBox :> Module[{
 							id = DiagramElementId[box],
 							content = DiagramElementContent[box],
-							textRect, borderRect,
+							placedContent,
+							contentRect, borderRect,
 							placedBox
 						},
-							{textRect, borderRect} = MakeBoxRectangles[
+							{placedContent, contentRect, borderRect} = LayoutBoxContent[
 								content,
 								{xOffset, yOffset},
 								{
@@ -79,7 +80,7 @@ DoEqualWidthRowsLayout[
 								}
 							];
 
-							placedBox = PlacedBox[box, textRect, borderRect];
+							placedBox = PlacedBox[box, placedContent, contentRect, borderRect];
 
 							xOffset += RectangleWidth[borderRect] + $Margin;
 

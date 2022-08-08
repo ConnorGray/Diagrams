@@ -7,7 +7,6 @@ PackageExport[{
 	RowWidth,
 
 	LayoutBoxContent,
-	MakeBoxRectangles,
 
 	PlacedBoxBorderRectangle,
 
@@ -502,6 +501,8 @@ AddUnmatchedArgumentsHandler[LayoutBoxContent]
 
 (*====================================*)
 
+(* NOTE: This function has been superceded by LayoutBoxContent. Kept for the
+	time being in case this algorithm is useful again.
 MakeBoxRectangles[elementContent: _] := MakeBoxRectangles[elementContent, {0, 0}]
 
 MakeBoxRectangles[
@@ -553,6 +554,7 @@ MakeBoxRectangles[
 ]
 
 AddUnmatchedArgumentsHandler[MakeBoxRectangles]
+*)
 
 (*====================================*)
 
