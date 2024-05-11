@@ -500,6 +500,11 @@ LayoutBoxContent[
 
 				Bounded[placedColumnElements, columnBoundingBox]
 			],
+           graphic_Graphics :> Module[{rect},
+               rect = Rectangle[{xOffset, yOffset}, {xOffset + 20, yOffset + 20}];
+
+               Bounded[{graphic}, rect]
+           ],
 			other_ :> RaiseError[
 				"Unrecognized diagram box content element: ``",
 				InputForm[other]

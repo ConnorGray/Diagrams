@@ -80,7 +80,17 @@ RenderPlacedDiagramToGraphics[
 				}];
 
 				(* FIXME: Re-implement usage of the "BoxTextColor" theme property. *)
-				contentGraphics = placedContent /. Bounded[c_?ListQ, _Rectangle] :> c;
+				contentGraphics = ReplaceRepeated[placedContent, {
+					Bounded[{g_Graphics}, rect_] :> Echo @ {
+						Inset[
+							g,
+							RectangleCenter[rect],
+							Automatic,
+							RectangleSize[rect]
+						]
+					},
+					Bounded[c_?ListQ, _Rectangle] :> c
+				}];
 
 				RaiseConfirmMatch[contentGraphics, _?ListQ];
 
