@@ -8,11 +8,6 @@ PackageExport[{
 	StringEncodingDiagram,
 	BinaryLayoutDiagram,
 
-	(*-----------*)
-	(* Utilities *)
-	(*-----------*)
-	EncodedTile,
-
 	(*----------*)
 	(* Concepts *)
 	(*----------*)
@@ -101,9 +96,9 @@ StringEncodingDiagram[
 
 (*========================================================*)
 
-SetFallthroughError[EncodedTile]
+SetFallthroughError[encodedTile]
 
-EncodedTile[content_, size_, color0_, offset_, styleOpts___] :=
+encodedTile[content_, size_, color0_, offset_, styleOpts___] :=
 Module[{
 	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]]
 },
@@ -131,16 +126,16 @@ binaryLayoutDiagramRow[
 		{yOffset, elem} |-> Module[{expr, incr},
 			{expr, incr} = ConfirmReplace[elem, {
 				DiaBit[value:(0|1)] :> (
-					{EncodedTile["", 10, GrayLevel[Clip[value, {0.15,0.95}]], yOffset, FontSize -> 8], 10}
+					{encodedTile["", 10, GrayLevel[Clip[value, {0.15,0.95}]], yOffset, FontSize -> 8], 10}
 				),
 				DiaByte[value_?IntegerQ] /; NonNegative[value] && value <= 255 :> (
-					{EncodedTile[value, 80, Brown, yOffset, FontSize -> 32], 80}
+					{encodedTile[value, 80, Brown, yOffset, FontSize -> 32], 80}
 				),
 				DiaCodepoint[value_?IntegerQ] :> (
-					{EncodedTile[value, 80, Darker[Blue], yOffset, FontSize -> 32], 80}
+					{encodedTile[value, 80, Darker[Blue], yOffset, FontSize -> 32], 80}
 				),
 				DiaCharacter[char_?StringQ, byteWidth_?IntegerQ] :> (
-					{EncodedTile[char, 80, Blue, yOffset, FontSize -> 32], 80}
+					{encodedTile[char, 80, Blue, yOffset, FontSize -> 32], 80}
 				)
 			}];
 			{expr, yOffset + incr}
