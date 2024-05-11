@@ -10,6 +10,7 @@ PackageExport[{
 	LayoutBoxContent,
 
 	PlacedBoxBorderRectangle,
+	ContentQ,
 
 	AbsoluteTranslate,
 	RectangleBoundingBox,
@@ -484,16 +485,16 @@ LayoutBoxContent[
 
 				RaiseConfirmMatch[
 					placedColumnElements,
-					{{Bounded[{(_SizedText)...}, _Rectangle]...}...}
+					{{Bounded[{___?ContentQ}, _Rectangle]...}...}
 				];
 
 				placedColumnElements = Part[placedColumnElements, All, 1, 1];
 
-				RaiseConfirmMatch[placedColumnElements, {{(_SizedText)...}...}];
+				RaiseConfirmMatch[placedColumnElements, {{___?ContentQ}...}];
 
 				placedColumnElements = Flatten[placedColumnElements];
 
-				RaiseConfirmMatch[placedColumnElements, {(_SizedText)...}];
+				RaiseConfirmMatch[placedColumnElements, {___?ContentQ}];
 
 				columnBoundingBox = RectangleBoundingBox[boundingBoxes];
 
@@ -507,7 +508,7 @@ LayoutBoxContent[
 		boxContent
 	];
 
-	RaiseConfirmMatch[elements, { Bounded[{(_SizedText)...}, _Rectangle]... }];
+	RaiseConfirmMatch[elements, { Bounded[{___?ContentQ}, _Rectangle]... }];
 
 	contentBoundingRect = RectangleBoundingBox[Part[elements, All, 2]];
 
@@ -614,6 +615,14 @@ PlacedBoxBorderRectangle[
 ] := borderRect
 
 AddUnmatchedArgumentsHandler[PlacedBoxBorderRectangle]
+
+(*====================================*)
+
+ContentQ[expr_] :=
+	MatchQ[expr, Alternatives[
+		SizedText[_?StringQ, _Rectangle],
+		Graphics[___]
+	]]
 
 (*====================================*)
 (* Utility functions                  *)
