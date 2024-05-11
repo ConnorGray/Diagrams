@@ -8,7 +8,7 @@ PackageUse[Diagrams -> {
 	PlacedDiagram, RenderPlacedDiagramToGraphics, DiaBox, DiaArrow,
 	DiagramElementContent,
 	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow, Utils -> Bounded},
-	Utils -> {RectangleSize},
+	Utils -> {RectangleSize, RectangleCenter},
 	Errors -> {RaiseError, RaiseConfirm, RaiseConfirmMatch}
 }]
 
