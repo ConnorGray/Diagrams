@@ -5,7 +5,15 @@ PackageExport[{
 	AddUnmatchedArgumentsHandler,
 
 	$RaiseErrorTag,
-	$ExitOnExceptionPreHandler
+	$ExitOnExceptionPreHandler,
+
+	(*================================*)
+	(* Reexported                     *)
+	(*================================*)
+	CreateErrorType,
+	Raise,
+	SetFallthroughError,
+	ConfirmReplace
 }]
 
 RaiseError::usage  = "RaiseError[formatStr, args___] throws a Failure object indicating an error encountered during the build process.";
@@ -20,6 +28,13 @@ $RaiseErrorTag
 $ExitOnExceptionPreHandler
 
 PackageUse[Diagrams -> Diagrams]
+
+Needs["Wolfram`ErrorTools`"]
+
+CreateErrorType     = Symbol["Wolfram`ErrorTools`CreateErrorType"]
+Raise               = Symbol["Wolfram`ErrorTools`Raise"]
+SetFallthroughError = Symbol["Wolfram`ErrorTools`SetFallthroughError"]
+ConfirmReplace      = Symbol["Wolfram`ErrorTools`ConfirmReplace"]
 
 (**********************************************************)
 

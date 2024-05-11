@@ -6,6 +6,7 @@ PackageModule["Layout"]
 PackageModule["Layouts"]
 PackageModule["Render"]
 PackageModule["Utils"]
+PackageModule["Misc"]
 
 PackageExport[{
 	Diagrams,
