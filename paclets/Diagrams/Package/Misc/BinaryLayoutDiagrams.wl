@@ -27,45 +27,57 @@ CreateErrorType[DiagramError, {}]
 
 (*========================================================*)
 
+$tileSize = 80
+
 SetFallthroughError[StringEncodingDiagram]
 
 StringEncodingDiagram[
 	text_?StringQ,
 	layers : {___}
 ] := Module[{
+	encoding = "UTF-8",
 	handle,
-	directives = {},
-	yOffset = 0
+	directives = {}
 },
 	handle["Characters"] := Module[{},
-		DiaCharacter[#, 1] & /@ Characters[text]
+		Map[
+			char |-> DiaCharacter[
+				char,
+				(* Calculate width in bytes *)
+				Length @ ToCharacterCode[char, encoding]
+			],
+			Characters[text]
+		]
 	];
 
 	handle["Codepoints"] := Module[{},
 		Map[
-			(* FIXME:
-				Not guaranteed to fit in one byte *)
-			DiaCodepoint,
-			ToCharacterCode[text]
+			codepoint |-> DiaCodepoint[
+				codepoint,
+				(* Calculate width in bytes *)
+				Length @ ToCharacterCode[
+					FromCharacterCode[codepoint, "Unicode"],
+					encoding
+				]
+			],
+			ToCharacterCode[text, "Unicode"]
 		]
 	];
 
 	handle["Bytes"] := Module[{},
 		Map[
 			DiaByte,
-			ToCharacterCode[text, "UTF-8"]
+			ToCharacterCode[text, encoding]
 		]
 	];
 
 	handle["Bits"] := Module[{},
 		Flatten @ Map[
-			(* FIXME:
-				Codepoints are not guaranteed to fit in 8 bits *)
-			codepoint |-> Map[
-					DiaBit,
-					IntegerDigits[codepoint, 2, 8]
-				],
-			ToCharacterCode[text]
+			byte |-> Map[
+				DiaBit,
+				IntegerDigits[byte, 2, 8]
+			],
+			ToCharacterCode[text, encoding]
 		]
 	];
 
@@ -98,18 +110,24 @@ StringEncodingDiagram[
 
 SetFallthroughError[encodedTile]
 
-encodedTile[content_, size_, color0_, offset_, styleOpts___] :=
+encodedTile[
+	content_,
+	width_?NumberQ,
+	color0_,
+	xOffset_?IntegerQ,
+	styleOpts___
+] :=
 Module[{
 	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]]
 },
 	{
 		color,
 		EdgeForm[{Thickness[0.005], Gray}],
-		Rectangle[{offset, 0}, {offset + size, size}],
+		Rectangle[{xOffset, 0}, {xOffset + $tileSize * width, $tileSize}],
 		ColorNegate[color],
 		Text[
 			Style[content, styleOpts, Bold, FontFamily -> "PT Mono"],
-			{offset + size/2, size/2}
+			{xOffset + ($tileSize * width)/2, $tileSize/2}
 		]
 	}
 ];
@@ -123,22 +141,40 @@ binaryLayoutDiagramRow[
 ] := Module[{
 },
 	FoldPairList[
-		{yOffset, elem} |-> Module[{expr, incr},
+		{xOffset, elem} |-> Module[{expr, incr},
 			{expr, incr} = ConfirmReplace[elem, {
 				DiaBit[value:(0|1)] :> (
-					{encodedTile["", 10, GrayLevel[Clip[value, {0.15,0.95}]], yOffset, FontSize -> 8], 10}
+					{
+						encodedTile["", 1/8, GrayLevel[Clip[value, {0.15,0.95}]], xOffset, FontSize -> 8],
+						10
+					}
 				),
 				DiaByte[value_?IntegerQ] /; NonNegative[value] && value <= 255 :> (
-					{encodedTile[value, 80, Brown, yOffset, FontSize -> 32], 80}
+					{
+						encodedTile[value, 1, Brown, xOffset, FontSize -> 32],
+						$tileSize
+					}
 				),
-				DiaCodepoint[value_?IntegerQ] :> (
-					{encodedTile[value, 80, Darker[Blue], yOffset, FontSize -> 32], 80}
+				DiaCodepoint[
+					value_?IntegerQ,
+					width : _?IntegerQ : 1
+				] :> (
+					{
+						encodedTile[value, width, Darker[Blue], xOffset, FontSize -> 32],
+						width * $tileSize
+					}
 				),
-				DiaCharacter[char_?StringQ, byteWidth_?IntegerQ] :> (
-					{encodedTile[char, 80, Blue, yOffset, FontSize -> 32], 80}
+				DiaCharacter[
+					char_?StringQ,
+					width : _?IntegerQ : 1
+				] :> (
+					{
+						encodedTile[char, width, Blue, xOffset, FontSize -> 32],
+						width * $tileSize
+					}
 				)
 			}];
-			{expr, yOffset + incr}
+			{expr, xOffset + incr}
 		],
 		0,
 		row
@@ -168,11 +204,9 @@ BinaryLayoutDiagram[
 			(* FIXME:
 				Horrible hack to guess height of row *)
 			rowHeight = ConfirmReplace[First[row, row], {
-				_DiaBit -> 10,
-				_DiaByte -> 80,
-				_DiaCharacter -> 80,
-				_DiaCodepoint -> 80,
-				Delimiter -> 20
+				_DiaBit -> $tileSize / 8,
+				_DiaByte | _DiaCharacter | _DiaCodepoint -> $tileSize,
+				Delimiter -> $tileSize / 4
 			}];
 
 			graphic = ConfirmReplace[row, {
@@ -187,7 +221,7 @@ BinaryLayoutDiagram[
 			If[label =!= None,
 				graphic = {
 					graphic,
-					Translate[label, {-80, yOffset + rowHeight/2}]
+					Translate[label, {-$tileSize, yOffset + rowHeight/2}]
 				}
 			];
 
