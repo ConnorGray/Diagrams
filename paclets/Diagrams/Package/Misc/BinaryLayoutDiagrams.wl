@@ -97,7 +97,12 @@ StringEncodingDiagram[
 	};*)
 	handle[Delimiter] := Delimiter;
 
-	handle[Labeled[row_, label_]] := Labeled[handle[row], label];
+	handle[Labeled[row_, label_]] := (
+		Labeled[
+			handle[row],
+			Style[label, FontSize -> 20]
+		]
+	);
 
 	handle[other_] := (
 		Raise[DiagramError, "Bad layer name: ``", other];
