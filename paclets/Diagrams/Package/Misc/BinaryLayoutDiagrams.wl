@@ -11,6 +11,7 @@ PackageExport[{
 	(*----------*)
 	(* Concepts *)
 	(*----------*)
+	DiaString,
 	DiaCharacter,
 	DiaCodepoint,
 	DiaByte,
@@ -39,6 +40,14 @@ StringEncodingDiagram[
 	handle,
 	directives = {}
 },
+	handle["String"] := Module[{},
+		{DiaString[
+			text,
+			(* Calculate width in bytes *)
+			Length @ ToCharacterCode[text, encoding]
+		]}
+	];
+
 	handle["Characters"] := Module[{},
 		Map[
 			char |-> DiaCharacter[
@@ -176,6 +185,21 @@ binaryLayoutDiagramRow[
 						encodedTile[char, width, Blue, xOffset, FontSize -> 32],
 						width * $tileSize
 					}
+				),
+				DiaString[
+					text_?StringQ,
+					width_?IntegerQ
+				] :> (
+					{
+						encodedTile[
+							text,
+							width,
+							GrayLevel[0.95],
+							xOffset,
+							FontSize -> 32
+						],
+						width * $tileSize
+					}
 				)
 			}];
 			{expr, xOffset + incr}
@@ -209,7 +233,9 @@ BinaryLayoutDiagram[
 				Horrible hack to guess height of row *)
 			rowHeight = ConfirmReplace[First[row, row], {
 				_DiaBit -> $tileSize / 8,
-				_DiaByte | _DiaCharacter | _DiaCodepoint -> $tileSize,
+				_DiaByte | _DiaCharacter | _DiaCodepoint | _DiaString -> (
+					$tileSize
+				),
 				Delimiter -> $tileSize / 4
 			}];
 
