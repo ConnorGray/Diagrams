@@ -151,7 +151,7 @@ binaryLayoutDiagramRow[
 				),
 				DiaByte[value_?IntegerQ] /; NonNegative[value] && value <= 255 :> (
 					{
-						encodedTile[value, 1, Brown, xOffset, FontSize -> 32],
+						encodedTile[value, 1, Brown, xOffset, FontSize -> 24],
 						$tileSize
 					}
 				),
@@ -160,7 +160,11 @@ binaryLayoutDiagramRow[
 					width : _?IntegerQ : 1
 				] :> (
 					{
-						encodedTile[value, width, Darker[Blue], xOffset, FontSize -> 32],
+						encodedTile[
+							(* "U+" <> ToUpperCase @ IntegerString[value, 16], *)
+							value,
+							width, Darker[Blue], xOffset, FontSize -> 24
+						],
 						width * $tileSize
 					}
 				),
