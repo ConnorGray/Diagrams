@@ -19,7 +19,10 @@ PackageExport[{
 }]
 
 PackageUse[Diagrams -> {
-	Errors -> {CreateErrorType, Raise, ConfirmReplace, SetFallthroughError}
+	Errors -> {
+		CreateErrorType, Raise, Handle, ConfirmReplace, SetFallthroughError,
+		RaiseConfirmMatch
+	}
 }]
 
 (*========================================================*)
@@ -30,13 +33,21 @@ CreateErrorType[DiagramError, {}]
 
 $tileSize = 80
 
+Options[StringEncodingDiagram] = {
+	CharacterEncoding -> "UTF-8"
+}
+
 SetFallthroughError[StringEncodingDiagram]
 
 StringEncodingDiagram[
 	text_?StringQ,
-	layers : {___}
-] := Module[{
-	encoding = "UTF-8",
+	layers : {___},
+	OptionsPattern[]
+] := Handle[_Failure] @ Module[{
+	encoding = RaiseConfirmMatch[
+		OptionValue[CharacterEncoding],
+		_?StringQ
+	],
 	handle,
 	directives = {}
 },

@@ -12,8 +12,10 @@ PackageExport[{
 	(*================================*)
 	CreateErrorType,
 	Raise,
+	Handle,
 	SetFallthroughError,
-	ConfirmReplace
+	ConfirmReplace,
+	RaiseConfirmMatch
 }]
 
 RaiseError::usage  = "RaiseError[formatStr, args___] throws a Failure object indicating an error encountered during the build process.";
@@ -33,8 +35,10 @@ Needs["Wolfram`ErrorTools`"]
 
 CreateErrorType     = Symbol["Wolfram`ErrorTools`CreateErrorType"]
 Raise               = Symbol["Wolfram`ErrorTools`Raise"]
+Handle              = Symbol["Wolfram`ErrorTools`Handle"]
 SetFallthroughError = Symbol["Wolfram`ErrorTools`SetFallthroughError"]
 ConfirmReplace      = Symbol["Wolfram`ErrorTools`ConfirmReplace"]
+RaiseConfirmMatch   = Symbol["Wolfram`ErrorTools`RaiseConfirmMatch"]
 
 (**********************************************************)
 
