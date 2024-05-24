@@ -49,7 +49,12 @@ StringEncodingDiagram[
 		_?StringQ
 	],
 	handle,
-	directives = {}
+	directives = {},
+	(* TODO:
+		Improve this heuristic to be more accurate when the StringLength
+		is not the same as the number of vertical columns shown in the
+		final graphic. *)
+	fontMultiplier =  0.015 / StringLength[text]
 },
 	handle["String"] := Module[{},
 		{DiaString[
@@ -128,7 +133,10 @@ StringEncodingDiagram[
 	]];\[LineSeparator]
 	Graphics[directives, BaseStyle -> {FontSize -> 25}]*)
 
-	Graphics @ BinaryLayoutDiagram @ Map[handle, layers]
+	Graphics @ BinaryLayoutDiagram[
+		Map[handle, layers],
+		fontMultiplier
+	]
 ]
 
 (*========================================================*)
@@ -162,7 +170,8 @@ Module[{
 SetFallthroughError[binaryLayoutDiagramRow]
 
 binaryLayoutDiagramRow[
-	row:{Except[_?ListQ]...}
+	row:{Except[_?ListQ]...},
+	fontMultiplier : _ : 1
 ] := Module[{
 },
 	FoldPairList[
@@ -170,13 +179,25 @@ binaryLayoutDiagramRow[
 			{expr, incr} = ConfirmReplace[elem, {
 				DiaBit[value:(0|1)] :> (
 					{
-						encodedTile["", 1/8, GrayLevel[Clip[value, {0.15,0.95}]], xOffset, FontSize -> 8],
+						encodedTile[
+							"",
+							1/8,
+							GrayLevel[Clip[value, {0.15,0.95}]],
+							xOffset,
+							FontSize -> Scaled[fontMultiplier * 8]
+						],
 						10
 					}
 				),
 				DiaByte[value_?IntegerQ] /; NonNegative[value] && value <= 255 :> (
 					{
-						encodedTile[value, 1, Brown, xOffset, FontSize -> 24],
+						encodedTile[
+							value,
+							1,
+							Brown,
+							xOffset,
+							FontSize -> Scaled[fontMultiplier * 24]
+						],
 						$tileSize
 					}
 				),
@@ -188,7 +209,10 @@ binaryLayoutDiagramRow[
 						encodedTile[
 							(* "U+" <> ToUpperCase @ IntegerString[value, 16], *)
 							value,
-							width, Darker[Blue], xOffset, FontSize -> 24
+							width,
+							Darker[Blue],
+							xOffset,
+							FontSize -> Scaled[fontMultiplier * 24]
 						],
 						width * $tileSize
 					}
@@ -198,7 +222,13 @@ binaryLayoutDiagramRow[
 					width : _?IntegerQ : 1
 				] :> (
 					{
-						encodedTile[char, width, Blue, xOffset, FontSize -> 32],
+						encodedTile[
+							char,
+							width,
+							Blue,
+							xOffset,
+							FontSize -> Scaled[fontMultiplier * 32]
+						],
 						width * $tileSize
 					}
 				),
@@ -212,7 +242,7 @@ binaryLayoutDiagramRow[
 							width,
 							GrayLevel[0.95],
 							xOffset,
-							FontSize -> 32
+							FontSize -> Scaled[fontMultiplier * 32]
 						],
 						width * $tileSize
 					}
@@ -228,7 +258,8 @@ binaryLayoutDiagramRow[
 SetFallthroughError[BinaryLayoutDiagram]
 
 BinaryLayoutDiagram[
-	rows:{(_List | Delimiter | _Labeled)...}
+	rows:{(_List | Delimiter | _Labeled)...},
+	fontMultiplier : _ : 1
 ] := Module[{},
 	FoldPairList[
 		{yOffset, row0} |-> Module[{
@@ -261,7 +292,12 @@ BinaryLayoutDiagram[
 					RGBColor[0.36,0.65,0.88],
 					InfiniteLine[{{0, yOffset + 10}, {1, yOffset + 10}}]
 				},
-				_ :> Translate[binaryLayoutDiagramRow[row], {0, yOffset}]
+				_ :> (
+					Translate[
+						binaryLayoutDiagramRow[row, fontMultiplier],
+						{0, yOffset}
+					]
+				)
 			}];
 
 			If[label =!= None,
