@@ -15,7 +15,12 @@ PackageExport[{
 	DiaCharacter,
 	DiaCodepoint,
 	DiaByte,
-	DiaBit
+	DiaBit,
+
+	(*---------------*)
+	(* Configuration *)
+	(*---------------*)
+	$ColorScheme
 }]
 
 PackageUse[Diagrams -> {
@@ -24,6 +29,13 @@ PackageUse[Diagrams -> {
 		RaiseConfirmMatch
 	}
 }]
+
+$ColorScheme = <|
+	"Byte" -> Brown,
+	"Codepoint" -> Darker[Blue],
+	"Character" -> Blue,
+	"String" -> GrayLevel[0.95]
+|>;
 
 (*========================================================*)
 
@@ -194,7 +206,7 @@ binaryLayoutDiagramRow[
 						encodedTile[
 							value,
 							1,
-							Brown,
+							$ColorScheme["Byte"],
 							xOffset,
 							FontSize -> Scaled[fontMultiplier * 24]
 						],
@@ -210,7 +222,7 @@ binaryLayoutDiagramRow[
 							(* "U+" <> ToUpperCase @ IntegerString[value, 16], *)
 							value,
 							width,
-							Darker[Blue],
+							$ColorScheme["Codepoint"],
 							xOffset,
 							FontSize -> Scaled[fontMultiplier * 24]
 						],
@@ -225,7 +237,7 @@ binaryLayoutDiagramRow[
 						encodedTile[
 							char,
 							width,
-							Blue,
+							$ColorScheme["Character"],
 							xOffset,
 							FontSize -> Scaled[fontMultiplier * 32]
 						],
@@ -240,7 +252,7 @@ binaryLayoutDiagramRow[
 						encodedTile[
 							text,
 							width,
-							GrayLevel[0.95],
+							$ColorScheme["String"],
 							xOffset,
 							FontSize -> Scaled[fontMultiplier * 32]
 						],
