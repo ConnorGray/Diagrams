@@ -189,7 +189,7 @@ binaryLayoutDiagramRow[
 						10
 					}
 				),
-				DiaByte[value_?IntegerQ] /; NonNegative[value] && value <= 255 :> (
+				DiaByte[value_] :> (
 					{
 						encodedTile[
 							value,
