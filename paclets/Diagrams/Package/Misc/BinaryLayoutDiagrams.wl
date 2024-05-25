@@ -68,12 +68,18 @@ StringEncodingDiagram[
 	],
 	handle,
 	directives = {},
+	fontMultiplier
+},
 	(* TODO:
 		Improve this heuristic to be more accurate when the StringLength
 		is not the same as the number of vertical columns shown in the
 		final graphic. *)
-	fontMultiplier =  0.015 / StringLength[text]
-},
+	fontMultiplier = If[MemberQ[layers, "Bytes"],
+		0.015 / Length[ToCharacterCode2[text, encoding]]
+		,
+		0.015 / StringLength[text]
+	];
+
 	handle["String"] := Module[{},
 		{DiaString[
 			text,
@@ -167,8 +173,7 @@ encodedTile[
 	color0_,
 	xOffset_?IntegerQ,
 	styleOpts___
-] :=
-Module[{
+] := Module[{
 	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]]
 },
 	{
