@@ -3,6 +3,7 @@ use wolfram_library_link::{
     self as wll, export,
     expr::{Expr, Symbol},
     wstp::Link,
+    NumericArray,
 };
 
 use crate::{
@@ -87,4 +88,25 @@ fn rendered_text_size(args: Vec<Expr>) -> Expr {
         Expr::real(f64::from(width)),
         Expr::real(f64::from(height)),
     ])
+}
+
+//==========================================================
+// String Encodings
+//==========================================================
+
+#[wll::export]
+fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
+    match encoding.as_str() {
+        "UTF-8" => NumericArray::from_slice(string.as_bytes()),
+        "UTF-16" => {
+            let utf16: Vec<u16> = string.encode_utf16().collect();
+            let utf16_bytes: Vec<u8> = utf16
+                .iter()
+                .flat_map(|code_unit: &u16| code_unit.to_le_bytes())
+                .collect();
+            assert_eq!(2 * utf16.len(), utf16_bytes.len());
+            return NumericArray::from_slice(&utf16_bytes);
+        },
+        _ => panic!("unsupported or unrecognized encoding: {encoding}"),
+    }
 }

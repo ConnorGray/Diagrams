@@ -20,14 +20,20 @@ PackageExport[{
 	(*---------------*)
 	(* Configuration *)
 	(*---------------*)
-	$ColorScheme
+	$ColorScheme,
+
+	(*-----------*)
+	(* Utilities *)
+	(*-----------*)
+	ToCharacterCode2
 }]
 
 PackageUse[Diagrams -> {
 	Errors -> {
 		CreateErrorType, Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirmMatch
-	}
+	},
+	Library -> {$LibraryFunctions}
 }]
 
 $ColorScheme = <|
@@ -72,7 +78,7 @@ StringEncodingDiagram[
 		{DiaString[
 			text,
 			(* Calculate width in bytes *)
-			Length @ ToCharacterCode[text, encoding]
+			Length @ ToCharacterCode2[text, encoding]
 		]}
 	];
 
@@ -81,7 +87,7 @@ StringEncodingDiagram[
 			char |-> DiaCharacter[
 				char,
 				(* Calculate width in bytes *)
-				Length @ ToCharacterCode[char, encoding]
+				Length @ ToCharacterCode2[char, encoding]
 			],
 			Characters[text]
 		]
@@ -92,19 +98,19 @@ StringEncodingDiagram[
 			codepoint |-> DiaCodepoint[
 				codepoint,
 				(* Calculate width in bytes *)
-				Length @ ToCharacterCode[
+				Length @ ToCharacterCode2[
 					FromCharacterCode[codepoint, "Unicode"],
 					encoding
 				]
 			],
-			ToCharacterCode[text, "Unicode"]
+			ToCharacterCode2[text, "Unicode"]
 		]
 	];
 
 	handle["Bytes"] := Module[{},
 		Map[
 			DiaByte,
-			ToCharacterCode[text, encoding]
+			ToCharacterCode2[text, encoding]
 		]
 	];
 
@@ -114,7 +120,7 @@ StringEncodingDiagram[
 				DiaBit,
 				IntegerDigits[byte, 2, 8]
 			],
-			ToCharacterCode[text, encoding]
+			ToCharacterCode2[text, encoding]
 		]
 	];
 
@@ -327,4 +333,31 @@ BinaryLayoutDiagram[
 		0,
 		rows
 	]
+]
+
+(*========================================================*)
+
+SetFallthroughError[ToCharacterCode2]
+
+(*
+	This function is a workaround for the fact that WL doesn't provide support
+	for UTF-16 encoding in ToCharacterCode.
+*)
+ToCharacterCode2[
+	text_?StringQ,
+	encoding_?StringQ
+] := Module[{
+	libFunc
+},
+	If[MemberQ[$CharacterEncodings, encoding] || encoding == "Unicode",
+		Return @ ToCharacterCode[text, encoding];
+	];
+
+	libFunc = $LibraryFunctions["encode_string"];
+
+	RaiseConfirmMatch[libFunc, _LibraryFunction];
+
+	Replace[libFunc[text, encoding], {
+		data_?NumericArrayQ :> Normal[data]
+	}]
 ]
