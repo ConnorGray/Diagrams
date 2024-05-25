@@ -7,6 +7,7 @@ PackageModule["Layouts"]
 PackageModule["Render"]
 PackageModule["Utils"]
 PackageModule["Misc"]
+PackageModule["Library"]
 
 PackageExport[{
 	Diagrams,
@@ -109,18 +110,9 @@ PackageUse[Diagrams -> {
 	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},
 	Render -> SizedText,
 	Utils -> {RectangleSize},
-	Layout -> {$DebugDiagramLayout}
+	Layout -> {$DebugDiagramLayout},
+	Library -> {$LibraryFunctions}
 }]
-
-
-$functions = LibraryFunctionLoad[
-	"libdiagram_maker_wll",
-	"load_diagram_maker_functions",
-	LinkObject,
-	LinkObject
-][];
-
-Assert[MatchQ[$functions, <| (_?StringQ -> _)... |>]];
 
 (*----------------------------------------------------------------------------*)
 
@@ -258,7 +250,7 @@ DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], 
 		DiagramGraphicsImage[Graphics[N @ Flatten @ graphics]]
 	],
 	"alpha-v1" :> Module[{result},
-		result = $functions["diagram_image"][diagram];
+		result = $LibraryFunctions["diagram_image"][diagram];
 
 		Replace[result, {
 			bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
@@ -395,7 +387,7 @@ makeSizedTextInset[sizedText_SizedText] := Module[{
 (*----------------------------------------------------------------------------*)
 
 DiagramGraphicsImage[args___] := Module[{result},
-	result = $functions["graphics_image"][args];
+	result = $LibraryFunctions["graphics_image"][args];
 
 	Replace[result, {
 		bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
@@ -405,7 +397,7 @@ DiagramGraphicsImage[args___] := Module[{result},
 (*----------------------------------------------------------------------------*)
 
 RenderedTextSize[args___] :=
-	$functions["rendered_text_size"][args]
+	$LibraryFunctions["rendered_text_size"][args]
 
 (*----------------------------------------------------------------------------*)
 
