@@ -98,6 +98,7 @@ fn rendered_text_size(args: Vec<Expr>) -> Expr {
 fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
     match encoding.as_str() {
         "UTF-8" => NumericArray::from_slice(string.as_bytes()),
+        // FIXME: Support "UTF-16LE" and "UTF-16BE"
         "UTF-16" => {
             let utf16: Vec<u16> = string.encode_utf16().collect();
             let utf16_bytes: Vec<u8> = utf16
@@ -106,6 +107,18 @@ fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
                 .collect();
             assert_eq!(2 * utf16.len(), utf16_bytes.len());
             return NumericArray::from_slice(&utf16_bytes);
+        },
+        // FIXME: Support "UTF-32LE" and "UTF-32BE"
+        "UTF-32" => {
+            let utf32: Vec<char> = string.chars().collect();
+            let utf32_bytes: Vec<u8> = utf32
+                .iter()
+                .flat_map(|codepoint: &char| {
+                    u32::from(*codepoint).to_le_bytes()
+                })
+                .collect();
+            assert_eq!(4 * utf32.len(), utf32_bytes.len());
+            return NumericArray::from_slice(&utf32_bytes);
         },
         _ => panic!("unsupported or unrecognized encoding: {encoding}"),
     }
