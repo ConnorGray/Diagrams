@@ -29,11 +29,15 @@ PackageExport[{
 }]
 
 PackageUse[Diagrams -> {
+	DiagramGraphicsImage,
 	Errors -> {
 		CreateErrorType, Raise, Handle, ConfirmReplace, SetFallthroughError,
-		RaiseConfirmMatch
+		RaiseConfirm, RaiseConfirmMatch
 	},
-	Library -> {$LibraryFunctions}
+	Library -> {$LibraryFunctions},
+	Render -> {
+		SizedText
+	}
 }]
 
 $ColorScheme = <|
@@ -49,18 +53,32 @@ CreateErrorType[DiagramError, {}]
 
 (*========================================================*)
 
+Options[DiaString] = {
+	(* NOTE:
+		The Wolfram Front End incorrectly renders certain words, for example
+		the Kannada word for "Hello" (ನಮಸ್ಕಾರ), by apparently mishandling how
+		glyphs combine. If set to True, this option will change the "String"
+		layer to render using a fallback renderer (Skia).
+	*)
+	"UseFallbackTextRenderer" -> False
+}
+(*========================================================*)
+
 $tileSize = 80
 
-Options[StringEncodingDiagram] = {
-	CharacterEncoding -> "UTF-8"
-}
+Options[StringEncodingDiagram] = Join[
+	{
+		CharacterEncoding -> "UTF-8",
+	},
+	Options[DiaString]
+]
 
 SetFallthroughError[StringEncodingDiagram]
 
 StringEncodingDiagram[
 	text_?StringQ,
 	layers : {___},
-	OptionsPattern[]
+	opts:OptionsPattern[]
 ] := Handle[_Failure] @ Module[{
 	encoding = RaiseConfirmMatch[
 		OptionValue[CharacterEncoding],
@@ -84,7 +102,8 @@ StringEncodingDiagram[
 		{DiaString[
 			text,
 			(* Calculate width in bytes *)
-			Length @ ToCharacterCode2[text, encoding]
+			Length @ ToCharacterCode2[text, encoding],
+			FilterRules[{opts}, Options[DiaString]]
 		]}
 	];
 
@@ -174,6 +193,7 @@ encodedTile[
 	xOffset_?IntegerQ,
 	styleOpts___
 ] := Module[{
+	position = {xOffset + ($tileSize * width)/2, $tileSize/2},
 	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]]
 },
 	{
@@ -181,10 +201,17 @@ encodedTile[
 		EdgeForm[{Thickness[0.005], Gray}],
 		Rectangle[{xOffset, 0}, {xOffset + $tileSize * width, $tileSize}],
 		ColorNegate[color],
-		Text[
-			Style[content, styleOpts, Bold, FontFamily -> "PT Mono"],
-			{xOffset + ($tileSize * width)/2, $tileSize/2}
-		]
+		Replace[content, {
+			text_?AtomQ :> (
+				Text[
+					Style[content, styleOpts, Bold, FontFamily -> "PT Mono"],
+					position
+				]
+			),
+			other_ :> (
+				Translate[other, position]
+			)
+		}]
 	}
 ];
 
@@ -256,12 +283,51 @@ binaryLayoutDiagramRow[
 					}
 				),
 				DiaString[
-					text_?StringQ,
-					width_?IntegerQ
-				] :> (
+					text_,
+					width_?IntegerQ,
+					stringOpts:OptionsPattern[]
+				] :> Module[{
+					label = text,
+					useFallbackTextRenderer = RaiseConfirmMatch[
+						OptionValue["UseFallbackTextRenderer"],
+						_?BooleanQ
+					],
+					image
+				},
+					If[useFallbackTextRenderer,
+						image = RaiseConfirm @ DiagramGraphicsImage @ Graphics[{
+							SizedText[
+								text,
+								(* FIXME: Less arbitrary size? *)
+								Rectangle[{0, 0}, {500, 500}]
+							]
+						}];
+
+						RaiseConfirmMatch[image, _?ImageQ];
+
+						(* BUG:
+							For some reason ImageCrop[image] doesn't
+							behave as expected. *)
+						label = ImagePad[image, -BorderDimensions[image]];
+
+						label = Inset[
+							label,
+							{0, 0},
+							Center,
+							(* TODO:
+								This divide by 4 is an unprinciple choice
+								that happens to look like about the right
+								size on my machine. It may totally fail in
+								cases I haven't tested. Think more deeply
+								about the dimensions involved here and
+								pick and document a better calculation. *)
+							{$tileSize * width / 4, 0.8 * $tileSize}
+						];
+					];
+
 					{
 						encodedTile[
-							text,
+							label,
 							width,
 							$ColorScheme["String"],
 							xOffset,
@@ -269,7 +335,7 @@ binaryLayoutDiagramRow[
 						],
 						width * $tileSize
 					}
-				)
+				]
 			}];
 			{expr, xOffset + incr}
 		],

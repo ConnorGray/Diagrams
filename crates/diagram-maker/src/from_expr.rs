@@ -388,7 +388,7 @@ impl TryFrom<&Expr> for SizedText {
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
         let args =
-            try_headed_len(e, Symbol::new("DiagramMaker`Render`SizedText"), 2)?;
+            try_headed_len(e, Symbol::new("Diagrams`Render`SizedText"), 2)?;
 
         let text = match args[0].kind() {
             ExprKind::String(s) => s.clone(),
