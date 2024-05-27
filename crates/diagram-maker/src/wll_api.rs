@@ -96,10 +96,28 @@ fn rendered_text_size(args: Vec<Expr>) -> Expr {
 
 #[wll::export]
 fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
-    match encoding.as_str() {
-        "UTF-8" => NumericArray::from_slice(string.as_bytes()),
-        // FIXME: Support "UTF-16LE" and "UTF-16BE"
+    // Normalize endian-specific encodings.
+    let encoding = match encoding.as_str() {
         "UTF-16" => {
+            if cfg!(target_endian = "little") {
+                "UTF-16LE"
+            } else {
+                "UTF-16BE"
+            }
+        },
+        "UTF-32" => {
+            if cfg!(target_endian = "little") {
+                "UTF-32LE"
+            } else {
+                "UTF-32BE"
+            }
+        },
+        other => other,
+    };
+
+    match encoding {
+        "UTF-8" => NumericArray::from_slice(string.as_bytes()),
+        "UTF-16LE" => {
             let utf16: Vec<u16> = string.encode_utf16().collect();
             let utf16_bytes: Vec<u8> = utf16
                 .iter()
@@ -108,13 +126,32 @@ fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
             assert_eq!(2 * utf16.len(), utf16_bytes.len());
             return NumericArray::from_slice(&utf16_bytes);
         },
-        // FIXME: Support "UTF-32LE" and "UTF-32BE"
-        "UTF-32" => {
+        "UTF-16BE" => {
+            let utf16: Vec<u16> = string.encode_utf16().collect();
+            let utf16_bytes: Vec<u8> = utf16
+                .iter()
+                .flat_map(|code_unit: &u16| code_unit.to_be_bytes())
+                .collect();
+            assert_eq!(2 * utf16.len(), utf16_bytes.len());
+            return NumericArray::from_slice(&utf16_bytes);
+        },
+        "UTF-32LE" => {
             let utf32: Vec<char> = string.chars().collect();
             let utf32_bytes: Vec<u8> = utf32
                 .iter()
                 .flat_map(|codepoint: &char| {
                     u32::from(*codepoint).to_le_bytes()
+                })
+                .collect();
+            assert_eq!(4 * utf32.len(), utf32_bytes.len());
+            return NumericArray::from_slice(&utf32_bytes);
+        },
+        "UTF-32BE" => {
+            let utf32: Vec<char> = string.chars().collect();
+            let utf32_bytes: Vec<u8> = utf32
+                .iter()
+                .flat_map(|codepoint: &char| {
+                    u32::from(*codepoint).to_be_bytes()
                 })
                 .collect();
             assert_eq!(4 * utf32.len(), utf32_bytes.len());
