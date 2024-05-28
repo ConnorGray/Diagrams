@@ -24,7 +24,7 @@ impl TryFrom<&Expr> for Diagram {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_normal() {
+        let e = match e.try_as_normal() {
             Some(value) => value,
             None => return Err(format!("expected Diagram[..]")),
         };
@@ -97,7 +97,7 @@ impl TryFrom<&Expr> for Box {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_normal() {
+        let e = match e.try_as_normal() {
             Some(value) => value,
             None => return Err(format!("expected DiaBox[..]")),
         };
@@ -126,7 +126,7 @@ impl TryFrom<&Expr> for Arrow {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_normal() {
+        let e = match e.try_as_normal() {
             Some(value) => value,
             None => return Err(format!("expected DiaArrow[..]")),
         };
@@ -176,7 +176,7 @@ impl TryFrom<&Expr> for List {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_normal() {
+        let e = match e.try_as_normal() {
             Some(value) => value,
             None => return Err(format!("expected List[..]")),
         };
@@ -193,7 +193,7 @@ impl TryFrom<&Expr> for Rule {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_normal() {
+        let e = match e.try_as_normal() {
             Some(value) => value,
             None => return Err(format!("expected Rule[..]")),
         };
@@ -283,7 +283,7 @@ impl TryFrom<&Expr> for Directive {
 
             let arg = &args[0];
 
-            let num = arg.try_number().ok_or_else(|| {
+            let num = arg.try_as_number().ok_or_else(|| {
                 format!("expected thickness to be a number, got: {}", arg)
             })?;
 
@@ -308,7 +308,7 @@ impl TryFrom<&Expr> for RGBColor {
 
     fn try_from(expr: &Expr) -> Result<Self, Self::Error> {
         let normal = expr
-            .try_normal()
+            .try_as_normal()
             .ok_or_else(|| format!("expected RGBColor[..]"))?;
 
         if !normal.has_head(&Symbol::new("System`RGBColor")) {
@@ -325,13 +325,13 @@ impl TryFrom<&Expr> for RGBColor {
         }
 
         let r = elems[0]
-            .try_number()
+            .try_as_number()
             .ok_or_else(|| format!("invalid red channel"))?;
         let g = elems[1]
-            .try_number()
+            .try_as_number()
             .ok_or_else(|| format!("invalid green channel"))?;
         let b = elems[2]
-            .try_number()
+            .try_as_number()
             .ok_or_else(|| format!("invalid blue channel"))?;
 
         let to_u8_color = RGBColor::to_u8_color;
@@ -419,10 +419,10 @@ impl TryFrom<&Expr> for Coord {
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
         let args = try_headed_len(e, Symbol::new("System`List"), 2)?;
 
-        let x = args[0].try_number().ok_or_else(|| {
+        let x = args[0].try_as_number().ok_or_else(|| {
             format!("expected coordinate to be a number, got: {}", args[0])
         })?;
-        let y = args[1].try_number().ok_or_else(|| {
+        let y = args[1].try_as_number().ok_or_else(|| {
             format!("expected coordinate to be a number, got: {}", args[1])
         })?;
 
@@ -434,7 +434,7 @@ impl TryFrom<&Expr> for Coord {
 }
 
 fn try_headed(e: &Expr, head: Symbol) -> Result<&[Expr], String> {
-    let e = match e.try_normal() {
+    let e = match e.try_as_normal() {
         Some(value) => value,
         None => return Err(format!("expected {}[..]", head.symbol_name())),
     };

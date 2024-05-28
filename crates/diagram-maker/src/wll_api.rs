@@ -29,7 +29,7 @@ fn load_diagram_maker_functions(args: Vec<Expr>) -> Expr {
 #[export(wstp)]
 fn diagram_image(link: &mut Link) {
     let args = link.get_expr().unwrap();
-    let args = args.try_normal().unwrap();
+    let args = args.try_as_normal().unwrap();
     assert!(args.has_head(&Symbol::new("System`List")));
     let args = args.elements();
 
@@ -46,7 +46,7 @@ fn diagram_image(link: &mut Link) {
 #[export(wstp)]
 fn graphics_image(link: &mut Link) {
     let args = link.get_expr().unwrap();
-    let args = args.try_normal().unwrap();
+    let args = args.try_as_normal().unwrap();
     assert!(args.has_head(&Symbol::new("System`List")));
     let args = args.elements();
 
