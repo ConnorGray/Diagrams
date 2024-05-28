@@ -72,7 +72,8 @@ $tileSize = 80
 Options[StringEncodingDiagram] = Join[
 	{
 		CharacterEncoding -> "UTF-8",
-		ImageSize -> Automatic
+		ImageSize -> Automatic,
+		ChartLegends -> None
 	},
 	Options[DiaString]
 ]
@@ -99,7 +100,8 @@ StringEncodingDiagram[
 	],
 	handle,
 	directives = {},
-	fontMultiplier
+	fontMultiplier,
+	graphic
 },
 	(* TODO:
 		Improve this heuristic to be more accurate when the StringLength
@@ -188,8 +190,12 @@ StringEncodingDiagram[
 	);
 
 	handle[other_] := (
-		Raise[DiagramError, "Bad layer name: ``", other];
+		Raise[DiagramError, "Bad layer name: ``", InputForm[other]];
 	);
+
+	(*--------------------------------------*)
+	(* Produce the Graphics for the diagram *)
+	(*--------------------------------------*)
 
 	(*	directives = Flatten[MapIndexed[
 		{arg, index} |-> Translate[
@@ -200,14 +206,57 @@ StringEncodingDiagram[
 	]];\[LineSeparator]
 	Graphics[directives, BaseStyle -> {FontSize -> 25}]*)
 
-	Graphics[
+	graphic = Graphics[
 		BinaryLayoutDiagram[
 			Map[handle, layers],
 			fontMultiplier
 		],
 		ImageSize -> imageSize,
 		PlotRangePadding -> 0
-	]
+	];
+
+	(*--------------------------------*)
+	(* Handle the ChartLegends option *)
+	(*--------------------------------*)
+
+	ConfirmReplace[OptionValue[ChartLegends], {
+		None :> graphic,
+		Automatic :> Module[{
+			legendLayers = Reverse @ DeleteCases[layers, "Bits"],
+			colors,
+			legend
+		},
+			colors = Map[
+				layer |-> ConfirmReplace[layer, {
+					"String" :> $ColorScheme["String"],
+					"Graphemes" :> $ColorScheme["Grapheme"],
+					"Characters" :> $ColorScheme["Character"],
+					"Codepoints" :> $ColorScheme["Codepoint"],
+					"Bytes" :> $ColorScheme["Byte"],
+					other_ :> Raise[
+						DiagramError,
+						"Unsupported legend layer specification: ``",
+						InputForm[other]
+					]
+				}],
+				legendLayers
+			];
+
+			legend = SwatchLegend[
+				colors,
+				legendLayers,
+				LegendMarkerSize -> 20,
+				LegendMargins -> 0
+			];
+
+			Labeled[graphic, legend, Right]
+		],
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported ChartLegends option value: ``",
+			InputForm[other]
+		]
+	}]
 ]
 
 (*========================================================*)
