@@ -4,10 +4,17 @@ PackageExport[{
 	RectangleWidth,
 	RectangleHeight,
 	RectangleSize,
-	RectangleCenter
+	RectangleCenter,
+
+	GraphemeClusters
 }]
 
-PackageUse[Diagrams -> {Errors -> RaiseError}]
+PackageUse[Diagrams -> {
+	Errors -> {RaiseError, SetFallthroughError},
+	Library -> {$LibraryFunctions}
+}]
+
+(*====================================*)
 
 RectangleWidth[arg_] := Replace[arg, {
 	Rectangle[{xMin_?NumberQ, _}, {xMax_?NumberQ, _}] :> Abs[xMax - xMin],
@@ -28,3 +35,15 @@ RectangleCenter[arg_] := Replace[arg, {
 	] :> {xMin + RectangleWidth[arg] / 2, yMin + RectangleHeight[arg] / 2},
 	_ :> RaiseError["unable to get height of rectangle: ``", arg]
 }]
+
+(*====================================*)
+(* Strings                            *)
+(*====================================*)
+
+SetFallthroughError[GraphemeClusters]
+
+GraphemeClusters[text_?StringQ] := Module[{
+	libFunc = $LibraryFunctions["grapheme_clusters"]
+},
+	libFunc[text]
+]

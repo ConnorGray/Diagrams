@@ -6,6 +6,8 @@ use wolfram_library_link::{
     NumericArray,
 };
 
+use unicode_segmentation::UnicodeSegmentation;
+
 use crate::{
     graphics::Graphics,
     layout::{layout, LayoutAlgorithm},
@@ -159,4 +161,22 @@ fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
         },
         _ => panic!("unsupported or unrecognized encoding: {encoding}"),
     }
+}
+
+#[wll::export(wstp)]
+fn grapheme_clusters(args: Vec<Expr>) -> Expr {
+    let [text]: &[Expr; 1] = args.as_slice().try_into().unwrap_or_else(|_| {
+        panic!("expected one argument, got {}", args.len())
+    });
+
+    let text = match text.kind() {
+        ExprKind::String(text) => text,
+        _ => panic!("expected 1st argument to be String, got: {text}"),
+    };
+
+    let mut list = Vec::<Expr>::new();
+
+    list.extend(text.graphemes(true).map(Expr::string));
+
+    return Expr::list(list);
 }

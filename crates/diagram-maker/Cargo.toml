@@ -13,6 +13,7 @@ crate-type = ["rlib", "cdylib"]
 [dependencies]
 skia = { package = "skia-safe", version = "0.47.0", features = ["textlayout"] }
 cgmath = "0.18.0"
+unicode-segmentation = "1.11.0"
 
 wolfram-expr = "0.1.1"
 

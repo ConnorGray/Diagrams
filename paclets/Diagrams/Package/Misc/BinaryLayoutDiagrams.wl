@@ -12,6 +12,7 @@ PackageExport[{
 	(* Concepts *)
 	(*----------*)
 	DiaString,
+	DiaGrapheme,
 	DiaCharacter,
 	DiaCodepoint,
 	DiaByte,
@@ -37,13 +38,15 @@ PackageUse[Diagrams -> {
 	Library -> {$LibraryFunctions},
 	Render -> {
 		SizedText
-	}
+	},
+	Utils -> {GraphemeClusters}
 }]
 
 $ColorScheme = <|
 	"Byte" -> Brown,
 	"Codepoint" -> Darker[Blue],
 	"Character" -> Blue,
+	"Grapheme" -> Blend[{Green, GrayLevel[0.3]}, 0.8],
 	"String" -> GrayLevel[0.95]
 |>;
 
@@ -105,6 +108,17 @@ StringEncodingDiagram[
 			Length @ ToCharacterCode2[text, encoding],
 			FilterRules[{opts}, Options[DiaString]]
 		]}
+	];
+
+	handle["Graphemes"] := Module[{},
+		Map[
+			grapheme |-> DiaGrapheme[
+				grapheme,
+				(* Calculate width in bytes. *)
+				Length @ ToCharacterCode2[grapheme, encoding]
+			],
+			GraphemeClusters[text]
+		]
 	];
 
 	handle["Characters"] := Module[{},
@@ -285,6 +299,21 @@ binaryLayoutDiagramRow[
 						width * $tileSize
 					}
 				),
+				DiaGrapheme[
+					grapheme_?StringQ,
+					width : _?IntegerQ
+				] :> (
+					{
+						encodedTile[
+							grapheme,
+							width,
+							$ColorScheme["Grapheme"],
+							xOffset,
+							FontSize -> Scaled[fontMultiplier * 32]
+						],
+						width * $tileSize
+					}
+				),
 				DiaString[
 					text_,
 					width_?IntegerQ,
@@ -371,8 +400,14 @@ BinaryLayoutDiagram[
 			(* FIXME:
 				Horrible hack to guess height of row *)
 			rowHeight = ConfirmReplace[First[row, row], {
-				_DiaBit -> $tileSize / 8,
-				_DiaByte | _DiaCharacter | _DiaCodepoint | _DiaString -> (
+				_DiaBit -> (
+					$tileSize / 8
+				),
+				_DiaByte
+				| _DiaCodepoint
+				| _DiaCharacter
+				| _DiaGrapheme
+				| _DiaString -> (
 					$tileSize
 				),
 				Delimiter -> $tileSize / 4
@@ -409,6 +444,8 @@ BinaryLayoutDiagram[
 	]
 ]
 
+(*========================================================*)
+(* Utilities                                              *)
 (*========================================================*)
 
 SetFallthroughError[ToCharacterCode2]
