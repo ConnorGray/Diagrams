@@ -72,6 +72,7 @@ $tileSize = 80
 Options[StringEncodingDiagram] = Join[
 	{
 		CharacterEncoding -> "UTF-8",
+		ImageSize -> Automatic
 	},
 	Options[DiaString]
 ]
@@ -86,6 +87,15 @@ StringEncodingDiagram[
 	encoding = RaiseConfirmMatch[
 		OptionValue[CharacterEncoding],
 		_?StringQ
+	],
+	imageSize = Replace[
+		OptionValue[ImageSize],
+		(* Automatic ImageSize sets the height to be a multiple of the number
+			of layers. *)
+		Automatic -> {
+			Automatic,
+			45 * Length[DeleteCases[layers, "Bits"]]
+		}
 	],
 	handle,
 	directives = {},
@@ -195,6 +205,7 @@ StringEncodingDiagram[
 			Map[handle, layers],
 			fontMultiplier
 		],
+		ImageSize -> imageSize,
 		PlotRangePadding -> 0
 	]
 ]
