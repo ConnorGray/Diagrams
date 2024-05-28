@@ -176,9 +176,12 @@ StringEncodingDiagram[
 	]];\[LineSeparator]
 	Graphics[directives, BaseStyle -> {FontSize -> 25}]*)
 
-	Graphics @ BinaryLayoutDiagram[
-		Map[handle, layers],
-		fontMultiplier
+	Graphics[
+		BinaryLayoutDiagram[
+			Map[handle, layers],
+			fontMultiplier
+		],
+		PlotRangePadding -> 0
 	]
 ]
 
