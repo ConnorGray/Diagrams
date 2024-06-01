@@ -1,10 +1,6 @@
 Package["Diagrams`Misc`BinaryLayoutDiagrams`"]
 
 PackageExport[{
-	(* TODO:
-		Move to more general package. *)
-	DiagramError,
-
 	StringEncodingDiagram,
 	BinaryLayoutDiagram,
 
@@ -30,6 +26,7 @@ PackageExport[{
 }]
 
 PackageUse[Diagrams -> {
+	DiagramError,
 	DiagramGraphicsImage,
 	Errors -> {
 		CreateErrorType, Raise, Handle, ConfirmReplace, SetFallthroughError,
@@ -49,10 +46,6 @@ $ColorScheme = <|
 	"Grapheme" -> Blend[{Green, GrayLevel[0.3]}, 0.8],
 	"String" -> GrayLevel[0.95]
 |>;
-
-(*========================================================*)
-
-CreateErrorType[DiagramError, {}]
 
 (*========================================================*)
 

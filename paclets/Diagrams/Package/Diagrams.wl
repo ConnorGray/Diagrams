@@ -9,8 +9,13 @@ PackageModule["Utils"]
 PackageModule["Misc"]
 PackageModule["Library"]
 
+(* Diagram Kinds *)
+PackageModule["BlockStack"]
+
 PackageExport[{
 	Diagrams,
+
+	DiagramError,
 
 	Diagram,
 	PlacedDiagram,
@@ -43,7 +48,13 @@ PackageExport[{
 	RenderedTextSize,
 
 	(* TODO: Remove these, they are unused? *)
-	Subgraphs, DiagramBlock, DiagramArrow
+	Subgraphs, DiagramBlock, DiagramArrow,
+
+	(*-------------------*)
+	(* Diagram Functions *)
+	(*-------------------*)
+
+	BlockStackDiagram
 }]
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."
@@ -102,12 +113,16 @@ RenderedTextSize
 (* Errors *)
 (*--------*)
 
+(*========================================================*)
+
+CreateErrorType[DiagramError, {}]
+
 Diagrams::error = "``"
 Diagrams::assertfail = "``"
 
 
 PackageUse[Diagrams -> {
-	Errors -> {RaiseError, RaiseConfirm, RaiseAssert},
+	Errors -> {CreateErrorType, RaiseError, RaiseConfirm, RaiseAssert},
 	Render -> SizedText,
 	Utils -> {RectangleSize},
 	Layout -> {$DebugDiagramLayout},
