@@ -28,7 +28,7 @@ BlockStackDiagram[
 		},
 			{rowHeight, rowElements} = ConfirmReplace[row, {
 				{_?NumberQ, _List} :> row,
-				other :> Raise[
+				other_ :> Raise[
 					DiagramError,
 					"Expected row of the form {height, {elements...}}, got: ``",
 					InputForm[other]
@@ -79,7 +79,8 @@ blockStackDiagramRow[
 								Background,
 								defaultBackground
 							],
-							xOffset
+							xOffset,
+							styleOpts
 						],
 						width
 					}

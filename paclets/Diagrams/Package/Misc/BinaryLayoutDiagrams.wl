@@ -28,9 +28,10 @@ PackageExport[{
 PackageUse[Diagrams -> {
 	DiagramError,
 	DiagramGraphicsImage,
+	BlockStackDiagram,
 	Errors -> {
 		CreateErrorType, Raise, Handle, ConfirmReplace, SetFallthroughError,
-		RaiseConfirm, RaiseConfirmMatch
+		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised
 	},
 	Library -> {$LibraryFunctions},
 	Render -> {
@@ -199,8 +200,8 @@ StringEncodingDiagram[
 	]];\[LineSeparator]
 	Graphics[directives, BaseStyle -> {FontSize -> 25}]*)
 
-	graphic = Graphics[
-		BinaryLayoutDiagram[
+	graphic = Show[
+		RaiseConfirm2 @ BinaryLayoutDiagram[
 			Map[handle, layers],
 			fontMultiplier
 		],
@@ -254,39 +255,6 @@ StringEncodingDiagram[
 
 (*========================================================*)
 
-SetFallthroughError[encodedTile]
-
-encodedTile[
-	content_,
-	width_?NumberQ,
-	color0_,
-	xOffset_?IntegerQ,
-	styleOpts___
-] := Module[{
-	position = {xOffset + ($tileSize * width)/2, $tileSize/2},
-	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]]
-},
-	{
-		color,
-		EdgeForm[{Thickness[0.005], Gray}],
-		Rectangle[{xOffset, 0}, {xOffset + $tileSize * width, $tileSize}],
-		ColorNegate[color],
-		Replace[content, {
-			text_?AtomQ :> (
-				Text[
-					Style[content, styleOpts, Bold, FontFamily -> "PT Mono"],
-					position
-				]
-			),
-			other_ :> (
-				Translate[other, position]
-			)
-		}]
-	}
-];
-
-(*========================================================*)
-
 SetFallthroughError[binaryLayoutDiagramRow]
 
 binaryLayoutDiagramRow[
@@ -294,78 +262,57 @@ binaryLayoutDiagramRow[
 	fontMultiplier : _ : 1
 ] := Module[{
 },
-	FoldPairList[
-		{xOffset, elem} |-> Module[{expr, incr},
-			{expr, incr} = ConfirmReplace[elem, {
+	Map[
+		elem |-> Module[{expr},
+			expr = ConfirmReplace[elem, {
 				DiaBit[value:(0|1)] :> (
-					{
-						encodedTile[
-							"",
-							1/8,
-							GrayLevel[Clip[value, {0.15,0.95}]],
-							xOffset,
-							FontSize -> Scaled[fontMultiplier * 8]
-						],
-						10
-					}
+					Item[
+						"",
+						Background -> GrayLevel[Clip[value, {0.15,0.95}]],
+						FontSize -> Scaled[fontMultiplier * 8]
+					]
 				),
 				DiaByte[value_] :> (
-					{
-						encodedTile[
-							value,
-							1,
-							$ColorScheme["Byte"],
-							xOffset,
-							FontSize -> Scaled[fontMultiplier * 24]
-						],
-						$tileSize
-					}
+					Item[
+						value,
+						1,
+						Background -> $ColorScheme["Byte"],
+						FontSize -> Scaled[fontMultiplier * 24]
+					]
 				),
 				DiaCodepoint[
 					value_?IntegerQ,
 					width : _?IntegerQ : 1
 				] :> (
-					{
-						encodedTile[
-							(* "U+" <> ToUpperCase @ IntegerString[value, 16], *)
-							value,
-							width,
-							$ColorScheme["Codepoint"],
-							xOffset,
-							FontSize -> Scaled[fontMultiplier * 24]
-						],
-						width * $tileSize
-					}
+					Item[
+						(* "U+" <> ToUpperCase @ IntegerString[value, 16], *)
+						value,
+						width,
+						Background -> $ColorScheme["Codepoint"],
+						FontSize -> Scaled[fontMultiplier * 24]
+					]
 				),
 				DiaCharacter[
 					char_?StringQ,
 					width : _?IntegerQ : 1
 				] :> (
-					{
-						encodedTile[
-							char,
-							width,
-							$ColorScheme["Character"],
-							xOffset,
-							FontSize -> Scaled[fontMultiplier * 32]
-						],
-						width * $tileSize
-					}
+					Item[
+						char,
+						width,
+						Background -> $ColorScheme["Character"],
+						FontSize -> Scaled[fontMultiplier * 32]
+					]
 				),
 				DiaGrapheme[
 					grapheme_?StringQ,
 					width : _?IntegerQ
 				] :> (
-					{
-						encodedTile[
-							grapheme,
-							width,
-							$ColorScheme["Grapheme"],
-							xOffset,
-							FontSize -> Scaled[fontMultiplier * 32]
-						],
-						width * $tileSize
-					}
+					Item[
+						grapheme,
+						width,
+						Background -> $ColorScheme["Grapheme"],
+						FontSize -> Scaled[fontMultiplier * 32]
+					]
 				),
 				DiaString[
 					text_,
@@ -410,21 +357,17 @@ binaryLayoutDiagramRow[
 						];
 					];
 
-					{
-						encodedTile[
-							label,
-							width,
-							$ColorScheme["String"],
-							xOffset,
-							FontSize -> Scaled[fontMultiplier * 32]
-						],
-						width * $tileSize
-					}
+					Item[
+						label,
+						width,
+						Background -> $ColorScheme["String"],
+						FontSize -> Scaled[fontMultiplier * 32]
+					]
 				]
 			}];
-			{expr, xOffset + incr}
+
+			expr
 		],
-		0,
 		row
 	]
 ]
@@ -434,9 +377,14 @@ SetFallthroughError[BinaryLayoutDiagram]
 BinaryLayoutDiagram[
 	rows:{(_List | Delimiter | _Labeled)...},
 	fontMultiplier : _ : 1
-] := Module[{},
-	FoldPairList[
-		{yOffset, row0} |-> Module[{
+] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error creating BinaryLayoutDiagram"
+] @ Module[{
+	blockRows
+},
+	blockRows = Map[
+		row0 |-> Module[{
 			row = row0,
 			label = None,
 			rowHeight,
@@ -444,8 +392,12 @@ BinaryLayoutDiagram[
 		},
 			row = ConfirmReplace[row, {
 				Labeled[r_, l_] :> (
-					label = l;
-					r
+					Raise[
+						DiagramError,
+						"Labeled[..] is no longer supported as a row specification"
+					]
+					(* label = l;
+					r *)
 				),
 				r_ :> r
 			}];
@@ -466,35 +418,35 @@ BinaryLayoutDiagram[
 				Delimiter -> $tileSize / 4
 			}];
 
-			graphic = ConfirmReplace[row, {
-				Delimiter :> {
+			items = ConfirmReplace[row, {
+				(* Delimiter :> {
 					Thickness[0.02],
 					RGBColor[0.36,0.65,0.88],
 					InfiniteLine[{{0, yOffset + 10}, {1, yOffset + 10}}]
-				},
+				}, *)
+				Delimiter :> Raise[
+					DiagramError,
+					"Delimiter is no longer supported as a row specification"
+				],
 				_ :> (
-					Translate[
-						binaryLayoutDiagramRow[row, fontMultiplier],
-						{0, yOffset}
-					]
+					binaryLayoutDiagramRow[row, fontMultiplier]
 				)
 			}];
 
-			If[label =!= None,
+			(* FIXME: Label handling *)
+			(* If[label =!= None,
 				graphic = {
 					graphic,
 					Translate[label, {-$tileSize, yOffset + rowHeight/2}]
 				}
-			];
+			]; *)
 
-			{
-				graphic,
-				yOffset + rowHeight
-			}
+			{rowHeight, items}
 		],
-		0,
 		rows
-	]
+	];
+
+	BlockStackDiagram[blockRows]
 ]
 
 (*========================================================*)
