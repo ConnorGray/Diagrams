@@ -61,8 +61,6 @@ Options[DiaString] = {
 }
 (*========================================================*)
 
-$tileSize = 80
-
 Options[StringEncodingDiagram] = Join[
 	{
 		CharacterEncoding -> "UTF-8",
@@ -353,7 +351,7 @@ binaryLayoutDiagramRow[
 								cases I haven't tested. Think more deeply
 								about the dimensions involved here and
 								pick and document a better calculation. *)
-							{$tileSize * width / 4, 0.8 * $tileSize}
+							{width / 4, 0.8}
 						];
 					];
 
@@ -406,16 +404,16 @@ BinaryLayoutDiagram[
 				Horrible hack to guess height of row *)
 			rowHeight = ConfirmReplace[First[row, row], {
 				_DiaBit -> (
-					$tileSize / 8
+					1 / 8
 				),
 				_DiaByte
 				| _DiaCodepoint
 				| _DiaCharacter
 				| _DiaGrapheme
 				| _DiaString -> (
-					$tileSize
+					1
 				),
-				Delimiter -> $tileSize / 4
+				Delimiter -> 1 / 4
 			}];
 
 			items = ConfirmReplace[row, {
