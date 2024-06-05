@@ -376,7 +376,7 @@ SetFallthroughError[BinaryLayoutDiagram]
 
 BinaryLayoutDiagram[
 	rows:{(_List | Delimiter | _Labeled)...},
-	fontMultiplier : _ : 1
+	fontMultiplier : _ : 0.0045
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating BinaryLayoutDiagram"
