@@ -20,7 +20,7 @@ BlockStackDiagram[
 ] @ Module[{
 	rows = rows0
 },
-	Graphics @ FoldPairList[
+	Graphics[#, PlotRangePadding -> 0]& @ FoldPairList[
 		{yOffset, row} |-> Module[{
 			rowHeight,
 			rowElements,
