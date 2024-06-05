@@ -63,7 +63,7 @@ Options[DiaString] = {
 
 Options[StringEncodingDiagram] = Join[
 	{
-		CharacterEncoding -> "UTF-8",
+		CharacterEncoding -> "__unused",
 		ImageSize -> Automatic,
 		ChartLegends -> None
 	},
@@ -75,12 +75,13 @@ SetFallthroughError[StringEncodingDiagram]
 StringEncodingDiagram[
 	text_?StringQ,
 	layers : {___},
+	encoding0 : (_?StringQ | Automatic) : Automatic,
 	opts:OptionsPattern[]
-] := Handle[_Failure] @ Module[{
-	encoding = RaiseConfirmMatch[
-		OptionValue[CharacterEncoding],
-		_?StringQ
-	],
+] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error creating StringEncodingDiagram"
+] @ Module[{
+	encoding = Replace[encoding0, Automatic -> "UTF-8"],
 	imageSize = Replace[
 		OptionValue[ImageSize],
 		(* Automatic ImageSize sets the height to be a multiple of the number
@@ -95,6 +96,12 @@ StringEncodingDiagram[
 	fontMultiplier,
 	graphic
 },
+	RaiseConfirmMatch[
+		OptionValue[CharacterEncoding],
+		"__unused",
+		"CharacterEncoding option has been deprecated. Use 2nd argument instead."
+	];
+
 	(* TODO:
 		Improve this heuristic to be more accurate when the StringLength
 		is not the same as the number of vertical columns shown in the
