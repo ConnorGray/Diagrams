@@ -221,33 +221,8 @@ StringEncodingDiagram[
 	ConfirmReplace[OptionValue[ChartLegends], {
 		None :> graphic,
 		Automatic :> Module[{
-			legendLayers = Reverse @ DeleteCases[layers, "Bits"],
-			colors,
-			legend
+			legend = layersSwatchLegend[layers]
 		},
-			colors = Map[
-				layer |-> ConfirmReplace[layer, {
-					"String" :> $ColorScheme["String"],
-					"Graphemes" :> $ColorScheme["Grapheme"],
-					"Characters" :> $ColorScheme["Character"],
-					"Codepoints" :> $ColorScheme["Codepoint"],
-					"Bytes" :> $ColorScheme["Byte"],
-					other_ :> Raise[
-						DiagramError,
-						"Unsupported legend layer specification: ``",
-						InputForm[other]
-					]
-				}],
-				legendLayers
-			];
-
-			legend = SwatchLegend[
-				colors,
-				legendLayers,
-				LegendMarkerSize -> 20,
-				LegendMargins -> 0
-			];
-
 			Labeled[graphic, legend, Right]
 		],
 		other_ :> Raise[
@@ -377,23 +352,30 @@ binaryLayoutDiagramRow[
 	]
 ]
 
+(*====================================*)
+
+Options[BinaryLayoutDiagram] = {
+	ChartLegends -> None
+}
+
 SetFallthroughError[BinaryLayoutDiagram]
 
 BinaryLayoutDiagram[
 	rows:{(_List | Delimiter | _Labeled)...},
-	fontMultiplier : _ : 0.0045
+	fontMultiplier : _ : 0.0045,
+	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating BinaryLayoutDiagram"
 ] @ Module[{
-	blockRows
+	blockRows,
+	graphic
 },
 	blockRows = Map[
 		row0 |-> Module[{
 			row = row0,
 			label = None,
-			rowHeight,
-			graphic
+			rowHeight
 		},
 			row = ConfirmReplace[row, {
 				Labeled[r_, l_] :> (
@@ -451,7 +433,60 @@ BinaryLayoutDiagram[
 		rows
 	];
 
-	BlockStackDiagram[blockRows]
+	graphic = BlockStackDiagram[blockRows];
+
+	(*--------------------------------*)
+	(* Handle the ChartLegends option *)
+	(*--------------------------------*)
+
+	ConfirmReplace[OptionValue[ChartLegends], {
+		None :> graphic,
+		layers:{___?StringQ} :> Module[{
+			legend = layersSwatchLegend[layers]
+		},
+			Labeled[graphic, legend, Right]
+		],
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported ChartLegends option value: ``",
+			InputForm[other]
+		]
+	}]
+]
+
+(*====================================*)
+
+SetFallthroughError[layersSwatchLegend]
+
+layersSwatchLegend[layers: {___?StringQ}] := Module[{
+	legendLayers = Reverse @ DeleteCases[layers, "Bits"],
+	colors,
+	legend
+},
+	colors = Map[
+		layer |-> ConfirmReplace[layer, {
+			"String" :> $ColorScheme["String"],
+			"Graphemes" :> $ColorScheme["Grapheme"],
+			"Characters" :> $ColorScheme["Character"],
+			"Codepoints" :> $ColorScheme["Codepoint"],
+			"Bytes" :> $ColorScheme["Byte"],
+			other_ :> Raise[
+				DiagramError,
+				"Unsupported legend layer specification: ``",
+				InputForm[other]
+			]
+		}],
+		legendLayers
+	];
+
+	legend = SwatchLegend[
+		colors,
+		legendLayers,
+		LegendMarkerSize -> 20,
+		LegendMargins -> 0
+	];
+
+	legend
 ]
 
 (*========================================================*)
