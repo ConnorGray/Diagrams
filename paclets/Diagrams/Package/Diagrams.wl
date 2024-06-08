@@ -115,8 +115,6 @@ RenderedTextSize
 
 (*========================================================*)
 
-CreateErrorType[DiagramError, {}]
-
 Diagrams::error = "``"
 Diagrams::assertfail = "``"
 

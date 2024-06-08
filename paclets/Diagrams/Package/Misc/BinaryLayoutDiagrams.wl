@@ -30,7 +30,7 @@ PackageUse[Diagrams -> {
 	DiagramGraphicsImage,
 	BlockStackDiagram,
 	Errors -> {
-		CreateErrorType, Raise, Handle, ConfirmReplace, SetFallthroughError,
+		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised
 	},
 	Library -> {$LibraryFunctions},

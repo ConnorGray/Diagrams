@@ -31,7 +31,7 @@ $RaiseErrorTag
 
 $ExitOnExceptionPreHandler
 
-PackageUse[Diagrams -> Diagrams]
+PackageUse[Diagrams -> {Diagrams, DiagramError}]
 
 Needs["Wolfram`ErrorTools`"]
 
@@ -43,6 +43,8 @@ ConfirmReplace      = Symbol["Wolfram`ErrorTools`ConfirmReplace"]
 RaiseConfirm2       = Symbol["Wolfram`ErrorTools`RaiseConfirm"]
 RaiseConfirmMatch   = Symbol["Wolfram`ErrorTools`RaiseConfirmMatch"]
 WrapRaised          = Symbol["Wolfram`ErrorTools`WrapRaised"]
+
+CreateErrorType[DiagramError, {}]
 
 (**********************************************************)
 
