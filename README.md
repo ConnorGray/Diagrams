@@ -27,5 +27,5 @@ Diagram Maker.
 
 * The data files in
   [assets/UnicodePublic](./crates/unicode-data/assets/UnicodePublic/)
-  are sourced from <unicode.org/Public/> and are Copyright © Unicode, Inc.
-  Used under the terms of <unicode.org/copyright.html>.
+  are sourced from <https://unicode.org/Public/> and are Copyright © Unicode, Inc.
+  Used under the terms of <https://unicode.org/copyright.html>.
