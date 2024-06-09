@@ -22,3 +22,10 @@ StringEncodingDiagram[
 
 See [**Development.md**](./docs/Development.md) for information on contributing to
 Diagram Maker.
+
+## Acknowledgements
+
+* The data files in
+  [assets/UnicodePublic](./crates/unicode-data/assets/UnicodePublic/)
+  are sourced from <unicode.org/Public/> and are Copyright © Unicode, Inc.
+  Used under the terms of <unicode.org/copyright.html>.

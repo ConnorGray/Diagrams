@@ -6,11 +6,15 @@ PackageExport[{
 	RectangleSize,
 	RectangleCenter,
 
-	GraphemeClusters
+	GraphemeClusters,
+	UnicodeData
 }]
 
 PackageUse[Diagrams -> {
-	Errors -> {RaiseError, SetFallthroughError},
+	DiagramError,
+	Errors -> {
+		RaiseError, SetFallthroughError, Handle, WrapRaised, RaiseConfirmMatch
+	},
 	Library -> {$LibraryFunctions}
 }]
 
@@ -46,4 +50,48 @@ GraphemeClusters[text_?StringQ] := Module[{
 	libFunc = $LibraryFunctions["grapheme_clusters"]
 },
 	libFunc[text]
+]
+
+
+(*====================================*)
+
+SetFallthroughError[UnicodeData]
+
+UnicodeData[] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error processing Unicode data"
+] @ Module[{
+	(* FIXME: Fix broken "\n" string literal in package format. *)
+	newline = FromCharacterCode[10],
+	data,
+},
+	(*--------------------------------------------------------*)
+	(* Import from the file and divide it into the raw fields *)
+	(*--------------------------------------------------------*)
+
+	data = $LibraryFunctions["get_unicode_data"][];
+
+	RaiseConfirmMatch[data, _?StringQ];
+
+	data = StringSplit[data, newline];
+
+	RaiseConfirmMatch[data, {Repeated[_?StringQ, {5, 100000}]}];
+
+	data = Map[
+		line |-> StringSplit[line, ";"],
+		data
+	];
+
+	(*-----------------*)
+
+	data
+]
+
+(*------------------------------------*)
+
+UnicodeData["GeneralCategoryPropertyValues"] := Module[{},
+	RaiseConfirmMatch[
+		$LibraryFunctions["unicode_properties"][],
+		{{_?StringQ, _?StringQ, _?StringQ}..}
+	]
 ]

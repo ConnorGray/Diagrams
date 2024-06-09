@@ -1,0 +1,1 @@
+crates/unicode-data/assets/UnicodePublic/** filter=lfs diff=lfs merge=lfs -text

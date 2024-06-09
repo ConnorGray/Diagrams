@@ -8,6 +8,8 @@ use wolfram_library_link::{
 
 use unicode_segmentation::UnicodeSegmentation;
 
+use unicode_data::GeneralCategory;
+
 use crate::{
     graphics::Graphics,
     layout::{layout, LayoutAlgorithm},
@@ -163,6 +165,10 @@ fn encode_string(string: String, encoding: String) -> NumericArray<u8> {
     }
 }
 
+//======================================
+// Unicode
+//======================================
+
 #[wll::export(wstp)]
 fn grapheme_clusters(args: Vec<Expr>) -> Expr {
     let [text]: &[Expr; 1] = args.as_slice().try_into().unwrap_or_else(|_| {
@@ -179,4 +185,37 @@ fn grapheme_clusters(args: Vec<Expr>) -> Expr {
     list.extend(text.graphemes(true).map(Expr::string));
 
     return Expr::list(list);
+}
+
+//--------------------------------------
+// Unicode Data
+//--------------------------------------
+
+#[wll::export(wstp)]
+fn get_unicode_data(args: Vec<Expr>) -> Expr {
+    let []: &[Expr; 0] = args.as_slice().try_into().unwrap_or_else(|_| {
+        panic!("expected zero arguments, got {}", args.len())
+    });
+
+    return Expr::string(unicode_data::data::unicode_15_1_0::UNICODE_DATA_TXT);
+}
+
+#[wll::export(wstp)]
+fn unicode_properties(args: Vec<Expr>) -> Expr {
+    let []: &[Expr; 0] = args.as_slice().try_into().unwrap_or_else(|_| {
+        panic!("expected zero arguments, got {}", args.len())
+    });
+
+    let list = GeneralCategory::variants()
+        .into_iter()
+        .map(|variant| {
+            Expr::list(vec![
+                Expr::string(variant.short()),
+                Expr::string(variant.name()),
+                Expr::string(variant.description()),
+            ])
+        })
+        .collect();
+
+    Expr::list(list)
 }

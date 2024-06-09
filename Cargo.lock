@@ -216,6 +216,7 @@ dependencies = [
  "cgmath",
  "open",
  "skia-safe",
+ "unicode-data",
  "unicode-segmentation",
  "wolfram-expr",
  "wolfram-library-link",
@@ -876,6 +877,10 @@ name = "unicode-bidi"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08f95100a766bf4f8f28f90d77e0a5461bbdb219042e7679bebe79004fed8d75"
+
+[[package]]
+name = "unicode-data"
+version = "0.1.0"
 
 [[package]]
 name = "unicode-ident"
