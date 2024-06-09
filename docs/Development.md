@@ -17,6 +17,13 @@ $ cargo make paclet
 $ cargo test
 ```
 
+*After a fresh checkout:* Populate the files in this repository managed by
+Git LFS:
+
+```shell
+$ git lfs checkout
+```
+
 ## Artifacts 
 
 The Diagram Maker project has two main "outputs":
