@@ -5,13 +5,19 @@ Diagram Maker project.
 
 ### Command quick reference
 
-**Build the main `Diagrams` paclet artifact:**
+#### Build the main `Diagrams` paclet artifact:
 
 ```shell
 $ cargo make paclet
 ```
 
-**Run the `diagram-maker` tests:**
+#### Run the `Diagrams` paclet tests:
+
+```shell
+wolfram-cli paclet test ./paclets/Diagrams ./Tests
+```
+
+#### Run the `diagram-maker` tests:
 
 ```shell
 $ cargo test
@@ -24,7 +30,7 @@ Git LFS:
 $ git lfs checkout
 ```
 
-## Artifacts 
+## Artifacts
 
 The Diagram Maker project has two main "outputs":
 

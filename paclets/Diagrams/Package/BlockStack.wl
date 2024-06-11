@@ -3,9 +3,15 @@ Package["Diagrams`BlockStack`"]
 PackageUse[Diagrams -> {
 	DiagramError,
 	BlockStackDiagram,
+	TreeStackDiagram,
 	Errors -> {
 		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace
 	}
+}]
+
+PackageExport[{
+	(* Note: Exported for testing purposes. *)
+	processTree
 }]
 
 (*========================================================*)
@@ -140,3 +146,81 @@ renderBlock[
 		}]
 	}
 ];
+
+(*========================================================*)
+
+SetFallthroughError[TreeStackDiagram]
+
+TreeStackDiagram[tree_Tree] := Module[{},
+	BlockStackDiagram @ Map[
+		layer |-> {1, layer},
+		processTree[tree]
+	]
+]
+
+(*===================================*)
+
+SetFallthroughError[processTree]
+
+processTree[tree_?TreeQ] := Module[{
+	lowerLayers,
+	baseWidth = treeBaseWidth[tree],
+	treeData
+},
+	If[TreeLeafQ[tree] || TreeChildren[tree] === {},
+		(* Return the bottom layer. *)
+		Return[{
+			{TreeData[tree]}
+		}, Module]
+	];
+
+	lowerLayers = Map[
+		processTree,
+		TreeChildren[tree]
+	];
+
+	(* TODO: Error if lower layers lengths (i.e. depths) are not consistent. *)
+
+	(* Join elements across layers in the processed children. *)
+	lowerLayers = ConfirmReplace[
+		lowerLayers,
+		{layersSeq___} :> Join[layersSeq, 2]
+	];
+
+	If[TreeData[tree] =!= Null,
+		(* TODO:
+			Handle `TreeData` result that is itself an
+				Item[label, ___?OptionQ].
+			Error if the Item tries to specify a width? *)
+		Append[
+			lowerLayers,
+			{Item[TreeData[tree], treeBaseWidth[tree]]}
+		],
+		lowerLayers
+	]
+]
+
+(*===================================*)
+
+SetFallthroughError[treeBaseWidth]
+
+treeBaseWidth[expr_] := ConfirmReplace[expr, {
+	tree_?TreeLeafQ :> 1,
+
+	tree_?TreeQ :> Total @ Map[
+		treeBaseWidth,
+		Replace[TreeChildren[tree], None -> {}]
+	],
+
+	Item[
+		_,
+		width : _?IntegerQ : 1,
+		___?OptionQ
+	] :> width,
+
+	other_ :> Raise[
+		DiagramError,
+		"Unsupported tree base width argument form: ``",
+		InputForm[other]
+	]
+}]
