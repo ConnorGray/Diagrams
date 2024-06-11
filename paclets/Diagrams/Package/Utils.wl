@@ -95,3 +95,22 @@ UnicodeData["GeneralCategoryPropertyValues"] := Module[{},
 		{{_?StringQ, _?StringQ, _?StringQ}..}
 	]
 ]
+
+(*------------------------------------*)
+
+UnicodeData[
+	"MappedCharacterSetCodepoints",
+	characterSet : _?StringQ | All
+] := Module[{},
+	RaiseConfirmMatch[
+		$LibraryFunctions["get_mapped_character_set_codepoints"][characterSet],
+		Alternatives[
+			{ (_?IntegerQ -> _?IntegerQ) .. },
+			{
+				Repeated[
+					_?StringQ -> { (_?IntegerQ -> _?IntegerQ) .. }
+				]
+			}
+		]
+	]
+]

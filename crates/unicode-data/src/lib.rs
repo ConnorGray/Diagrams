@@ -12,6 +12,8 @@
 //! * [`GeneralCategory`]
 //! * [`GeneralCategoryClass`] — classes of [`GeneralCategory`] values
 
+use std::collections::HashMap;
+
 pub mod data;
 
 //======================================
@@ -181,6 +183,176 @@ macro_rules! property_and_class_enums {
 
 //======================================
 // Data
+//======================================
+
+macro_rules! generate_mapped_character_set_enum {
+    (
+        $( #[$attr:meta] )*
+        pub enum $name:ident => [
+            $( $variant:ident = $mapping_file:ident ),*
+        ];
+    ) => {
+        $( #[$attr] )*
+        #[allow(non_camel_case_types)]
+        pub enum $name {
+            $($variant),*
+        }
+
+        impl $name {
+            /// Get the variants of this enum.
+            pub const fn variants() -> &'static [Self] {
+                return &[$(Self::$variant),*]
+            }
+
+            pub const fn variant_name(&self) -> &'static str {
+                match self {
+                    $( Self::$variant => stringify!($variant), )*
+                }
+            }
+
+            /// Construct a [`MappedCharacterSet`] from the character set
+            /// variant name.
+            ///
+            /// # Examples
+            /// ```
+            /// # use unicode_data::MappedCharacterSet;
+            ///
+            /// assert_eq!(
+            ///     MappedCharacterSet::from_variant_name("ISO_8859_7").unwrap(),
+            ///     MappedCharacterSet::ISO_8859_7
+            /// );
+            /// ```
+            pub fn from_variant_name(string: &str) -> Option<Self> {
+                let variant = match string {
+                    $( stringify!($variant) => Self::$variant, )*
+                    _ => return None,
+                };
+                Some(variant)
+            }
+
+            /// Raw contents of the <https://unicode.org/Public/MAPPINGS/> entry
+            /// file for the given character set.
+            #[rustfmt::skip]
+            pub const fn raw_mapping_file_contents(&self) -> &'static str {
+                match self {
+                    $(
+                        Self::$variant => $crate::data::mappings::$mapping_file,
+                    )*
+                }
+            }
+        }
+    };
+}
+
+generate_mapped_character_set_enum!(
+    /// Character sets that have official mappings into Unicode.
+    ///
+    /// Reference: <https://unicode.org/Public/MAPPINGS/>
+    ///
+    /// **NOTE:** ISO 8859-12 is intentionally missing as it was never standardized.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+    pub enum MappedCharacterSet => [
+        //
+        // ISO 8859
+        //
+        ISO_8859_1 = ISO_8859_1_TXT,
+        ISO_8859_2 = ISO_8859_2_TXT,
+        ISO_8859_3 = ISO_8859_3_TXT,
+        ISO_8859_4 = ISO_8859_4_TXT,
+        ISO_8859_5 = ISO_8859_5_TXT,
+        ISO_8859_6 = ISO_8859_6_TXT,
+        ISO_8859_7 = ISO_8859_7_TXT,
+        ISO_8859_8 = ISO_8859_8_TXT,
+        ISO_8859_9 = ISO_8859_9_TXT,
+        ISO_8859_10 = ISO_8859_10_TXT,
+        ISO_8859_11 = ISO_8859_11_TXT,
+        ISO_8859_13 = ISO_8859_13_TXT,
+        ISO_8859_14 = ISO_8859_14_TXT,
+        ISO_8859_15 = ISO_8859_15_TXT,
+        ISO_8859_16 = ISO_8859_16_TXT
+
+        //
+        // Vendor-Specific
+        //
+        // Apple_Arabic,
+        // Apple_Celtic,
+        // Apple_CentralEuropean,
+        // Apple_ChineseSimplified,
+        // Apple_ChineseTraditional,
+        // etc.
+    ];
+);
+
+impl MappedCharacterSet {
+    pub fn to_unicode_codepoints(&self) -> HashMap<u32, char> {
+        let raw_text = self.raw_mapping_file_contents();
+
+        let data = raw_text
+            .lines()
+            .flat_map(|line: &str| -> Option<(u32, char)> {
+                parse_mapping_line(*self, line)
+            })
+            .collect();
+
+        return data;
+    }
+}
+
+fn parse_mapping_line(
+    char_set: MappedCharacterSet,
+    line: &str,
+) -> Option<(u32, char)> {
+    if line.starts_with('#') {
+        return None;
+    }
+
+    if line == "" {
+        return None;
+    }
+
+    let fields: Vec<&str> = line.split('\t').collect();
+
+    let fields: [&str; 4] = match fields.try_into() {
+        Ok(fields) => fields,
+        Err(fields) => panic!(
+            "unexpected number of fields in MAPPINGS file for {char_set:?}: {}",
+            fields.len()
+        ),
+    };
+
+    let [external, unicode, comment_char, _comment_name] = fields;
+
+    let external = external
+        .strip_prefix("0x")
+        .expect("expected field prefix to be '0x'");
+    let unicode = unicode
+        .strip_prefix("0x")
+        .expect("expected field prefix to be '0x'");
+    assert_eq!(comment_char, "#");
+
+    let external = u32::from_str_radix(external, 16)
+        .expect("expected field to be hex number");
+    let unicode = u32::from_str_radix(unicode, 16)
+        .expect("expected field to be hex number");
+
+    let unicode = char::from_u32(unicode)
+        .expect("expected field to be valid Unicode codepoint");
+
+    Some((external, unicode))
+}
+
+#[test]
+fn test_mapped_character_set() {
+    let iso_8859_7 = MappedCharacterSet::ISO_8859_7.to_unicode_codepoints();
+
+    assert_eq!(
+        u32::from(iso_8859_7[&0xE1]),
+        0x03B1 // 'α'
+    );
+}
+
+//======================================
+// Properties
 //======================================
 
 property_and_class_enums!(

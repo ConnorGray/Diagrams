@@ -8,7 +8,7 @@ use wolfram_library_link::{
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use unicode_data::GeneralCategory;
+use unicode_data::{GeneralCategory, MappedCharacterSet};
 
 use crate::{
     graphics::Graphics,
@@ -216,6 +216,51 @@ fn unicode_properties(args: Vec<Expr>) -> Expr {
             ])
         })
         .collect();
+
+    Expr::list(list)
+}
+
+#[wll::export(wstp)]
+fn get_mapped_character_set_codepoints(args: Vec<Expr>) -> Expr {
+    let [char_set]: &[Expr; 1] =
+        args.as_slice().try_into().unwrap_or_else(|_| {
+            panic!("expected zero arguments, got {}", args.len())
+        });
+
+    let Some(char_set) = char_set.try_as_str() else {
+        if *char_set == Symbol::new("System`All") {
+            let mut list = Vec::new();
+
+            for char_set in MappedCharacterSet::variants().into_iter().copied()
+            {
+                list.push(Expr::rule(
+                    Expr::string(char_set.variant_name()),
+                    char_set_to_codepoints_expr(char_set),
+                ))
+            }
+
+            return Expr::list(list);
+        }
+
+        panic!("expected 1st argument to be mapped character set string or All")
+    };
+
+    let Some(char_set) = MappedCharacterSet::from_variant_name(char_set) else {
+        panic!("1st argument was not a recognized mapped character set name");
+    };
+
+    char_set_to_codepoints_expr(char_set)
+}
+
+fn char_set_to_codepoints_expr(char_set: MappedCharacterSet) -> Expr {
+    let mut list = Vec::new();
+
+    for (codepoint, unicode_codepoint) in char_set.to_unicode_codepoints() {
+        list.push(Expr::rule(
+            Expr::from(codepoint),
+            Expr::from(u32::from(unicode_codepoint)),
+        ));
+    }
 
     Expr::list(list)
 }

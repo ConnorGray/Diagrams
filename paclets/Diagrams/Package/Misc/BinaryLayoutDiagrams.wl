@@ -2,6 +2,7 @@ Package["Diagrams`Misc`BinaryLayoutDiagrams`"]
 
 PackageExport[{
 	StringEncodingDiagram,
+	CharacterSetDiagram,
 	BinaryLayoutDiagram,
 
 	(*----------*)
@@ -31,13 +32,14 @@ PackageUse[Diagrams -> {
 	BlockStackDiagram,
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
-		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised
+		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
+		RaiseAssert
 	},
 	Library -> {$LibraryFunctions},
 	Render -> {
 		SizedText
 	},
-	Utils -> {GraphemeClusters}
+	Utils -> {GraphemeClusters, UnicodeData}
 }]
 
 $ColorScheme = <|
@@ -45,7 +47,11 @@ $ColorScheme = <|
 	"Codepoint" -> Darker[Blue],
 	"Character" -> Blue,
 	"Grapheme" -> Blend[{Green, GrayLevel[0.3]}, 0.8],
-	"String" -> GrayLevel[0.95]
+	"String" -> GrayLevel[0.95],
+
+	"CodepointUnassigned" -> LightGray,
+	"CodepointSameAsUnicode" -> LightGreen,
+	"CodepointDifferentFromUnicode" -> LightBlue
 |>;
 
 (*========================================================*)
@@ -231,6 +237,118 @@ StringEncodingDiagram[
 			InputForm[other]
 		]
 	}]
+]
+
+(*====================================*)
+
+SetFallthroughError[CharacterSetDiagram]
+
+(* TODO: Rename to CodePageDiagram? *)
+CharacterSetDiagram[
+	charSet0 : _?StringQ | Association[(_?IntegerQ -> _?IntegerQ)..],
+	visualization_?StringQ
+] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error creating CharacterSetDiagram"
+] @ Module[{
+	charSet = Replace[
+		charSet0,
+		_?StringQ :> Association @ RaiseConfirmMatch[
+			UnicodeData["MappedCharacterSetCodepoints", charSet0],
+			{ (_?IntegerQ -> _?IntegerQ).. }
+		]
+	]
+},
+	ConfirmReplace[visualization, {
+		"8BitEncodingUnicodeCorrespondance" :> (
+			show8BitCharacterSetUnicodeCorrespondance[charSet]
+		),
+		_ :> Raise[
+			DiagramError,
+			"Unrecognized character set visualization specification: ``",
+			InputForm[visualization]
+		]
+	}]
+]
+
+(*====================================*)
+
+SetFallthroughError[show8BitCharacterSetUnicodeCorrespondance];
+
+show8BitCharacterSetUnicodeCorrespondance[
+	codepointsMap_?AssociationQ
+] := Module[{
+	unicodeCodepoint
+},
+	RaiseAssert[Max[Keys[codepointsMap]] <= 255];
+
+	items = Table[
+		(* Possible states:
+			* Codepoint is unassigned in original character set
+			* Codepoint assignment in original character set has same
+				codepoint value as in Unicode.
+			* Codepoint assignment in original character set
+				has different codepoint value in Unicode.
+		*)
+		(
+			If[KeyExistsQ[codepointsMap, codepoint],
+				unicodeCodepoint = Lookup[codepointsMap, codepoint];
+
+				ConfirmReplace[unicodeCodepoint, {
+					codepoint :> Item[
+						FromCharacterCode[unicodeCodepoint],
+						Background -> $ColorScheme["CodepointSameAsUnicode"]
+					],
+					_ :> Item[
+						FromCharacterCode[unicodeCodepoint],
+						Background -> $ColorScheme["CodepointDifferentFromUnicode"]
+					]
+				}]
+				,
+				(* Codepoint is unassigned in original encoding *)
+				Item[
+					Text @ Style[
+						"<" <> IntegerString[codepoint, 16, 2] <> ">",
+						8
+					],
+					Background -> $ColorScheme["CodepointUnassigned"]
+				]
+			]
+		),
+		{codepoint, 0, 255}
+	];
+
+	graphic = BlockStackDiagram[
+		Reverse @ Map[
+			row |-> {1, row},
+			Partition[items, UpTo[16]]
+		]
+	];
+
+	Show[graphic, Graphics[{
+		Table[
+			Inset[
+				Style[Row[{
+					"" <> ToUpperCase@IntegerString[i, 16],
+					Style["x ", Italic]
+				}], 14],
+				{0, 16 - i - 0.5},
+				Right
+			],
+			{i, 0, 15, 1}
+		],
+		Table[
+			Inset[
+				Style[Row[{
+					Style["x", Italic],
+					ToUpperCase@IntegerString[i, 16],
+				}], 14],
+				{i + 0.5, 16},
+				Bottom
+			],
+			{i, 0, 15, 1}
+		]
+	}]]
 ]
 
 (*========================================================*)
