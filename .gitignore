@@ -1,2 +1,5 @@
 /target
 /build
+
+# In-source build artifacts
+/paclets/Diagrams/LibraryResources/

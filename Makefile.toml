@@ -5,15 +5,29 @@ default_to_workspace = false
 # Development tasks
 #---------------------------------------
 
+#
 # Define `$ cargo make paclet`
+#
 [tasks.paclet]
 dependencies = ["build-library-resources"]
-script = { file = "./scripts/BuildPaclet.wls" }
+command = "wolfram-cli"
+args = ["paclet", "build", "./paclets/Diagrams", "./build"]
 
 #---------------------------------------
 # Helper tasks
 #---------------------------------------
 
 [tasks.build-library-resources]
-command = "cargo"
-args = ["build"]
+script = '''
+set -euo pipefail
+
+# FIXME: Make this switch between release and debug builds somehow.
+cargo build
+
+# FIXME: Don't hard-code the SystemID directory here
+SystemID="MacOSX-ARM64"
+
+mkdir -p ./paclets/Diagrams/LibraryResources/$SystemID/
+
+cp ./target/debug/libdiagram_maker.dylib ./paclets/Diagrams/LibraryResources/$SystemID/libdiagram_maker_wll.dylib
+'''
