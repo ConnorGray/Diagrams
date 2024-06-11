@@ -241,12 +241,17 @@ StringEncodingDiagram[
 
 (*====================================*)
 
+Options[CharacterSetDiagram] = {
+	ChartLegends -> None
+}
+
 SetFallthroughError[CharacterSetDiagram]
 
 (* TODO: Rename to CodePageDiagram? *)
 CharacterSetDiagram[
 	charSet0 : _?StringQ | Association[(_?IntegerQ -> _?IntegerQ)..],
-	visualization_?StringQ
+	visualization_?StringQ,
+	optsSeq:OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating CharacterSetDiagram"
@@ -261,7 +266,12 @@ CharacterSetDiagram[
 },
 	ConfirmReplace[visualization, {
 		"8BitEncodingUnicodeCorrespondance" :> (
-			show8BitCharacterSetUnicodeCorrespondance[charSet]
+			show8BitCharacterSetUnicodeCorrespondance[
+				charSet,
+				(* Pass the name of the character set, if we have it. *)
+				Replace[charSet0, Except[_?StringQ] :> Sequence[]],
+				optsSeq
+			]
 		),
 		_ :> Raise[
 			DiagramError,
@@ -276,9 +286,13 @@ CharacterSetDiagram[
 SetFallthroughError[show8BitCharacterSetUnicodeCorrespondance];
 
 show8BitCharacterSetUnicodeCorrespondance[
-	codepointsMap_?AssociationQ
+	codepointsMap_?AssociationQ,
+	characterSetName : _?StringQ : None,
+	OptionsPattern[CharacterSetDiagram]
 ] := Module[{
-	unicodeCodepoint
+	items,
+	unicodeCodepoint,
+	graphic
 },
 	RaiseAssert[Max[Keys[codepointsMap]] <= 255];
 
@@ -325,7 +339,11 @@ show8BitCharacterSetUnicodeCorrespondance[
 		]
 	];
 
-	Show[graphic, Graphics[{
+	(*--------------------------------*)
+	(* Include row and column labels  *)
+	(*--------------------------------*)
+
+	graphic = Show[graphic, Graphics[{
 		Table[
 			Inset[
 				Style[Row[{
@@ -348,7 +366,45 @@ show8BitCharacterSetUnicodeCorrespondance[
 			],
 			{i, 0, 15, 1}
 		]
-	}]]
+	}]];
+
+	(*--------------------------------*)
+	(* Handle the ChartLegends option *)
+	(*--------------------------------*)
+
+	graphic = ConfirmReplace[OptionValue[ChartLegends], {
+		None :> graphic,
+		Automatic :> Module[{
+			legend
+		},
+			legend = SwatchLegend[
+				{
+					$ColorScheme["CodepointSameAsUnicode"],
+					$ColorScheme["CodepointDifferentFromUnicode"],
+					$ColorScheme["CodepointUnassigned"]
+				},
+				{
+					"Same value as Unicode",
+					"Different value from Unicode",
+					"Unassigned"
+				},
+				LegendMarkerSize -> 20
+			];
+
+			Labeled[
+				graphic,
+				{legend, Style[characterSetName, "Text", 18]},
+				{Right, Bottom}
+			]
+		],
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported ChartLegends option value: ``",
+			InputForm[other]
+		]
+	}];
+
+	graphic
 ]
 
 (*========================================================*)
