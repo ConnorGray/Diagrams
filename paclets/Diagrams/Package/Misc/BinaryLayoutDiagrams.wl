@@ -18,12 +18,7 @@ PackageExport[{
 	(*---------------*)
 	(* Configuration *)
 	(*---------------*)
-	$ColorScheme,
-
-	(*-----------*)
-	(* Utilities *)
-	(*-----------*)
-	ToCharacterCode2
+	$ColorScheme
 }]
 
 PackageUse[Diagrams -> {
@@ -39,7 +34,7 @@ PackageUse[Diagrams -> {
 	Render -> {
 		SizedText
 	},
-	Utils -> {GraphemeClusters, UnicodeData}
+	Utils -> {ToCharacterCode2, GraphemeClusters, UnicodeData}
 }]
 
 $ColorScheme = <|
@@ -666,28 +661,3 @@ layersSwatchLegend[layers: {___?StringQ}] := Module[{
 (*========================================================*)
 (* Utilities                                              *)
 (*========================================================*)
-
-SetFallthroughError[ToCharacterCode2]
-
-(*
-	This function is a workaround for the fact that WL doesn't provide support
-	for UTF-16 encoding in ToCharacterCode.
-*)
-ToCharacterCode2[
-	text_?StringQ,
-	encoding_?StringQ
-] := Module[{
-	libFunc
-},
-	If[MemberQ[$CharacterEncodings, encoding] || encoding == "Unicode",
-		Return @ ToCharacterCode[text, encoding];
-	];
-
-	libFunc = $LibraryFunctions["encode_string"];
-
-	RaiseConfirmMatch[libFunc, _LibraryFunction];
-
-	Replace[libFunc[text, encoding], {
-		data_?NumericArrayQ :> Normal[data]
-	}]
-]

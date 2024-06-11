@@ -6,6 +6,7 @@ PackageExport[{
 	RectangleSize,
 	RectangleCenter,
 
+	ToCharacterCode2,
 	GraphemeClusters,
 	UnicodeData
 }]
@@ -44,6 +45,33 @@ RectangleCenter[arg_] := Replace[arg, {
 (* Strings                            *)
 (*====================================*)
 
+SetFallthroughError[ToCharacterCode2]
+
+(*
+	This function is a workaround for the fact that WL doesn't provide support
+	for UTF-16 encoding in ToCharacterCode.
+*)
+ToCharacterCode2[
+	text_?StringQ,
+	encoding_?StringQ
+] := Module[{
+	libFunc
+},
+	If[MemberQ[$CharacterEncodings, encoding] || encoding == "Unicode",
+		Return @ ToCharacterCode[text, encoding];
+	];
+
+	libFunc = $LibraryFunctions["encode_string"];
+
+	RaiseConfirmMatch[libFunc, _LibraryFunction];
+
+	Replace[libFunc[text, encoding], {
+		data_?NumericArrayQ :> Normal[data]
+	}]
+]
+
+(*====================================*)
+
 SetFallthroughError[GraphemeClusters]
 
 GraphemeClusters[text_?StringQ] := Module[{
@@ -51,7 +79,6 @@ GraphemeClusters[text_?StringQ] := Module[{
 },
 	libFunc[text]
 ]
-
 
 (*====================================*)
 
