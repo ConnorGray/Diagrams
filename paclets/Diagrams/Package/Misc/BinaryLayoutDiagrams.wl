@@ -4,6 +4,7 @@ PackageExport[{
 	StringEncodingDiagram,
 	CharacterSetDiagram,
 	BinaryLayoutDiagram,
+	MemoryLayoutDiagram,
 
 	(*----------*)
 	(* Concepts *)
@@ -15,6 +16,8 @@ PackageExport[{
 	DiaByte,
 	DiaBit,
 
+	DiaStruct,
+
 	(*---------------*)
 	(* Configuration *)
 	(*---------------*)
@@ -25,6 +28,7 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	DiagramGraphicsImage,
 	BlockStackDiagram,
+	TreeStackDiagram,
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
@@ -43,6 +47,9 @@ $ColorScheme = <|
 	"Character" -> Blue,
 	"Grapheme" -> Blend[{Green, GrayLevel[0.3]}, 0.8],
 	"String" -> GrayLevel[0.95],
+
+	"Integer" -> LightOrange,
+	"Pointer" -> LightPurple,
 
 	"CodepointUnassigned" -> LightGray,
 	"CodepointSameAsUnicode" -> LightGreen,
@@ -657,6 +664,140 @@ layersSwatchLegend[layers: {___?StringQ}] := Module[{
 
 	legend
 ]
+
+(*========================================================*)
+
+MemoryLayoutDiagram[
+	type_
+] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error creating MemoryLayoutDiagram"
+] @ Block[{
+	(* FIXME:
+		Hard-coded max of 10 layers of indirection.
+		Good luck if you need more.
+	*)
+	$indirectionLayers = AssociationMap[{} &, Range[10]],
+	$indirectionDepth = 0
+}, Module[{
+	tree
+},
+	tree = treeForType[type];
+
+	RaiseAssert[$indirectionDepth === 0];
+
+	$indirectionLayers //= DeleteCases[{}];
+
+	(* TODO: Return or render this information? *)
+	$indirectionLayers = Values[$indirectionLayers];
+
+	TreeStackDiagram[tree]
+]]
+
+(*====================================*)
+
+SetFallthroughError[treeForType]
+
+(* TODO:
+	Make this public as LayoutTreeForType? For folks who want to customize
+	the tree layout at a lower level before passing it to TreeStackDiagram.
+*)
+(* FIXME: Support TypeSpecifier[..] type specifications. *)
+treeForType[type_] := ConfirmReplace[type, {
+	DiaStruct[structName_?StringQ, fields_?AssociationQ] :> (
+		RaiseConfirmMatch[fields, Association[(_?StringQ -> _)...]];
+
+		Tree[
+			structName,
+			KeyValueMap[
+				{fieldName, fieldType} |-> (
+					(* Tree[fieldName, {treeForType[fieldType]}] *)
+					Tree[
+						fieldName <> ": " <> ToString[fieldType],
+						(* Note:
+							Ignore the TreeData node of the tree for this
+							type, since we're displaying the type by
+							concatenating it to the fieldName above. *)
+						TreeChildren @ treeForType[fieldType]
+					]
+				),
+				fields
+			]
+		]
+	),
+
+	"UInt8" | "Int8" |
+	"UInt16" | "Int16" |
+	"UInt32" | "Int32" |
+	"UInt64" | "Int64" :> (
+		Tree[
+			(* FIXME: This background is being ignored. *)
+			(* Item[type, Background -> $ColorScheme["Integer"]], *)
+			type,
+			Table[
+				Item["", Background -> $ColorScheme["Byte"]],
+				sizeOf[type]
+			]
+		]
+	),
+
+	"PrimitiveArray"[arrayElemType_, count_?IntegerQ] :> (
+		Tree[Table[treeForType[arrayElemType], count]]
+	),
+
+	"Pointer"[
+		pointee_,
+		(* TODO: Support "SelfReferential"[..] as a location. *)
+		location : ("Heap" | "Stack" | "Generic") : "Generic"
+	] :> Block[{
+		$indirectionDepth = $indirectionDepth + 1
+	},
+		AppendTo[
+			$indirectionLayers[$indirectionDepth],
+			treeForType[pointee]
+		];
+
+		Tree[
+			"Pointer[" <> ToString[pointee] <> "]",
+			Table[Item["", Background -> $ColorScheme["Byte"]], $pointerSize]
+		]
+	],
+
+	other_ :> Raise[
+		DiagramError,
+		"Unrecognzied type specification: ``",
+		InputForm[other]
+	]
+}]
+
+(*====================================*)
+
+$pointerSize = 8
+
+SetFallthroughError[sizeOf]
+
+sizeOf[type_] := WrapRaised[
+	DiagramError,
+	"Error computing sizeOf: ``",
+	InputForm[type]
+] @ ConfirmReplace[type, {
+	int:("UInt8" | "Int8")    :> 1,
+	int:("UInt16" | "Int16")  :> 2,
+	int:("UInt32" | "Int32")  :> 4,
+	int:("UInt64" | "Int64")  :> 8,
+
+	"Pointer"[pointee_] :> $pointerSize,
+
+	"PrimitiveArray"[arrayElemType_, count_?IntegerQ] :> (
+		count * sizeOf[arrayElemType]
+	),
+
+	other_ :> Raise[
+		DiagramError,
+		"Unrecognzied type specification: ``",
+		InputForm[other]
+	]
+}]
 
 (*========================================================*)
 (* Utilities                                              *)
