@@ -1,6 +1,7 @@
 [workspace]
 
-members = [
-    "crates/diagram-maker",
-    "crates/unicode-data"
-]
+members = ["crates/diagram-maker", "crates/unicode-data"]
+
+# FIXME: Publish this functionality to crates.io and remove this patch.
+[patch.'crates-io'.wolfram-expr]
+path = "/Users/connorgray/Dev/GitHub/WolframResearch/wolfram-expr-rs"

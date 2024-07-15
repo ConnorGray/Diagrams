@@ -7,7 +7,10 @@ use crate::{
     Diagram,
 };
 
-use wolfram_expr::{Expr, ExprKind, Number, Symbol};
+use wolfram_expr::{
+    convert::from_expr::{try_headed, try_headed_len},
+    Expr, ExprKind, Number, Symbol,
+};
 
 pub struct List(Vec<Expr>);
 
@@ -217,8 +220,7 @@ impl TryFrom<&Expr> for Graphics {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let arg: &Expr =
-            &try_headed_len(e, Symbol::new("System`Graphics"), 1)?[0];
+        let [arg] = try_headed_len(e, Symbol::new("System`Graphics"))?;
 
         let commands = try_headed(arg, Symbol::new("System`List"))?;
 
@@ -346,10 +348,10 @@ impl TryFrom<&Expr> for Rectangle {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let args = try_headed_len(e, Symbol::new("System`Rectangle"), 2)?;
+        let [mins, maxs] = try_headed_len(e, Symbol::new("System`Rectangle"))?;
 
-        let mins = Coord::try_from(&args[0])?;
-        let maxs = Coord::try_from(&args[1])?;
+        let mins = Coord::try_from(mins)?;
+        let maxs = Coord::try_from(maxs)?;
 
         // FIXME: Parse this from the expression;
         let rounding_radius = 0.0;
@@ -369,8 +371,7 @@ impl TryFrom<&Expr> for Line {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let arg = try_headed_len(e, Symbol::new("System`Line"), 1)?;
-        let arg = &arg[0];
+        let [arg] = try_headed_len(e, Symbol::new("System`Line"))?;
 
         let elems = try_headed(arg, Symbol::new("System`List"))?;
 
@@ -387,15 +388,15 @@ impl TryFrom<&Expr> for SizedText {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let args =
-            try_headed_len(e, Symbol::new("Diagrams`Render`SizedText"), 2)?;
+        let [text, rect] =
+            try_headed_len(e, Symbol::new("Diagrams`Render`SizedText"))?;
 
-        let text = match args[0].kind() {
+        let text = match text.kind() {
             ExprKind::String(s) => s.clone(),
             _ => return Err(format!("expected SizedText[_String, _]")),
         };
 
-        let rect = match Rectangle::try_from(&args[1]) {
+        let rect = match Rectangle::try_from(rect) {
             Ok(rect) => rect,
             Err(err) => {
                 return Err(format!("expected SizedText[_, _Rectangle]: {err}"))
@@ -417,13 +418,13 @@ impl TryFrom<&Expr> for Coord {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let args = try_headed_len(e, Symbol::new("System`List"), 2)?;
+        let [x, y] = try_headed_len(e, Symbol::new("System`List"))?;
 
-        let x = args[0].try_as_number().ok_or_else(|| {
-            format!("expected coordinate to be a number, got: {}", args[0])
+        let x = x.try_as_number().ok_or_else(|| {
+            format!("expected coordinate to be a number, got: {}", x)
         })?;
-        let y = args[1].try_as_number().ok_or_else(|| {
-            format!("expected coordinate to be a number, got: {}", args[1])
+        let y = y.try_as_number().ok_or_else(|| {
+            format!("expected coordinate to be a number, got: {}", y)
         })?;
 
         let x = as_real(x) as f32;
@@ -431,34 +432,4 @@ impl TryFrom<&Expr> for Coord {
 
         Ok(Coord { x, y })
     }
-}
-
-fn try_headed(e: &Expr, head: Symbol) -> Result<&[Expr], String> {
-    let e = match e.try_as_normal() {
-        Some(value) => value,
-        None => return Err(format!("expected {}[..]", head.symbol_name())),
-    };
-
-    if !e.has_head(&head) {
-        return Err(format!("expected {}[..]", head.symbol_name()));
-    }
-
-    Ok(e.elements())
-}
-
-fn try_headed_len(
-    e: &Expr,
-    head: Symbol,
-    len: usize,
-) -> Result<&[Expr], String> {
-    let elems = try_headed(e, head.clone())?;
-
-    if elems.len() != len {
-        return Err(format!(
-            "expected {}[..] with length {len}",
-            head.symbol_name()
-        ));
-    }
-
-    Ok(elems)
 }
