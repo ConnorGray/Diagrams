@@ -9,7 +9,7 @@ use crate::{
 
 use wolfram_expr::{
     convert::from_expr::{try_headed, try_headed_len},
-    Expr, ExprKind, Number, Symbol,
+    Expr, ExprKind, Number, Symbol, SymbolStr,
 };
 
 pub struct List(Vec<Expr>);
@@ -19,6 +19,19 @@ pub struct Rule {
     pub rhs: Expr,
 }
 
+mod st {
+    use wolfram_expr::symbol::unsafe_symbol_str;
+
+    unsafe_symbol_str! {
+        pub const List = "System`List";
+
+        pub const Graphics = "System`Graphics";
+        pub const Line = "System`Line";
+        pub const Rectangle = "System`Rectangle";
+        pub const AbsoluteThickness = "System`AbsoluteThickness";
+        pub const EdgeForm = "System`EdgeForm";
+    }
+}
 //======================================
 // TryFrom<&Expr> impls
 //======================================
@@ -220,9 +233,9 @@ impl TryFrom<&Expr> for Graphics {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [arg] = try_headed_len(e, Symbol::new("System`Graphics"))?;
+        let [arg] = try_headed_len(e, st::Graphics)?;
 
-        let commands = try_headed(arg, Symbol::new("System`List"))?;
+        let commands = try_headed(arg, st::List)?;
 
         let commands = commands
             .into_iter()
@@ -277,8 +290,7 @@ impl TryFrom<&Expr> for Directive {
             return Ok(Directive::RGBColor(rgb));
         }
 
-        if let Ok(args) = try_headed(e, Symbol::new("System`AbsoluteThickness"))
-        {
+        if let Ok(args) = try_headed(e, st::AbsoluteThickness) {
             if args.len() != 1 {
                 return Err(format!("expected AbsoluteThickness[_]"));
             }
@@ -292,7 +304,7 @@ impl TryFrom<&Expr> for Directive {
             return Ok(Directive::AbsoluteThickness(as_real(num) as f32));
         }
 
-        if let Ok(args) = try_headed(e, Symbol::new("System`EdgeForm")) {
+        if let Ok(args) = try_headed(e, st::EdgeForm) {
             let directives = args
                 .into_iter()
                 .map(Directive::try_from)
@@ -348,7 +360,7 @@ impl TryFrom<&Expr> for Rectangle {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [mins, maxs] = try_headed_len(e, Symbol::new("System`Rectangle"))?;
+        let [mins, maxs] = try_headed_len(e, st::Rectangle)?;
 
         let mins = Coord::try_from(mins)?;
         let maxs = Coord::try_from(maxs)?;
@@ -371,9 +383,9 @@ impl TryFrom<&Expr> for Line {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [arg] = try_headed_len(e, Symbol::new("System`Line"))?;
+        let [arg] = try_headed_len(e, st::Line)?;
 
-        let elems = try_headed(arg, Symbol::new("System`List"))?;
+        let elems = try_headed(arg, st::List)?;
 
         let coords = elems
             .into_iter()
@@ -389,7 +401,7 @@ impl TryFrom<&Expr> for SizedText {
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
         let [text, rect] =
-            try_headed_len(e, Symbol::new("Diagrams`Render`SizedText"))?;
+            try_headed_len(e, SymbolStr::new("Diagrams`Render`SizedText"))?;
 
         let text = match text.kind() {
             ExprKind::String(s) => s.clone(),
@@ -418,7 +430,7 @@ impl TryFrom<&Expr> for Coord {
     type Error = String;
 
     fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [x, y] = try_headed_len(e, Symbol::new("System`List"))?;
+        let [x, y] = try_headed_len(e, st::List)?;
 
         let x = x.try_as_number().ok_or_else(|| {
             format!("expected coordinate to be a number, got: {}", x)
