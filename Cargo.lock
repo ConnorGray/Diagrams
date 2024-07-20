@@ -1184,7 +1184,6 @@ name = "wolfram-expr"
 version = "0.1.4"
 dependencies = [
  "ordered-float",
- "ref-cast",
 ]
 
 [[package]]

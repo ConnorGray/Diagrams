@@ -1,7 +1,7 @@
 use wolfram_expr::ExprKind;
 use wolfram_library_link::{
     self as wll, export,
-    expr::{Expr, Symbol},
+    expr::{convert::FromExpr, Expr, Symbol},
     wstp::Link,
     NumericArray,
 };
@@ -37,7 +37,7 @@ fn diagram_image(link: &mut Link) {
     assert!(args.has_head(&Symbol::new("System`List")));
     let args = args.elements();
 
-    let diagram = Diagram::try_from(&args[0]).unwrap();
+    let diagram = Diagram::from_expr_req(&args[0]).unwrap();
 
     let placed = layout(&diagram, LayoutAlgorithm::Row);
 
@@ -54,7 +54,7 @@ fn graphics_image(link: &mut Link) {
     assert!(args.has_head(&Symbol::new("System`List")));
     let args = args.elements();
 
-    let graphics = Graphics::try_from(&args[0]).unwrap();
+    let graphics = Graphics::from_expr_req(&args[0]).unwrap();
 
     let png_data: Vec<u8> = graphics.render_to_png_bytes();
 

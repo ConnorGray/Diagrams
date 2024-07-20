@@ -8,16 +8,13 @@ use crate::{
 };
 
 use wolfram_expr::{
-    convert::from_expr::{try_headed, try_headed_len},
-    Expr, ExprKind, Number, Symbol, SymbolStr,
+    convert::{
+        forms::{List, Rule},
+        parse_headed, parse_headed_args, parse_opt_headed_len, FromExpr,
+        FromExprError,
+    },
+    Expr, ExprKind, Number, SymbolStr,
 };
-
-pub struct List(Vec<Expr>);
-
-pub struct Rule {
-    pub lhs: Expr,
-    pub rhs: Expr,
-}
 
 mod st {
     use wolfram_expr::symbol::unsafe_symbol_str;
@@ -30,41 +27,34 @@ mod st {
         pub const Rectangle = "System`Rectangle";
         pub const AbsoluteThickness = "System`AbsoluteThickness";
         pub const EdgeForm = "System`EdgeForm";
+        pub const RGBColor = "System`RGBColor";
+
+        pub const Diagram = "DiagramMaker`Diagram";
+        pub const DiaBox = "DiagramMaker`DiaBox";
+        pub const DiaArrow = "DiagramMaker`DiaArrow";
     }
 }
 //======================================
 // TryFrom<&Expr> impls
 //======================================
 
-impl TryFrom<&Expr> for Diagram {
-    type Error = String;
+impl FromExpr<'_> for Diagram {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let elements =
+            parse_headed(e, st::Diagram).map_err(FromExprError::Unexpected)?;
 
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_as_normal() {
-            Some(value) => value,
-            None => return Err(format!("expected Diagram[..]")),
-        };
-
-        if !e.has_head(&Symbol::new("DiagramMaker`Diagram")) {
-            return Err(format!("expected Diagram[..]"));
+        if elements.len() < 2 {
+            // TODO: Add ExprError::ExpectedLengthMin and use it here?
+            return Err(FromExprError::malformed_custom(
+                e,
+                "expected Diagram[_, _] with 2 arguments",
+            ));
         }
 
-        if e.elements().len() < 2 {
-            return Err(format!("expected Diagram[_, _]"));
-        }
+        let List(boxes) = List::<Box>::from_expr_req(&elements[0])?;
+        let List(arrows) = List::<Arrow>::from_expr_req(&elements[1])?;
 
-        let List(boxes) = List::try_from(&e.elements()[0])?;
-        let List(arrows) = List::try_from(&e.elements()[1])?;
-
-        let boxes: Vec<Box> =
-            boxes.iter().map(Box::try_from).collect::<Result<_, _>>()?;
-
-        let arrows: Vec<Arrow> = arrows
-            .iter()
-            .map(Arrow::try_from)
-            .collect::<Result<_, _>>()?;
-
-        let theme = parse_theme_options(&e.elements()[2..])?;
+        let theme = parse_theme_options(&elements[2..])?;
 
         Ok(Diagram {
             boxes,
@@ -74,11 +64,11 @@ impl TryFrom<&Expr> for Diagram {
     }
 }
 
-fn parse_theme_options(opts: &[Expr]) -> Result<Theme, String> {
+fn parse_theme_options(opts: &[Expr]) -> Result<Theme, FromExprError> {
     let mut theme = Theme::default();
 
     for opt in opts {
-        let Rule { lhs, rhs } = Rule::try_from(opt)?;
+        let Rule(lhs, rhs) = Rule::<Expr, Expr>::from_expr_req(opt)?;
 
         match lhs.kind() {
             ExprKind::String(s) if s == "BoxBackground" => {
@@ -101,82 +91,48 @@ fn parse_theme_options(opts: &[Expr]) -> Result<Theme, String> {
     Ok(theme)
 }
 
-fn get_color(expr: &Expr) -> Result<skia::Color, String> {
-    if let Ok(RGBColor { r, g, b }) = RGBColor::try_from(expr) {
-        return Ok(skia::Color::from_rgb(r, g, b));
-    }
+fn get_color(expr: &Expr) -> Result<skia::Color, FromExprError> {
+    let RGBColor { r, g, b } = RGBColor::from_expr_req(expr)?;
 
-    return Err("unrecognized color specification".into());
+    return Ok(skia::Color::from_rgb(r, g, b));
 }
 
-impl TryFrom<&Expr> for Box {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_as_normal() {
-            Some(value) => value,
-            None => return Err(format!("expected DiaBox[..]")),
-        };
-
-        if !e.has_head(&Symbol::new("DiagramMaker`DiaBox")) {
-            return Err(format!("expected DiaBox[..]"));
-        }
-
-        if e.elements().len() != 1 {
-            return Err(format!("expected DiaBox[_]"));
-        }
-
-        let id = match e.elements()[0].kind() {
-            ExprKind::String(s) => s,
-            _ => return Err(format!("expected DiaBox[_String]")),
-        };
+impl FromExpr<'_> for Box {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (id,): (String,) = parse_headed_args(e, st::DiaBox)?;
 
         Ok(Box {
-            id: Id::new(id),
-            text: Text(id.clone()),
+            id: Id::new(id.clone()),
+            text: Text(id),
         })
     }
 }
 
-impl TryFrom<&Expr> for Arrow {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_as_normal() {
-            Some(value) => value,
-            None => return Err(format!("expected DiaArrow[..]")),
-        };
-
-        if !e.has_head(&Symbol::new("DiagramMaker`DiaArrow")) {
-            return Err(format!("expected DiaArrow[..]"));
-        }
-
-        if e.elements().len() != 2 {
-            return Err(format!("expected DiaArrow[_, _]"));
-        }
-
-        let rule = Rule::try_from(&e.elements()[0])?;
-
-        let start = match rule.lhs.kind() {
-            ExprKind::String(s) => Id::new(s),
-            _ => return Err(format!("expected DiaArrow[_String -> _, _]")),
-        };
-        let end = match rule.rhs.kind() {
-            ExprKind::String(s) => Id::new(s),
+impl FromExpr<'_> for Id {
+    fn parse_from_expr(expr: &'_ Expr) -> Result<Self, FromExprError> {
+        let id = match expr.kind() {
+            ExprKind::String(s) => s,
             _ => {
-                return Err(format!("expected DiaArrow[_String -> _String, _]"))
+                return Err(FromExprError::unexpected_custom(
+                    expr,
+                    "expected String diagram element ID",
+                ))
             },
         };
 
-        let text = match e.elements()[1].kind() {
-            ExprKind::String(s) => Text(s.clone()),
-            _ => return Err(format!("expected DiaArrow[_, _String]")),
-        };
+        Ok(Id::new(id))
+    }
+}
+
+impl FromExpr<'_> for Arrow {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (Rule(start, end), text): (Rule<_, _>, _) =
+            parse_headed_args(e, st::DiaArrow)?;
 
         Ok(Arrow {
             start,
             end,
-            text,
+            text: Text(text),
             // TODO: Support Attachment option on DiaArrow, use that here if specified.
             start_at: None,
             end_at: None,
@@ -188,165 +144,83 @@ impl TryFrom<&Expr> for Arrow {
 // System symbols
 //======================================
 
-impl TryFrom<&Expr> for List {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_as_normal() {
-            Some(value) => value,
-            None => return Err(format!("expected List[..]")),
-        };
-
-        if !e.has_head(&Symbol::new("System`List")) {
-            return Err(format!("expected List[..]"));
-        }
-
-        Ok(List(e.elements().to_owned()))
-    }
-}
-
-impl TryFrom<&Expr> for Rule {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let e = match e.try_as_normal() {
-            Some(value) => value,
-            None => return Err(format!("expected Rule[..]")),
-        };
-
-        if !e.has_head(&Symbol::new("System`Rule")) {
-            return Err(format!("expected Rule[..]"));
-        }
-
-        if e.elements().len() != 2 {
-            return Err(format!("expected Rule[_, _]"));
-        }
-
-        Ok(Rule {
-            lhs: e.elements()[0].clone(),
-            rhs: e.elements()[1].clone(),
-        })
-    }
-}
-
-impl TryFrom<&Expr> for Graphics {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [arg] = try_headed_len(e, st::Graphics)?;
-
-        let commands = try_headed(arg, st::List)?;
-
-        let commands = commands
-            .into_iter()
-            .map(Command::try_from)
-            .collect::<Result<Vec<_>, String>>()?;
+impl FromExpr<'_> for Graphics {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (List(commands),) = parse_headed_args(e, st::Graphics)?;
 
         Ok(Graphics { commands })
     }
 }
 
-impl TryFrom<&Expr> for Command {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        if let Ok(primitive) = Primitive::try_from(e) {
+impl FromExpr<'_> for Command {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        if let Some(primitive) = Primitive::from_expr_opt(e)? {
             return Ok(Command::Primitive(primitive));
         }
 
-        if let Ok(directive) = Directive::try_from(e) {
+        if let Some(directive) = Directive::from_expr_opt(e)? {
             return Ok(Command::Directive(directive));
         }
 
-        return Err(format!("unrecognized graphics command: {}", e));
+        return Err(FromExprError::malformed_custom(
+            e,
+            "unrecognized graphics command",
+        ));
     }
 }
 
-impl TryFrom<&Expr> for Primitive {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        if let Ok(line) = Line::try_from(e) {
+impl FromExpr<'_> for Primitive {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        if let Some(line) = Line::from_expr_opt(e)? {
             return Ok(Primitive::Line(line));
         }
 
-        if let Ok(rect) = Rectangle::try_from(e) {
+        if let Some(rect) = Rectangle::from_expr_opt(e)? {
             return Ok(Primitive::Rectangle(rect));
         }
 
-        if let Ok(sized_text) = SizedText::try_from(e) {
+        if let Some(sized_text) = SizedText::from_expr_opt(e)? {
             return Ok(Primitive::SizedText(sized_text));
         }
 
-        Err(format!("unrecognized graphics primitive: {}", e))
+        Err(FromExprError::malformed_custom(
+            e,
+            "unrecognized graphics primitive",
+        ))
     }
 }
 
-impl TryFrom<&Expr> for Directive {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        if let Ok(rgb) = RGBColor::try_from(e) {
+impl FromExpr<'_> for Directive {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        if let Some(rgb) = RGBColor::from_expr_opt(e)? {
             return Ok(Directive::RGBColor(rgb));
         }
 
-        if let Ok(args) = try_headed(e, st::AbsoluteThickness) {
-            if args.len() != 1 {
-                return Err(format!("expected AbsoluteThickness[_]"));
-            }
-
-            let arg = &args[0];
-
-            let num = arg.try_as_number().ok_or_else(|| {
-                format!("expected thickness to be a number, got: {}", arg)
-            })?;
+        if let Some([arg]) = parse_opt_headed_len(e, st::AbsoluteThickness)? {
+            let num = Number::from_expr_req(arg)?;
 
             return Ok(Directive::AbsoluteThickness(as_real(num) as f32));
         }
 
-        if let Ok(args) = try_headed(e, st::EdgeForm) {
+        if let Ok(args) = parse_headed(e, st::EdgeForm) {
             let directives = args
                 .into_iter()
-                .map(Directive::try_from)
+                .map(Directive::from_expr_req)
                 .collect::<Result<Vec<_>, _>>()?;
 
             return Ok(Directive::EdgeForm(directives));
         }
 
-        return Err(format!("unrecognized graphics directive: {}", e));
+        return Err(FromExprError::malformed_custom(
+            e,
+            "unrecognized graphics directive",
+        ));
     }
 }
 
-impl TryFrom<&Expr> for RGBColor {
-    type Error = String;
-
-    fn try_from(expr: &Expr) -> Result<Self, Self::Error> {
-        let normal = expr
-            .try_as_normal()
-            .ok_or_else(|| format!("expected RGBColor[..]"))?;
-
-        if !normal.has_head(&Symbol::new("System`RGBColor")) {
-            return Err(format!("unrecognized color specification: {}", expr));
-        }
-
-        let elems = normal.elements();
-
-        if elems.len() != 3 {
-            return Err(format!(
-                "invalid RGBColor[..]: wrong number of arguments: {}",
-                expr
-            ));
-        }
-
-        let r = elems[0]
-            .try_as_number()
-            .ok_or_else(|| format!("invalid red channel"))?;
-        let g = elems[1]
-            .try_as_number()
-            .ok_or_else(|| format!("invalid green channel"))?;
-        let b = elems[2]
-            .try_as_number()
-            .ok_or_else(|| format!("invalid blue channel"))?;
+impl FromExpr<'_> for RGBColor {
+    fn parse_from_expr(expr: &Expr) -> Result<Self, FromExprError> {
+        let (r, g, b) = parse_headed_args(expr, st::RGBColor)?;
 
         let to_u8_color = RGBColor::to_u8_color;
 
@@ -356,14 +230,9 @@ impl TryFrom<&Expr> for RGBColor {
     }
 }
 
-impl TryFrom<&Expr> for Rectangle {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [mins, maxs] = try_headed_len(e, st::Rectangle)?;
-
-        let mins = Coord::try_from(mins)?;
-        let maxs = Coord::try_from(maxs)?;
+impl FromExpr<'_> for Rectangle {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (mins, maxs): (Coord, Coord) = parse_headed_args(e, st::Rectangle)?;
 
         // FIXME: Parse this from the expression;
         let rounding_radius = 0.0;
@@ -379,43 +248,20 @@ impl TryFrom<&Expr> for Rectangle {
     }
 }
 
-impl TryFrom<&Expr> for Line {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [arg] = try_headed_len(e, st::Line)?;
-
-        let elems = try_headed(arg, st::List)?;
-
-        let coords = elems
-            .into_iter()
-            .map(Coord::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
+impl FromExpr<'_> for Line {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (List(coords),) = parse_headed_args(e, st::Line)?;
 
         Ok(Line { coords })
     }
 }
 
-impl TryFrom<&Expr> for SizedText {
-    type Error = String;
+impl FromExpr<'_> for SizedText {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (string, rect) =
+            parse_headed_args(e, SymbolStr::new("Diagrams`Render`SizedText"))?;
 
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [text, rect] =
-            try_headed_len(e, SymbolStr::new("Diagrams`Render`SizedText"))?;
-
-        let text = match text.kind() {
-            ExprKind::String(s) => s.clone(),
-            _ => return Err(format!("expected SizedText[_String, _]")),
-        };
-
-        let rect = match Rectangle::try_from(rect) {
-            Ok(rect) => rect,
-            Err(err) => {
-                return Err(format!("expected SizedText[_, _Rectangle]: {err}"))
-            },
-        };
-
-        Ok(SizedText { string: text, rect })
+        Ok(SizedText { string, rect })
     }
 }
 
@@ -426,18 +272,9 @@ fn as_real(num: Number) -> f64 {
     }
 }
 
-impl TryFrom<&Expr> for Coord {
-    type Error = String;
-
-    fn try_from(e: &Expr) -> Result<Self, Self::Error> {
-        let [x, y] = try_headed_len(e, st::List)?;
-
-        let x = x.try_as_number().ok_or_else(|| {
-            format!("expected coordinate to be a number, got: {}", x)
-        })?;
-        let y = y.try_as_number().ok_or_else(|| {
-            format!("expected coordinate to be a number, got: {}", y)
-        })?;
+impl FromExpr<'_> for Coord {
+    fn parse_from_expr(e: &Expr) -> Result<Self, FromExprError> {
+        let (x, y): (Number, Number) = parse_headed_args(e, st::List)?;
 
         let x = as_real(x) as f32;
         let y = as_real(y) as f32;

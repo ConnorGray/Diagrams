@@ -11,7 +11,7 @@ mod wll_api;
 pub use crate::diagram::Diagram;
 
 #[derive(Debug, Clone)]
-pub struct Error(String);
+pub struct Error(#[allow(dead_code)] String);
 
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Error {
