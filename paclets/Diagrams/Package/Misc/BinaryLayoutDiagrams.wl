@@ -713,7 +713,12 @@ treeForType[type_] := ConfirmReplace[type, {
 				{fieldName, fieldType} |-> (
 					(* Tree[fieldName, {treeForType[fieldType]}] *)
 					Tree[
-						fieldName <> ": " <> ToString[fieldType],
+						(* TODO: Factor out typeName[..] function. *)
+						fieldName <> ": " <> ConfirmReplace[fieldType, {
+							name_?StringQ :> name,
+							DiaStruct[name_?StringQ, __] :> name,
+							other_ :> ToString[other]
+						}],
 						(* Note:
 							Ignore the TreeData node of the tree for this
 							type, since we're displaying the type by
