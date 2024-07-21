@@ -4,26 +4,26 @@ Get["Diagrams`"]
 (*========================================================*)
 
 VerificationTest[
-	Context[processTree],
+	Context[treeToLayers],
 	"Diagrams`BlockStack`"
 ]
 
 VerificationTest[
-	processTree[Tree["label", None]],
+	treeToLayers[Tree["label", None]],
 	{
 		{"label"}
 	}
 ]
 
 VerificationTest[
-	processTree @ Tree[{1, 2, 3}],
+	treeToLayers @ Tree[{1, 2, 3}],
 	{
 		{1, 2, 3}
 	}
 ]
 
 VerificationTest[
-	processTree @ Tree["list", {1, 2, 3}],
+	treeToLayers @ Tree["list", {1, 2, 3}],
 	{
 		{1, 2, 3},
 		{Item["list", 3]}
@@ -31,7 +31,7 @@ VerificationTest[
 ]
 
 VerificationTest[
-	processTree @ Tree[
+	treeToLayers @ Tree[
 		"SIMD[UInt16, 3]",
 		{
 			Tree["UInt16", {"byte", "byte"}],
@@ -47,14 +47,14 @@ VerificationTest[
 ]
 
 VerificationTest[
-	processTree @ Tree[Null, None],
+	treeToLayers @ Tree[Null, None],
 	{
 		{Null}
 	}
 ]
 
 VerificationTest[
-	processTree @ Tree[Null, {}],
+	treeToLayers @ Tree[Null, {}],
 	{
 		{Null}
 	}
@@ -66,7 +66,7 @@ VerificationTest[
 
 (* FIXME: Start checking for this an enable this test. *)
 (* VerificationTest[
-	processTree @ Tree[
+	treeToLayers @ Tree[
 		"InlineList[Int16, 3]",
 		{
 			Tree["storage", {

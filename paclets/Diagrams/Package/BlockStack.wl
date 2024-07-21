@@ -11,7 +11,7 @@ PackageUse[Diagrams -> {
 
 PackageExport[{
 	(* Note: Exported for testing purposes. *)
-	processTree
+	treeToLayers
 }]
 
 (*========================================================*)
@@ -154,15 +154,16 @@ SetFallthroughError[TreeStackDiagram]
 TreeStackDiagram[tree_Tree] := Module[{},
 	BlockStackDiagram @ Map[
 		layer |-> {1, layer},
-		processTree[tree]
+		treeToLayers[tree]
 	]
 ]
 
 (*===================================*)
 
-SetFallthroughError[processTree]
+SetFallthroughError[treeToLayers]
 
-processTree[tree_?TreeQ] := Module[{
+(* Turn a Tree into a list of layers. *)
+treeToLayers[tree_?TreeQ] := Module[{
 	lowerLayers,
 	baseWidth = treeBaseWidth[tree],
 	treeData
@@ -175,7 +176,7 @@ processTree[tree_?TreeQ] := Module[{
 	];
 
 	lowerLayers = Map[
-		processTree,
+		treeToLayers,
 		TreeChildren[tree]
 	];
 
