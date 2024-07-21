@@ -768,9 +768,10 @@ treeForType[type_] := ConfirmReplace[type, {
 		]
 	],
 
+	(* TID:240721/1: Test unrecognized type errors *)
 	other_ :> Raise[
 		DiagramError,
-		"Unrecognzied type specification: ``",
+		"Unrecognized type specification: ``",
 		InputForm[other]
 	]
 }]
