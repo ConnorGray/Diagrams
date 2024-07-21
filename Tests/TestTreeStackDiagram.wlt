@@ -1,5 +1,9 @@
+Needs["Wolfram`ErrorTools`V1`"]
+
 (* TODO: Fix DiagramsLoader.wl and make this Needs *)
 Get["Diagrams`"]
+
+AppendTo[$ContextPath, "Diagrams`Misc`BinaryLayoutDiagrams`Private`"]
 
 (*========================================================*)
 
@@ -57,6 +61,64 @@ VerificationTest[
 	treeToLayers @ Tree[Null, {}],
 	{
 		{Null}
+	}
+]
+
+(* TID:240721/2: treeToLayers handling of existing Item[..] tree data *)
+VerificationTest[
+	treeToLayers @ Tree[
+		Item["Foo", Background -> Red],
+		{1, 2, 3}
+	],
+	{
+		{1, 2, 3},
+		{Item["Foo", 3, Background -> Red]}
+	}
+]
+
+(* TID:240721/3: treeToLayers handling of Item[..] with custom width *)
+VerificationTest[
+	Handle[_Failure] @ treeToLayers @ Tree[
+		Item["Foo", 10, Background -> Red],
+		{1, 2, 3}
+	],
+	Failure[DiagramError, <|
+		"MessageTemplate" -> "Unsupported custom Item width in tree node data: ``",
+		"MessageParameters" -> {
+			InputForm[Item["Foo", 10, Background -> RGBColor[1, 0, 0]]]
+		}
+	|>]
+]
+
+VerificationTest[
+	treeToLayers @ treeForType @ DiaStruct["Point", <|
+		"x" -> "Int64",
+		"y" -> "Int64"
+	|>],
+	{
+		{
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]],
+			Item["", Background -> RGBColor[0.6, 0.4, 0.2]]
+		},
+		{
+			Item["x: Int64", 8, Background -> RGBColor[1, 0.9, 0.8]],
+			Item["y: Int64", 8, Background -> RGBColor[1, 0.9, 0.8]]
+		},
+		{Item["Point", 16]}
 	}
 ]
 

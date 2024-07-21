@@ -188,17 +188,45 @@ treeToLayers[tree_?TreeQ] := Module[{
 		{layersSeq___} :> Join[layersSeq, 2]
 	];
 
-	If[TreeData[tree] =!= Null,
-		(* TODO:
-			Handle `TreeData` result that is itself an
-				Item[label, ___?OptionQ].
-			Error if the Item tries to specify a width? *)
-		Append[
+	ConfirmReplace[TreeData[tree], {
+		(* Elide creating a layer at this level, this is an "anonymous" parent
+			node. *)
+		Null :> lowerLayers,
+
+		(*-------------------------------------------*)
+		(* Handle `TreeData` value that is itself an *)
+		(*      Item[label, ___?OptionQ]             *)
+		(*-------------------------------------------*)
+
+		(* TID:240721/2: treeToLayers handling of existing Item[..] tree data *)
+		Item[
+			label_,
+			opts___?OptionQ
+		] :> Append[
 			lowerLayers,
-			{Item[TreeData[tree], treeBaseWidth[tree]]}
+			{Item[label, treeBaseWidth[tree], opts]}
 		],
-		lowerLayers
-	]
+
+		(* TID:240721/3: treeToLayers handling of Item[..] with custom width *)
+		treeData:Item[
+			label_,
+			width_?NumberQ,
+			opts___?OptionQ
+		] :> Raise[
+			DiagramError,
+			"Unsupported custom Item width in tree node data: ``",
+			InputForm[treeData]
+		],
+
+		(*------------------------------*)
+		(* Handle all other label kinds *)
+		(*------------------------------*)
+
+		label_ :> Append[
+			lowerLayers,
+			{Item[label, treeBaseWidth[tree]]}
+		]
+	}]
 ]
 
 (*===================================*)
