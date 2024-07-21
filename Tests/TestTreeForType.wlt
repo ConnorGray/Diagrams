@@ -20,3 +20,32 @@ VerificationTest[
 		"MessageParameters" -> {InputForm["Fake64"]}
 	|>]
 ]
+
+VerificationTest[
+	treeForType @ DiaStruct["Point", <|
+		"x" -> "Int64",
+		"y" -> "Int64"
+	|>],
+	Tree["Point", {
+		Tree["x: Int64", {
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None]
+		}],
+		Tree["y: Int64", {
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
+			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None]
+		}]
+	}]
+]
