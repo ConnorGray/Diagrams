@@ -751,7 +751,10 @@ treeForType[type_] := ConfirmReplace[type, {
 	),
 
 	"PrimitiveArray"[arrayElemType_, count_?IntegerQ] :> (
-		Tree[Table[treeForType[arrayElemType], count]]
+		Tree[
+			ToString["PrimitiveArray"["..", count]],
+			Table[treeForType[arrayElemType], count]
+		]
 	),
 
 	"Pointer"[
