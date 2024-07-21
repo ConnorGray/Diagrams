@@ -18,7 +18,8 @@ $ContextPath = DeleteDuplicates @ Join[
 		"Diagrams`Concepts`",
 		"Diagrams`Layout`",
 		"Diagrams`Misc`BinaryLayoutDiagrams`",
-		"Diagrams`Utils`"
+		"Diagrams`Utils`",
+		"Diagrams`BlockStack`"
 	},
 	$ContextPath
 ];

@@ -1,20 +1,5 @@
-Needs["Packages`"]
-
-packageObj = PackageLoad[
-	PackageSpecifier[PacletSpecifier["Diagrams", "0.0.1"], "Diagrams"]
-]
-
-$ContextPath = DeleteDuplicates @ Join[
-	$ContextPath,
-	{
-		packageObj["PackageContext"],
-		"Diagrams`Concepts`",
-		"Diagrams`Layout`",
-		"Diagrams`Misc`BinaryLayoutDiagrams`",
-		"Diagrams`Utils`",
-		"Diagrams`BlockStack`"
-	}
-];
+(* TODO: Fix DiagramsLoader.wl and make this Needs *)
+Get["Diagrams`"]
 
 (*========================================================*)
 
