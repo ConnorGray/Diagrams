@@ -805,7 +805,10 @@ treeForType[type_] := ConfirmReplace[type, {
 		];
 
 		Tree[
-			"Pointer[" <> ToString[pointee] <> "]",
+			Item[
+				"Pointer[" <> ToString[pointee] <> "]",
+				Background -> $ColorScheme["Pointer"]
+			],
 			Table[Item["", Background -> $ColorScheme["Byte"]], $pointerSize]
 		]
 	],
