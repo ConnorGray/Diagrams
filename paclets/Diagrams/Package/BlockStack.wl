@@ -175,18 +175,33 @@ treeToLayers[tree_?TreeQ] := Module[{
 		}, Module]
 	];
 
+	(*------------------------------------------------------*)
+	(* Process children into the layers beneath this level. *)
+	(*------------------------------------------------------*)
+
+	(* Error if lower layers lengths (i.e. depths) are not consistent. *)
+	If[Not[SameQ @@ Map[TreeDepth, TreeChildren[tree]]],
+		Raise[
+			DiagramError,
+			<| "Tree" -> tree |>,
+			"Mixed-depth trees are not supported.",
+		];
+	];
+
 	lowerLayers = Map[
 		treeToLayers,
 		TreeChildren[tree]
 	];
-
-	(* TODO: Error if lower layers lengths (i.e. depths) are not consistent. *)
 
 	(* Join elements across layers in the processed children. *)
 	lowerLayers = ConfirmReplace[
 		lowerLayers,
 		{layersSeq___} :> Join[layersSeq, 2]
 	];
+
+	(*--------------------------------------------*)
+	(* Process the label of this node in the tree *)
+	(*--------------------------------------------*)
 
 	ConfirmReplace[TreeData[tree], {
 		(* Elide creating a layer at this level, this is an "anonymous" parent
