@@ -711,20 +711,26 @@ treeForType[type_] := ConfirmReplace[type, {
 			structName,
 			KeyValueMap[
 				{fieldName, fieldType} |-> (
-					(* Tree[fieldName, {treeForType[fieldType]}] *)
-					Tree[
-						(* TODO: Factor out typeName[..] function. *)
-						fieldName <> ": " <> ConfirmReplace[fieldType, {
-							name_?StringQ :> name,
-							DiaStruct[name_?StringQ, __] :> name,
-							other_ :> ToString[other]
-						}],
-						(* Note:
-							Ignore the TreeData node of the tree for this
-							type, since we're displaying the type by
-							concatenating it to the fieldName above. *)
-						TreeChildren @ treeForType[fieldType]
-					]
+					(* Prepend the field name to the label for the field type
+						tree. Take care to preserve any styling options in
+						Item[..] type labels. *)
+					ConfirmReplace[treeForType[fieldType], {
+						Tree[Item[label_, opts___], children_] :> (
+							Tree[
+								Item[
+									fieldName <> ": " <> ToString[label],
+									opts
+								],
+								children
+							]
+						),
+						Tree[fieldTypeLabel_, children_] :> (
+							Tree[
+								fieldName <> ": " <> ToString[fieldTypeLabel],
+								children
+							]
+						)
+					}]
 				),
 				fields
 			]
@@ -736,9 +742,7 @@ treeForType[type_] := ConfirmReplace[type, {
 	"UInt32" | "Int32" |
 	"UInt64" | "Int64" :> (
 		Tree[
-			(* FIXME: This background is being ignored. *)
-			(* Item[type, Background -> $ColorScheme["Integer"]], *)
-			type,
+			Item[type, Background -> $ColorScheme["Integer"]],
 			Table[
 				Item["", Background -> $ColorScheme["Byte"]],
 				sizeOf[type]

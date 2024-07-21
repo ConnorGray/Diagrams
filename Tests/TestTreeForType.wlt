@@ -27,7 +27,7 @@ VerificationTest[
 		"y" -> "Int64"
 	|>],
 	Tree["Point", {
-		Tree["x: Int64", {
+		Tree[Item["x: Int64", Background -> RGBColor[1, 0.9, 0.8]], {
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
@@ -37,7 +37,7 @@ VerificationTest[
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None]
 		}],
-		Tree["y: Int64", {
+		Tree[Item["y: Int64", Background -> RGBColor[1, 0.9, 0.8]], {
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
 			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
