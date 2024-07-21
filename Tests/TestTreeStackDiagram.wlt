@@ -91,7 +91,7 @@ VerificationTest[
 ]
 
 VerificationTest[
-	treeToLayers @ treeForType @ DiaStruct["Point", <|
+	treeToLayers @ TreeForType @ DiaStruct["Point", <|
 		"x" -> "Int64",
 		"y" -> "Int64"
 	|>],

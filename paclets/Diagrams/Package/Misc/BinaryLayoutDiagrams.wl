@@ -18,6 +18,11 @@ PackageExport[{
 
 	DiaStruct,
 
+	(*------------*)
+	(* Helpers    *)
+	(*------------*)
+	TreeForType,
+
 	(*---------------*)
 	(* Configuration *)
 	(*---------------*)
@@ -672,6 +677,32 @@ MemoryLayoutDiagram[
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating MemoryLayoutDiagram"
+] @ Module[{
+	tree
+},
+	tree = TreeForType[type];
+
+	TreeStackDiagram[tree]
+]
+
+(*====================================*)
+
+SetFallthroughError[TreeForType]
+
+$indirectionLayers := Raise[DiagramError, "Invalid unscoped access of $indirectionLayers"]
+$indirectionDepth := Raise[DiagramError, "Invalid unscoped access of $indirectionDepth"]
+
+(*
+	For users who want to customize the tree layout at a lower level before
+	passing it to TreeStackDiagram.
+*)
+TreeForType[
+	type_,
+	getProp : _ : Automatic
+] := WrapRaised[
+	DiagramError,
+	"Error processing TreeForType: ``",
+	InputForm[type]
 ] @ Block[{
 	(* FIXME:
 		Hard-coded max of 10 layers of indirection.
@@ -691,17 +722,21 @@ MemoryLayoutDiagram[
 	(* TODO: Return or render this information? *)
 	$indirectionLayers = Values[$indirectionLayers];
 
-	TreeStackDiagram[tree]
+	ConfirmReplace[getProp, {
+		Automatic :> tree,
+		All :> {tree, $indirectionLayers},
+		other_ :> Raise[
+			DiagramError,
+			"Unrecognized return property requested: ``",
+			InputForm[other]
+		]
+	}]
 ]]
 
-(*====================================*)
+(*------------------------------------*)
 
 SetFallthroughError[treeForType]
 
-(* TODO:
-	Make this public as LayoutTreeForType? For folks who want to customize
-	the tree layout at a lower level before passing it to TreeStackDiagram.
-*)
 (* FIXME: Support TypeSpecifier[..] type specifications. *)
 treeForType[type_] := ConfirmReplace[type, {
 	DiaStruct[structName_?StringQ, fields_?AssociationQ] :> (

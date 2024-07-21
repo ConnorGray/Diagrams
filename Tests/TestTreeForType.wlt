@@ -1,51 +1,19 @@
 (* TODO: Fix DiagramsLoader.wl and make this Needs *)
 Get["Diagrams`"]
 
-AppendTo[$ContextPath, "Diagrams`Misc`BinaryLayoutDiagrams`Private`"]
-
 Needs["Wolfram`ErrorTools`V1`"]
 
 (*========================================================*)
 
-VerificationTest[
-	Context[treeForType],
-	"Diagrams`Misc`BinaryLayoutDiagrams`Private`"
-]
-
 (* TID:240721/1: Test unrecognized type errors *)
 VerificationTest[
-	Handle[_Failure] @ treeForType["Fake64"],
+	Handle[_Failure] @ TreeForType["Fake64"],
 	Failure[DiagramError, <|
-		"MessageTemplate" -> "Unrecognized type specification: ``",
+		"CausedBy" -> Failure[DiagramError, <|
+			"MessageTemplate" -> "Unrecognized type specification: ``",
+			"MessageParameters" -> {InputForm["Fake64"]}
+		|>],
+		"MessageTemplate" -> "Error processing TreeForType: ``",
 		"MessageParameters" -> {InputForm["Fake64"]}
 	|>]
-]
-
-VerificationTest[
-	treeForType @ DiaStruct["Point", <|
-		"x" -> "Int64",
-		"y" -> "Int64"
-	|>],
-	Tree["Point", {
-		Tree[Item["x: Int64", Background -> RGBColor[1, 0.9, 0.8]], {
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None]
-		}],
-		Tree[Item["y: Int64", Background -> RGBColor[1, 0.9, 0.8]], {
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None],
-			Tree[Item["", Background -> RGBColor[0.6, 0.4, 0.2]], None]
-		}]
-	}]
 ]
