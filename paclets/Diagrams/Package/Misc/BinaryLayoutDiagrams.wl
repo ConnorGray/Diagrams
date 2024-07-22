@@ -727,16 +727,11 @@ TreeForType[
 
 	ConstructOutputElements[
 		outputElems,
-		"Graphics",
-		elem |-> ConfirmReplace[elem, {
-			"Graphics" :> tree,
-			"IndirectionLayers" :> $indirectionLayers,
-			other_ :> Raise[
-				DiagramError,
-				"Unrecognized return property requested: ``",
-				InputForm[other]
-			]
-		}]
+		"Tree",
+		{
+			"Tree" :> tree,
+			"IndirectionLayers" :> $indirectionLayers
+		}
 	]
 ]]
 

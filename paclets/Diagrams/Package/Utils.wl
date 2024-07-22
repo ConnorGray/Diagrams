@@ -61,8 +61,27 @@ SetFallthroughError[ConstructOutputElements]
 ConstructOutputElements[
 	outputElems: _?OutputElementsQ,
 	default: _?StringQ,
-	getOutputElement_
-] := Module[{},
+	(* A list of rules or a function. *)
+	getOutputElement0_
+] := Module[{
+	getOutputElement = getOutputElement0
+},
+	If[ListQ[getOutputElement0],
+		getOutputElement = ({elem} |-> ConfirmReplace[
+			elem,
+			Append[
+				getOutputElement0,
+				other_ :> Raise[
+					DiagramError,
+					"Unrecognized output element requested: ``",
+					InputForm[other]
+				]
+			]
+		]);
+	];
+
+	(*--------------------------------*)
+
 	ConfirmReplace[outputElems, {
 		Automatic :> getOutputElement[default],
 		element_?StringQ :> getOutputElement[element],

@@ -91,15 +91,10 @@ BlockStackDiagram[
 	ConstructOutputElements[
 		outputElems,
 		"Graphics",
-		elem |-> ConfirmReplace[elem, {
+		{
 			"Graphics" :> graphic,
-			"Regions" :> $regions,
-			other_ :> Raise[
-				DiagramError,
-				"Unrecognized output element specification: ``",
-				InputForm[other]
-			]
-		}]
+			"Regions" :> $regions
+		}
 	]
 ]]
 
