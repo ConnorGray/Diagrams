@@ -6,6 +6,8 @@ PackageExport[{
 	RectangleSize,
 	RectangleCenter,
 
+	OutputElementsQ,
+
 	ToCharacterCode2,
 	GraphemeClusters,
 	UnicodeData
@@ -40,6 +42,15 @@ RectangleCenter[arg_] := Replace[arg, {
 	] :> {xMin + RectangleWidth[arg] / 2, yMin + RectangleHeight[arg] / 2},
 	_ :> RaiseError["unable to get height of rectangle: ``", arg]
 }]
+
+(*====================================*)
+(* Developer UX                       *)
+(*====================================*)
+
+SetFallthroughError[OutputElementsQ]
+
+OutputElementsQ[expr_] :=
+	MatchQ[expr, _?StringQ | {___?StringQ} | Automatic]
 
 (*====================================*)
 (* Strings                            *)

@@ -50,6 +50,8 @@ PackageExport[{
 	(* TODO: Remove these, they are unused? *)
 	Subgraphs, DiagramBlock, DiagramArrow,
 
+	DiaID,
+
 	(*-------------------*)
 	(* Diagram Functions *)
 	(*-------------------*)

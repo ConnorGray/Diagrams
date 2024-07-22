@@ -4,8 +4,16 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	BlockStackDiagram,
 	TreeStackDiagram,
+	DiaID,
+	Layout -> {
+		Utils -> {
+			AbsoluteTranslate
+		}
+	},
+	Utils -> {OutputElementsQ},
 	Errors -> {
-		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace
+		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace,
+		RaiseAssert
 	}
 }]
 
@@ -16,17 +24,42 @@ PackageExport[{
 
 (*========================================================*)
 
+$regions := Raise[DiagramError, "Invalid unscopped access of $regions"]
+
+SetFallthroughError[addRegion]
+
+addRegion[id_DiaID, value_] := (
+	If[KeyExistsQ[$regions, id],
+		(* TID:240721/5: Duplicate IDs in BlockStackDiagram *)
+		Raise[
+			DiagramError,
+			"Region value already defined for ID: ``, value: ``",
+			InputForm[id],
+			InputForm[value]
+		];
+	];
+
+	$regions[id] = value;
+)
+
+(*------------------------------------*)
+
 SetFallthroughError[BlockStackDiagram]
 
 BlockStackDiagram[
-	rows0_List
+	rows0_List,
+	outputElems : _?OutputElementsQ : Automatic
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating BlockStackDiagram"
-] @ Module[{
-	rows = rows0
+] @ Block[{
+	$regions = <||>
+}, Module[{
+	rows = rows0,
+	graphic,
+	getOutputElement
 },
-	Graphics[#, PlotRangePadding -> 0]& @ FoldPairList[
+	graphic = Graphics[#, PlotRangePadding -> 0]& @ FoldPairList[
 		{yOffset, row} |-> Module[{
 			rowHeight,
 			rowElements,
@@ -41,10 +74,7 @@ BlockStackDiagram[
 				]
 			}];
 
-			graphic = Translate[
-				blockStackDiagramRow[rowElements, rowHeight],
-				{0, yOffset}
-			];
+			graphic = blockStackDiagramRow[rowElements, rowHeight, yOffset];
 
 			{
 				graphic,
@@ -53,8 +83,35 @@ BlockStackDiagram[
 		],
 		0,
 		rows
-	]
-]
+	];
+
+	(*-----------------------------------*)
+	(* Process output type specification *)
+	(*-----------------------------------*)
+
+	SetFallthroughError[getOutputElement];
+
+	getOutputElement[elem_?StringQ] := ConfirmReplace[elem, {
+		"Graphics" :> graphic,
+		"Regions" :> $regions,
+		other_ :> Raise[
+			DiagramError,
+			"Unrecognized output element specification: ``",
+			InputForm[other]
+		]
+	}];
+
+	ConfirmReplace[outputElems, {
+		Automatic :> getOutputElement["Graphics"],
+		element_?StringQ :> getOutputElement[element],
+		elements:{___?StringQ} :> Map[getOutputElement, elements],
+		other_ :> Raise[
+			DiagramError,
+			"Unrecognized output elements specification: ``",
+			InputForm[other]
+		]
+	}]
+]]
 
 (*====================================*)
 
@@ -62,51 +119,68 @@ SetFallthroughError[blockStackDiagramRow]
 
 blockStackDiagramRow[
 	row_List,
-	rowSize_?NumberQ
+	rowSize_?NumberQ,
+	yOffset_?NumberQ
 ] := Module[{
 	defaultBackground = GrayLevel[0.8]
 },
 	FoldPairList[
-		{xOffset, elem} |-> Module[{expr, incr},
-			{expr, incr} = ConfirmReplace[elem, {
-				(* TODO: What about unrecognized styleOpts? *)
-				Item[
-					label_,
-					width : _?NumberQ : 1,
-					styleOpts___?OptionQ
-				] :> (
-					{
-						renderBlock[
-							label,
-							rowSize,
-							width,
-							Lookup[
-								{styleOpts},
-								Background,
-								defaultBackground
-							],
-							xOffset,
-							styleOpts
-						],
-						width
-					}
-				),
-				label_ :> (
-					{
-						renderBlock[
-							label,
-							rowSize,
-							(* Default width *)
-							1,
-							defaultBackground,
-							xOffset
-						],
-						(* Default width *)
-						1
-					}
-				)
-			}];
-			{expr, xOffset + rowSize * incr}
+		{xOffset, elem} |-> Module[{
+			(* Default width *)
+			width = 1,
+			id = None,
+			styleOpts = {},
+			label,
+			expr
+		},
+			(* Process element wrappers like Item[..] and DiaID[..]. *)
+			(* TODO:
+				This won't detect redundant or erroenous or conflicting wrapper
+				values, e.g. Item[Item[..], ..].
+
+				Add a utility function for doing this kind of wrapper processing
+				that does things like only allow a single wrapper processing
+				rule to fire once for a given element being processed. *)
+			label = FixedPoint[
+				Replace[{
+					(* TODO: What about unrecognized styleOpts? *)
+					Item[
+						label_,
+						width0 : _?NumberQ : 1,
+						styleOptsSeq___?OptionQ
+					] :> (
+						width = width0;
+						styleOpts = {styleOptsSeq};
+
+						label
+					),
+					(id0_DiaID)[expr_] :> (
+						id = id0;
+
+						expr
+					)
+				}],
+				elem,
+				5
+			];
+
+			RaiseAssert[ListQ[styleOpts]];
+
+			expr = renderBlock[
+				id,
+				label,
+				rowSize,
+				width,
+				Lookup[
+					styleOpts,
+					Background,
+					defaultBackground
+				],
+				{xOffset, yOffset},
+				Sequence @@ styleOpts
+			];
+
+			{expr, xOffset + rowSize * width}
 		],
 		0,
 		row
@@ -118,20 +192,31 @@ blockStackDiagramRow[
 SetFallthroughError[renderBlock]
 
 renderBlock[
+	id : _DiaID | None,
 	content_,
 	rowSize_?NumberQ,
 	width_?NumberQ,
 	color0_,
-	xOffset_?NumberQ,
+	offsets:{_?NumberQ, _?NumberQ},
 	styleOpts___
 ] := Module[{
-	position = {xOffset + (rowSize * width)/2, rowSize/2},
-	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]]
+	position = {(rowSize * width)/2, rowSize/2} + offsets,
+	color = Replace[color0, Automatic :> RandomColor[Hue[_, 1, 0.7]]],
+	rect
 },
+	rect = AbsoluteTranslate[
+		Rectangle[{0, 0}, {rowSize * width, rowSize}],
+		offsets
+	];
+
+	If[id =!= None,
+		addRegion[id, rect];
+	];
+
 	{
 		color,
 		EdgeForm[{Thickness[0.005], Gray}],
-		Rectangle[{xOffset, 0}, {xOffset + rowSize * width, rowSize}],
+		rect,
 		ColorNegate[color],
 		ConfirmReplace[content, {
 			text_?AtomQ :> (
@@ -151,10 +236,16 @@ renderBlock[
 
 SetFallthroughError[TreeStackDiagram]
 
-TreeStackDiagram[tree_Tree] := Module[{},
-	BlockStackDiagram @ Map[
-		layer |-> {1, layer},
-		treeToLayers[tree]
+TreeStackDiagram[
+	tree_Tree,
+	outputElems : _?OutputElementsQ : Automatic
+] := Module[{},
+	BlockStackDiagram[
+		Map[
+			layer |-> {1, layer},
+			treeToLayers[tree]
+		],
+		outputElems
 	]
 ]
 
