@@ -43,7 +43,10 @@ PackageUse[Diagrams -> {
 	Render -> {
 		SizedText
 	},
-	Utils -> {ToCharacterCode2, GraphemeClusters, UnicodeData}
+	Utils -> {
+		ToCharacterCode2, GraphemeClusters, UnicodeData,
+		OutputElementsQ, ConstructOutputElements
+	}
 }]
 
 $ColorScheme = <|
@@ -698,7 +701,7 @@ $indirectionDepth := Raise[DiagramError, "Invalid unscoped access of $indirectio
 *)
 TreeForType[
 	type_,
-	getProp : _ : Automatic
+	outputElems : _?OutputElementsQ : Automatic
 ] := WrapRaised[
 	DiagramError,
 	"Error processing TreeForType: ``",
@@ -722,15 +725,19 @@ TreeForType[
 	(* TODO: Return or render this information? *)
 	$indirectionLayers = Values[$indirectionLayers];
 
-	ConfirmReplace[getProp, {
-		Automatic :> tree,
-		All :> {tree, $indirectionLayers},
-		other_ :> Raise[
-			DiagramError,
-			"Unrecognized return property requested: ``",
-			InputForm[other]
-		]
-	}]
+	ConstructOutputElements[
+		outputElems,
+		"Graphics",
+		elem |-> ConfirmReplace[elem, {
+			"Graphics" :> tree,
+			"IndirectionLayers" :> $indirectionLayers,
+			other_ :> Raise[
+				DiagramError,
+				"Unrecognized return property requested: ``",
+				InputForm[other]
+			]
+		}]
+	]
 ]]
 
 (*------------------------------------*)

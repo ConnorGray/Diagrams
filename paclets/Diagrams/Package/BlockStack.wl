@@ -10,7 +10,7 @@ PackageUse[Diagrams -> {
 			AbsoluteTranslate
 		}
 	},
-	Utils -> {OutputElementsQ},
+	Utils -> {OutputElementsQ, ConstructOutputElements},
 	Errors -> {
 		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace,
 		RaiseAssert
@@ -56,8 +56,7 @@ BlockStackDiagram[
 	$regions = <||>
 }, Module[{
 	rows = rows0,
-	graphic,
-	getOutputElement
+	graphic
 },
 	graphic = Graphics[#, PlotRangePadding -> 0]& @ FoldPairList[
 		{yOffset, row} |-> Module[{
@@ -89,28 +88,19 @@ BlockStackDiagram[
 	(* Process output type specification *)
 	(*-----------------------------------*)
 
-	SetFallthroughError[getOutputElement];
-
-	getOutputElement[elem_?StringQ] := ConfirmReplace[elem, {
-		"Graphics" :> graphic,
-		"Regions" :> $regions,
-		other_ :> Raise[
-			DiagramError,
-			"Unrecognized output element specification: ``",
-			InputForm[other]
-		]
-	}];
-
-	ConfirmReplace[outputElems, {
-		Automatic :> getOutputElement["Graphics"],
-		element_?StringQ :> getOutputElement[element],
-		elements:{___?StringQ} :> Map[getOutputElement, elements],
-		other_ :> Raise[
-			DiagramError,
-			"Unrecognized output elements specification: ``",
-			InputForm[other]
-		]
-	}]
+	ConstructOutputElements[
+		outputElems,
+		"Graphics",
+		elem |-> ConfirmReplace[elem, {
+			"Graphics" :> graphic,
+			"Regions" :> $regions,
+			other_ :> Raise[
+				DiagramError,
+				"Unrecognized output element specification: ``",
+				InputForm[other]
+			]
+		}]
+	]
 ]]
 
 (*====================================*)

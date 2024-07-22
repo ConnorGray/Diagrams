@@ -7,6 +7,7 @@ PackageExport[{
 	RectangleCenter,
 
 	OutputElementsQ,
+	ConstructOutputElements,
 
 	ToCharacterCode2,
 	GraphemeClusters,
@@ -16,7 +17,8 @@ PackageExport[{
 PackageUse[Diagrams -> {
 	DiagramError,
 	Errors -> {
-		RaiseError, SetFallthroughError, Handle, WrapRaised, RaiseConfirmMatch
+		Raise, RaiseError, SetFallthroughError, Handle, WrapRaised,
+		RaiseConfirmMatch, ConfirmReplace
 	},
 	Library -> {$LibraryFunctions}
 }]
@@ -43,9 +45,9 @@ RectangleCenter[arg_] := Replace[arg, {
 	_ :> RaiseError["unable to get height of rectangle: ``", arg]
 }]
 
-(*====================================*)
-(* Developer UX                       *)
-(*====================================*)
+(*========================================================*)
+(* Developer UX                                           *)
+(*========================================================*)
 
 SetFallthroughError[OutputElementsQ]
 
@@ -53,8 +55,29 @@ OutputElementsQ[expr_] :=
 	MatchQ[expr, _?StringQ | {___?StringQ} | Automatic]
 
 (*====================================*)
-(* Strings                            *)
-(*====================================*)
+
+SetFallthroughError[ConstructOutputElements]
+
+ConstructOutputElements[
+	outputElems: _?OutputElementsQ,
+	default: _?StringQ,
+	getOutputElement_
+] := Module[{},
+	ConfirmReplace[outputElems, {
+		Automatic :> getOutputElement[default],
+		element_?StringQ :> getOutputElement[element],
+		elements:{___?StringQ} :> Map[getOutputElement, elements],
+		other_ :> Raise[
+			DiagramError,
+			"Unrecognized output elements specification: ``",
+			InputForm[other]
+		]
+	}]
+]
+
+(*========================================================*)
+(* Strings                                                *)
+(*========================================================*)
 
 SetFallthroughError[ToCharacterCode2]
 
