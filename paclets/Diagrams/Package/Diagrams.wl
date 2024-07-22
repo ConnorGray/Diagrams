@@ -57,7 +57,8 @@ PackageExport[{
 	(*-------------------*)
 
 	BlockStackDiagram,
-	TreeStackDiagram
+	TreeStackDiagram,
+	MultiBlockStackDiagram
 }]
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."

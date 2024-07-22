@@ -2,18 +2,25 @@ Package["Diagrams`BlockStack`"]
 
 PackageUse[Diagrams -> {
 	DiagramError,
-	BlockStackDiagram,
-	TreeStackDiagram,
 	DiaID,
+	DiaArrow,
+
+	BlockStackDiagram,
+	MultiBlockStackDiagram,
+	TreeStackDiagram,
+
 	Layout -> {
 		Utils -> {
 			AbsoluteTranslate
 		}
 	},
-	Utils -> {OutputElementsQ, ConstructOutputElements},
+	Utils -> {
+		OutputElementsQ, ConstructOutputElements,
+		RectangleAttachmentPoint
+	},
 	Errors -> {
 		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace,
-		RaiseAssert
+		RaiseAssert, RaiseConfirm2
 	}
 }]
 
@@ -371,3 +378,122 @@ treeBaseWidth[expr_] := ConfirmReplace[expr, {
 		InputForm[other]
 	]
 }]
+
+(*========================================================*)
+
+SetFallthroughError[MultiBlockStackDiagram]
+
+MultiBlockStackDiagram[
+	stacks_List,
+	connections_List,
+	gap : _?NumberQ : 0.5,
+	outputElems : _?OutputElementsQ : Automatic
+] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error creating MultiBlockStackDiagram"
+] @ Module[{
+	stackDiagrams,
+	allRegions,
+	connectionsGraphics,
+	graphic
+},
+	stackDiagrams = Map[
+		stack |-> RaiseConfirm2 @ BlockStackDiagram[stack, {"Graphics", "Regions"}],
+		stacks
+	];
+
+	RaiseAssert[MatchQ[stackDiagrams, {{_Graphics, _?AssociationQ} ...}]];
+
+	{stackDiagrams, allRegions} = Transpose @ FoldPairList[
+		{state, element} |-> ConfirmReplace[{state, element},
+			{xOffset_?NumberQ, {diagram_Graphics, regions_?AssociationQ}} :> Module[{
+				width = ConfirmReplace[AbsoluteOptions[diagram, PlotRange], {
+					{PlotRange -> {{0., x_}, {0., _}}} :> x,
+					other_ :> Raise[
+						DiagramError,
+						"Unable to calculate plot width from unexpected absolute PlotRange value: ``",
+						InputForm[other]
+					]
+				}]
+			},
+				{
+					{
+						Translate[
+							ConfirmReplace[
+								diagram,
+								Graphics[commands_, ___] :> commands
+							],
+							{xOffset, 0}
+						],
+						Map[
+							rect |-> AbsoluteTranslate[rect, {xOffset, 0}],
+							regions
+						]
+					},
+					xOffset + width + gap
+				}
+			]
+		],
+		0,
+		stackDiagrams
+	];
+
+	RaiseAssert[MatchQ[stackDiagrams, {___Translate}]];
+	RaiseAssert[MatchQ[allRegions, {___?AssociationQ}]];
+
+	(* TODO: Test and TID for this check. *)
+	(* Use addRegion to force a check for unique DiaID. *)
+	allRegions = Block[{$regions = <||>},
+		Map[
+			regions |-> KeyValueMap[addRegion, regions],
+			allRegions
+		];
+
+		$regions
+	];
+
+	RaiseAssert[AssociationQ[allRegions]];
+
+	(*--------------------------------*)
+	(* Compute the connection arrows  *)
+	(*--------------------------------*)
+
+	(* TODO: Use PlaceArrowsBasedOnBoxes for this. *)
+	connectionsGraphics = Map[
+		connection |-> ConfirmReplace[connection, {
+			DiaArrow[lhs_, rhs_] :> Module[{lhsPoint, rhsPoint},
+				(* TODO: Improve Lookup error handling. *)
+				(* FIXME:
+					The use of Right and Left below assume that all arrows
+					move from left-er columns towards right-er columns. There's
+					no reason to think that will always be the case. *)
+				lhsPoint = RectangleAttachmentPoint[
+					RaiseConfirm2 @ Lookup[allRegions, DiaID[lhs]],
+					{Right, 0.5}
+				];
+				rhsPoint = RectangleAttachmentPoint[
+					RaiseConfirm2 @ Lookup[allRegions, DiaID[rhs]],
+					{Left, 0.5}
+				];
+
+				{Thickness[0.01], Arrow[{lhsPoint, rhsPoint}]}
+			]
+		}],
+		connections
+	];
+
+	(*--------------------------------*)
+	(* Construct the output elements  *)
+	(*--------------------------------*)
+
+	graphic = Graphics[Join[stackDiagrams, connectionsGraphics]];
+
+	ConstructOutputElements[
+		outputElems,
+		"Graphics",
+		{
+			"Graphics" :> graphic,
+			"Regions" :> allRegions
+		}
+	]
+]
