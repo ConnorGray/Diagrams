@@ -122,6 +122,26 @@ VerificationTest[
 	}
 ]
 
+(* TID:240721/4: treeToLayers handling of mixed-depth subtrees. *)
+VerificationTest[
+	treeToLayers @ Tree["Root", {
+		"A",
+		"B",
+		Tree["C", {"D", "E"}]
+	}],
+	{
+		{"A", "B", "D", "E"},
+		{
+			Item["\[VerticalEllipsis]", 1, Background -> GrayLevel[1]],
+			Item["\[VerticalEllipsis]", 1, Background -> GrayLevel[1]],
+			Item["C", 2]
+		},
+		{
+			Item["Root", 4]
+		}
+	}
+]
+
 (*====================================*)
 (* Test errors                        *)
 (*====================================*)

@@ -166,6 +166,8 @@ SetFallthroughError[treeToLayers]
 treeToLayers[tree_?TreeQ] := Module[{
 	lowerLayers,
 	baseWidth = treeBaseWidth[tree],
+	children,
+	maxDepth,
 	treeData
 },
 	If[TreeLeafQ[tree] || TreeChildren[tree] === {},
@@ -179,8 +181,33 @@ treeToLayers[tree_?TreeQ] := Module[{
 	(* Process children into the layers beneath this level. *)
 	(*------------------------------------------------------*)
 
+	children = TreeChildren[tree];
+
+	maxDepth = Max[Map[TreeDepth, children]];
+
+	(* Wrap the shallower children in a sufficient number of "empty"
+	   parent Tree's to make the depth of all children equal. *)
+	(* TID:240721/4: treeToLayers handling of mixed-depth subtrees. *)
+	children = Map[
+		child |-> Nest[
+			Tree[
+				(* Note: Show a vertial ellipsis, working around Packages parse
+					error. *)
+				Item[FromCharacterCode[8942], Background -> White],
+				{#}
+			] &,
+			child,
+			(* 0 for most well-behaved trees, but >0 for subtrees that are
+				shallower than their siblings. *)
+			maxDepth - TreeDepth[child]
+		],
+		children
+	];
+
 	(* Error if lower layers lengths (i.e. depths) are not consistent. *)
-	If[Not[SameQ @@ Map[TreeDepth, TreeChildren[tree]]],
+	(* NOTE: Now that the above logic exists to make the depths all the same,
+		this check is more of an assert. *)
+	If[Not[SameQ @@ Map[TreeDepth, children]],
 		Raise[
 			DiagramError,
 			<| "Tree" -> tree |>,
@@ -190,7 +217,7 @@ treeToLayers[tree_?TreeQ] := Module[{
 
 	lowerLayers = Map[
 		treeToLayers,
-		TreeChildren[tree]
+		children
 	];
 
 	(* Join elements across layers in the processed children. *)
