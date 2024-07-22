@@ -5,6 +5,7 @@ PackageExport[{
 	RectangleHeight,
 	RectangleSize,
 	RectangleCenter,
+	RectangleAttachmentPoint,
 
 	OutputElementsQ,
 	ConstructOutputElements,
@@ -18,12 +19,14 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	Errors -> {
 		Raise, RaiseError, SetFallthroughError, Handle, WrapRaised,
-		RaiseConfirmMatch, ConfirmReplace
+		RaiseConfirmMatch, ConfirmReplace, RaiseAssert
 	},
 	Library -> {$LibraryFunctions}
 }]
 
-(*====================================*)
+(*========================================================*)
+(* Layout Utilities                                       *)
+(*========================================================*)
 
 RectangleWidth[arg_] := Replace[arg, {
 	Rectangle[{xMin_?NumberQ, _}, {xMax_?NumberQ, _}] :> Abs[xMax - xMin],
@@ -44,6 +47,52 @@ RectangleCenter[arg_] := Replace[arg, {
 	] :> {xMin + RectangleWidth[arg] / 2, yMin + RectangleHeight[arg] / 2},
 	_ :> RaiseError["unable to get height of rectangle: ``", arg]
 }]
+
+(*====================================*)
+
+SetFallthroughError[RectangleAttachmentPoint]
+
+RectangleAttachmentPoint[
+	rect:Rectangle[
+		{borderLeft_, borderBottom_},
+		{borderRight_, borderTop_}
+	],
+	attachment_
+] := Module[{
+	point,
+	x, y
+},
+	point = ConfirmReplace[attachment, {
+		{
+			side : (Left | Right | Top | Bottom),
+			(* Linear interpolation factor. *)
+			lerpFactor_?NumberQ
+		} :> (
+			x = ConfirmReplace[side, {
+				Left :> borderLeft,
+				Right :> borderRight,
+				Top | Bottom :> borderLeft + lerpFactor * RectangleWidth[rect]
+			}];
+
+			y = ConfirmReplace[side, {
+				Left | Right :> borderBottom + lerpFactor * RectangleHeight[rect],
+				Top :> borderTop,
+				Bottom :> borderBottom
+			}];
+
+			{x, y}
+		),
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported attachment specification: ``",
+			other
+		]
+	}];
+
+	RaiseAssert[MatchQ[point, {_?NumberQ, _?NumberQ}]];
+
+	point
+]
 
 (*========================================================*)
 (* Developer UX                                           *)

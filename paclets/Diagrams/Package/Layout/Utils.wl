@@ -30,7 +30,7 @@ PackageUse[Diagrams -> {
 	},
 	Render -> SizedText,
 	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
-	Utils -> {RectangleWidth, RectangleHeight}
+	Utils -> {RectangleWidth, RectangleHeight, RectangleAttachmentPoint}
 }]
 
 (*======================================*)
@@ -276,43 +276,12 @@ boxAttachmentPoint[
 		_DiaBox,
 		placedContent: _,
 		_Rectangle,
-		borderRect:Rectangle[
-			{borderLeft_, borderBottom_},
-			{borderRight_, borderTop_}
-		]
+		borderRect: _Rectangle
 	],
 	attachment_
-] := Module[{
-	point,
-	x, y
-},
-	point = Replace[attachment, {
-		{
-			side : (Left | Right | Top | Bottom),
-			(* Linear interpolation factor. *)
-			lerpFactor_?NumberQ
-		} :> (
-			x = Replace[side, {
-				Left :> borderLeft,
-				Right :> borderRight,
-				Top | Bottom :> borderLeft + lerpFactor * RectangleWidth[borderRect]
-			}];
-
-			y = Replace[side, {
-				Left | Right :> borderBottom + lerpFactor * RectangleHeight[borderRect],
-				Top :> borderTop,
-				Bottom :> borderBottom
-			}];
-
-			{x, y}
-		),
-		other_ :> RaiseError["unsupported attachment specification: ``", other]
-	}];
-
-	RaiseAssert[MatchQ[point, {_?NumberQ, _?NumberQ}]];
-
-	point
-]
+] := (
+	RectangleAttachmentPoint[borderRect, attachment]
+)
 
 AddUnmatchedArgumentsHandler[boxAttachmentPoint]
 
