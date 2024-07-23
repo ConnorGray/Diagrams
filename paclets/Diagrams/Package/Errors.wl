@@ -17,6 +17,7 @@ PackageExport[{
 	ConfirmReplace,
 	RaiseConfirm2,
 	RaiseConfirmMatch,
+	RaiseAssert2,
 	WrapRaised
 }]
 
@@ -40,6 +41,7 @@ Raise               = Symbol["Wolfram`ErrorTools`Raise"]
 Handle              = Symbol["Wolfram`ErrorTools`Handle"]
 SetFallthroughError = Symbol["Wolfram`ErrorTools`SetFallthroughError"]
 ConfirmReplace      = Symbol["Wolfram`ErrorTools`ConfirmReplace"]
+RaiseAssert2        = Symbol["Wolfram`ErrorTools`RaiseAssert"]
 RaiseConfirm2       = Symbol["Wolfram`ErrorTools`RaiseConfirm"]
 RaiseConfirmMatch   = Symbol["Wolfram`ErrorTools`RaiseConfirmMatch"]
 WrapRaised          = Symbol["Wolfram`ErrorTools`WrapRaised"]

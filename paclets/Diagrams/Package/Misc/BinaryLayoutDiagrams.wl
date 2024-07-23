@@ -5,6 +5,7 @@ PackageExport[{
 	CharacterSetDiagram,
 	BinaryLayoutDiagram,
 	MemoryLayoutDiagram,
+	StackHeapDiagram,
 
 	(*----------*)
 	(* Concepts *)
@@ -17,11 +18,15 @@ PackageExport[{
 	DiaBit,
 
 	DiaStruct,
+	(* TODO: Replace with DiaStackFrame[.., <| "var1" -> ... |>] instead? *)
+	DiaStackVariable,
 
 	(*------------*)
 	(* Helpers    *)
 	(*------------*)
 	TreeForType,
+
+	IntegerTypeQ,
 
 	(*---------------*)
 	(* Configuration *)
@@ -33,11 +38,12 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	DiagramGraphicsImage,
 	BlockStackDiagram,
+	MultiBlockStackDiagram,
 	TreeStackDiagram,
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
-		RaiseAssert
+		RaiseAssert, RaiseAssert2
 	},
 	Library -> {$LibraryFunctions},
 	Render -> {
@@ -803,7 +809,10 @@ treeForType[type_] := ConfirmReplace[type, {
 	},
 		AppendTo[
 			$indirectionLayers[$indirectionDepth],
-			treeForType[pointee]
+			(* FIXME: Maybe we shouldn't have this be part of TreeForType at
+				all? *)
+			pointee
+			(* treeForType[pointee] *)
 		];
 
 		Tree[
@@ -853,5 +862,171 @@ sizeOf[type_] := WrapRaised[
 }]
 
 (*========================================================*)
+
+SetFallthroughError[StackHeapDiagram]
+
+StackHeapDiagram[
+	stackData_List
+] := Handle[_Failure] @ WrapRaised[
+	DiagramError,
+	"Error creating StackHeapDiagram"
+] @ Module[{
+	stack,
+	heapColumns = {}
+},
+	stack = Flatten[#, 1]& @ Map[
+		stackElement |-> ConfirmReplace[stackElement, {
+			stackVar:DiaStackVariable[__] :> Module[{
+				var,
+				indirect,
+				maxIndirectionDepth
+			},
+				{var, indirect} = flattenStackVariable[stackVar];
+
+				maxIndirectionDepth = Max[Length[heapColumns], Length[indirect]];
+
+				heapColumns = Join[
+					PadRight[heapColumns, maxIndirectionDepth, {{}}],
+					PadRight[indirect, maxIndirectionDepth, {{}}],
+					2
+				];
+
+				var
+			],
+			other_ :> Raise[
+				DiagramError,
+				"Unrecognized stack element specification: ``",
+				InputForm[other]
+			]
+		}],
+		stackData
+	];
+
+	RaiseAssert2[
+		MatchQ[stack, {{_?NumberQ, _List}...}],
+		<| "Stack" -> stack |>,
+		"Invalid stack value: ``",
+		InputForm[stack]
+	];
+
+	(* Print["heapColumns before = ", InputForm[heapColumns]]; *)
+
+	heapColumns = Flatten[#, 1]& @ Map[
+		heapColumn |-> Map[
+			(* Note: Show a vertial ellipsis, working around Packages parse
+				error. *)
+			{
+				{1, {Item[FromCharacterCode[8942], Background -> White]}},
+				Splice @ typeToItems[None, #],
+				{1, {Item[FromCharacterCode[8942], Background -> White]}}
+			} &,
+			heapColumn
+		],
+		heapColumns
+	];
+
+	(* Print["heapColumns after = ", InputForm[heapColumns]]; *)
+
+	MultiBlockStackDiagram[
+		Join[{
+			stack
+		}, heapColumns],
+		{},
+		1.5
+	]
+]
+
+(*====================================*)
+
+SetFallthroughError[flattenStackVariable]
+
+(*
+	Input `type`: `DiaStruct[..]`
+
+	Output: {
+		{1, {Item["name.field1", ...]}},
+		{1, {Item["name.field2", ...]}},
+	}
+ *)
+flattenStackVariable[
+	DiaStackVariable[name_?StringQ, type_]
+] := Module[{
+	tree,
+	indirectionInfo
+},
+	{tree, indirectionInfo} = TreeForType[type, {"Tree", "IndirectionLayers"}];
+
+	{typeToItems[{name}, type], indirectionInfo}
+]
+
+(*------------------------------------*)
+
+(*
+	Returns one of:
+
+		* Nothing
+		* { {1, {Item[__]}} ... }
+*)
+typeToItems[
+	namePath : {__?StringQ} | None,
+	type_
+] := ConfirmReplace[type, {
+	_?IntegerTypeQ :> {
+		{1, {
+			Item[
+				withNamePath[namePath, ToString[type]],
+				sizeOf[type],
+				Background -> $ColorScheme["Integer"]
+			]
+		}}
+	},
+
+	DiaStruct[_?StringQ, fields_?AssociationQ] :> (
+		Flatten[#, 1]& @ KeyValueMap[
+			{fieldName, fieldType} |-> (
+				typeToItems[Append[namePath, fieldName], fieldType]
+			),
+			fields
+		]
+	),
+
+	"Pointer"[pointee_] :> {
+		{1, {
+			Item[
+				withNamePath[namePath, "ptr to " <> ToString[pointee]],
+				sizeOf[type],
+				Background -> $ColorScheme["Pointer"]
+			]
+		}}
+	},
+
+	other_ :> Raise[
+		DiagramError,
+		"Unsupported or unrecognized type: ``",
+		InputForm[other]
+	]
+}]
+
+(*------------------------------------*)
+
+SetFallthroughError[withNamePath]
+
+withNamePath[namePath: _, typeName: _?StringQ] :=
+	ConfirmReplace[namePath, {
+		None :> typeName,
+		{__?StringQ} :> StringRiffle[namePath, "."] <> ": " <> typeName
+	}]
+
+(*========================================================*)
 (* Utilities                                              *)
 (*========================================================*)
+
+SetFallthroughError[IntegerTypeQ]
+
+IntegerTypeQ[type_] := MatchQ[
+	type,
+	"UInt8" | "Int8" |
+	"UInt16" | "Int16" |
+	"UInt32" | "Int32" |
+	"UInt64" | "Int64"
+]
