@@ -40,6 +40,7 @@ PackageUse[Diagrams -> {
 	BlockStackDiagram,
 	MultiBlockStackDiagram,
 	TreeStackDiagram,
+	DiaID,
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
@@ -747,34 +748,52 @@ SetFallthroughError[treeForType]
 
 (* FIXME: Support TypeSpecifier[..] type specifications. *)
 treeForType[type_] := ConfirmReplace[type, {
+	(* Leave DiaID[_][_] wrappers untouched. *)
+	id_DiaID[type1_] :> id[treeForType[type1]],
+
 	DiaStruct[structName_?StringQ, fields_?AssociationQ] :> (
 		RaiseConfirmMatch[fields, Association[(_?StringQ -> _)...]];
 
 		Tree[
 			structName,
 			KeyValueMap[
-				{fieldName, fieldType} |-> (
+				{fieldName, fieldType0} |-> Module[{
+					fieldType = fieldType0,
+					id = None
+				},
+					(* Temporarily remove the optional DiaID wrapper. *)
+					fieldType //= Replace[id0_DiaID[type1_] :> (
+						id = id0;
+						type1
+					)];
+
 					(* Prepend the field name to the label for the field type
 						tree. Take care to preserve any styling options in
 						Item[..] type labels. *)
-					ConfirmReplace[treeForType[fieldType], {
-						Tree[Item[label_, opts___], children_] :> (
+					fieldType = ConfirmReplace[treeForType[fieldType], {
+						Tree[Item[label_?StringQ, opts___], children_] :> (
 							Tree[
 								Item[
-									fieldName <> ": " <> ToString[label],
+									fieldName <> ": " <> label,
 									opts
 								],
 								children
 							]
 						),
-						Tree[fieldTypeLabel_, children_] :> (
+						Tree[fieldTypeLabel_?StringQ, children_] :> (
 							Tree[
-								fieldName <> ": " <> ToString[fieldTypeLabel],
+								fieldName <> ": " <> fieldTypeLabel,
 								children
 							]
 						)
-					}]
-				),
+					}];
+
+					If[id =!= None,
+						fieldType = id[fieldType];
+					];
+
+					fieldType
+				],
 				fields
 			]
 		]
@@ -866,7 +885,8 @@ sizeOf[type_] := WrapRaised[
 SetFallthroughError[StackHeapDiagram]
 
 StackHeapDiagram[
-	stackData_List
+	stackData_List,
+	outputElems : _?OutputElementsQ : Automatic
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating StackHeapDiagram"
@@ -932,7 +952,8 @@ StackHeapDiagram[
 			stack
 		}, heapColumns],
 		{},
-		1.5
+		1.5,
+		outputElems
 	]
 ]
 
@@ -961,6 +982,8 @@ flattenStackVariable[
 
 (*------------------------------------*)
 
+SetFallthroughError[typeToItems]
+
 (*
 	Returns one of:
 
@@ -971,6 +994,25 @@ typeToItems[
 	namePath : {__?StringQ} | None,
 	type_
 ] := ConfirmReplace[type, {
+	id_DiaID[type1_] :> Module[{
+		items = typeToItems[namePath, type1]
+	},
+		ConfirmReplace[items, {
+			{ {size_, { column_Item }} } :> { {size, { id[column] }} },
+			(* TID:240724/1: DiaID on struct types *)
+			{_, __} :> Raise[
+				DiagramError,
+				"Cannot apply DiaID[..] to type that spans multiple rows: ``",
+				InputForm[type]
+			],
+			other_ :> Raise[
+				DiagramError,
+				"Unexpected typeToItems result: ``",
+				InputForm[other]
+			]
+		}]
+	],
+
 	_?IntegerTypeQ :> {
 		{1, {
 			Item[
