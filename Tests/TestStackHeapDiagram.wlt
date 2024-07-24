@@ -28,3 +28,20 @@ VerificationTest[
 		"MessageParameters" -> {}
 	|>]
 ]
+
+(* Test stack heap diagram without any indirections. *)
+VerificationTest[
+	StackHeapDiagram[{
+		DiaStackVariable[
+			"foo",
+			DiaStruct["Point", <|
+				"x" -> DiaID["x"] @ "Int64",
+				"y" -> DiaID["y"] @ "Int64"
+			|>]
+		]
+	}, "Regions"],
+	<|
+		DiaID["x"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["y"] -> Rectangle[{0, 1}, {8, 2}]
+	|>
+]

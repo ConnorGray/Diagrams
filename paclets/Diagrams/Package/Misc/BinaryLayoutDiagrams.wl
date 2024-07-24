@@ -905,10 +905,12 @@ StackHeapDiagram[
 
 				maxIndirectionDepth = Max[Length[heapColumns], Length[indirect]];
 
-				heapColumns = Join[
-					PadRight[heapColumns, maxIndirectionDepth, {{}}],
-					PadRight[indirect, maxIndirectionDepth, {{}}],
-					2
+				If[maxIndirectionDepth > 0,
+					heapColumns = Join[
+						PadRight[heapColumns, maxIndirectionDepth, {{}}],
+						PadRight[indirect, maxIndirectionDepth, {{}}],
+						2
+					];
 				];
 
 				var
