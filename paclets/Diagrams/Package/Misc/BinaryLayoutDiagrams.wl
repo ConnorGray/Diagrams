@@ -988,6 +988,8 @@ stackVarToIndirectionColumns[
 
 	columns = MapIndexed[
 		{column, pos} |-> Module[{
+			(* Only include the variable name if this is the
+				first column (i.e. the stack). *)
 			name = Replace[pos, {
 				{1} -> {varName},
 				_ -> None
