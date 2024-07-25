@@ -189,3 +189,24 @@ VerificationTest[
 		DiaID["y"] -> Rectangle[{0, 1}, {8, 2}]
 	|>
 ]
+
+(* Test stack heap diagram without any indirections and redundant
+	DiaIDs. *)
+(* TID:240724/2: Support multiple DiaID wrappers. *)
+VerificationTest[
+	StackHeapDiagram[{
+		DiaStackVariable[
+			"foo",
+			DiaStruct["Point", <|
+				"x" -> DiaID["x"] @ DiaID["x2"] @ DiaID["x3"] @ "Int64",
+				"y" -> DiaID["y"] @ "Int64"
+			|>]
+		]
+	}, "Regions"],
+	<|
+		DiaID["x"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["x2"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["x3"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["y"] -> Rectangle[{0, 1}, {8, 2}]
+	|>
+]

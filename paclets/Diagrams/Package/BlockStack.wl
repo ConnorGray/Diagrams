@@ -35,7 +35,7 @@ $regions := Raise[DiagramError, "Invalid unscopped access of $regions"]
 
 SetFallthroughError[addRegion]
 
-addRegion[id_DiaID, value_] := (
+addRegion[id: _DiaID, value: _] := (
 	If[KeyExistsQ[$regions, id],
 		(* TID:240721/5: Duplicate IDs in BlockStackDiagram *)
 		Raise[
@@ -120,7 +120,7 @@ blockStackDiagramRow[
 		{xOffset, elem} |-> Module[{
 			(* Default width *)
 			width = 1,
-			id = None,
+			diaIDs = {},
 			styleOpts = {},
 			label,
 			expr
@@ -147,19 +147,20 @@ blockStackDiagramRow[
 						label
 					),
 					(id0_DiaID)[expr_] :> (
-						id = id0;
+						(* TID:240724/2: Support multiple DiaID wrappers. *)
+						AppendTo[diaIDs, id0];
 
 						expr
 					)
 				}],
 				elem,
-				5
+				10
 			];
 
 			RaiseAssert[ListQ[styleOpts]];
 
 			expr = renderBlock[
-				id,
+				diaIDs,
 				label,
 				rowSize,
 				width,
@@ -184,7 +185,7 @@ blockStackDiagramRow[
 SetFallthroughError[renderBlock]
 
 renderBlock[
-	id : _DiaID | None,
+	diaIDs : {___DiaID},
 	content_,
 	rowSize_?NumberQ,
 	width_?NumberQ,
@@ -201,8 +202,9 @@ renderBlock[
 		offsets
 	];
 
-	If[id =!= None,
-		addRegion[id, rect];
+	Scan[
+		id |-> addRegion[id, rect],
+		diaIDs
 	];
 
 	{

@@ -1118,11 +1118,32 @@ typeToItems[
 	namePath : {__?StringQ} | None,
 	type_
 ] := ConfirmReplace[type, {
-	id_DiaID[type1_] :> Module[{
-		items = typeToItems[namePath, type1]
+	_DiaID[_] :> Module[{
+		ids,
+		type1,
+		items
 	},
+		ids = {};
+
+		(* TID:240724/2: Support multiple DiaID wrappers. *)
+		type1 = FixedPoint[
+			Replace[{
+				id_DiaID[type2_] :> (
+					AppendTo[ids, id];
+					type2
+				)
+			}],
+			type
+		];
+
+		RaiseAssert[MatchQ[ids, {__DiaID}]];
+
+		items = typeToItems[namePath, type1];
+
 		ConfirmReplace[items, {
-			{ {size_, { column: _Item }} } :> { {size, { id[column] }} },
+			{ {size_, { column: _Item }} } :> (
+				{ {size, { (Composition @@ ids)[column] }} }
+			),
 			(* TID:240724/1: DiaID on struct types *)
 			{_, __} :> Raise[
 				DiagramError,
