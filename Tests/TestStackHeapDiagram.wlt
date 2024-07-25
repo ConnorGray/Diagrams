@@ -20,12 +20,35 @@ VerificationTest[
 	{
 		(* 1st column — Stack *)
 		{
-			{1, {Item["foo: ptr to ...", 8, Background -> RGBColor[0.94, 0.88, 0.94]]}}
+			{1, {DiaID["foo"] @ Item["foo: ptr to ...", 8, Background -> RGBColor[0.94, 0.88, 0.94]]}}
 		},
 
 		(* 2nd column — 1st level of heap indirection. *)
 		{
-			{1, {Item["Int64", 8, Background -> RGBColor[1, 0.9, 0.8]]}}
+			{1, {DiaID["foo.*"] @ Item["Int64", 8, Background -> RGBColor[1, 0.9, 0.8]]}}
+		}
+	}
+]
+
+VerificationTest[
+	stackVarToIndirectionColumns @ DiaStackVariable[
+		"foo",
+		"Pointer"["Pointer"["UInt8"]]
+	],
+	{
+		(* 1st column — Stack *)
+		{
+			{1, {DiaID["foo"] @ Item["foo: ptr to ...", 8, Background -> RGBColor[0.94, 0.88, 0.94]]}}
+		},
+
+		(* 2nd column — 1st level of heap indirection. *)
+		{
+			{1, {DiaID["foo.*"] @ Item["ptr to ...", 8, Background -> RGBColor[0.94, 0.88, 0.94]]}}
+		},
+
+		(* 3rd column — 2nd level of heap indirection. *)
+		{
+			{1, {DiaID["foo.*.*"] @ Item["UInt8", 1, Background -> RGBColor[1, 0.9, 0.8]]}}
 		}
 	}
 ]
@@ -35,7 +58,7 @@ VerificationTest[
 (*====================================*)
 
 VerificationTest[
-	typeToIndirectionColumns["Int64"],
+	typeToIndirectionColumns[{}, "Int64"],
 	{
 		(* 0th level of indirection. *)
 		{"Int64"}
@@ -43,62 +66,63 @@ VerificationTest[
 ]
 
 VerificationTest[
-	typeToIndirectionColumns @ "Pointer"["Int64"],
+	typeToIndirectionColumns[{}, "Pointer"["Int64"]],
 	{
 		(* 1st level of indirection (no indirection). *)
-		{"Pointer"[DiaID[{"Indirection", {2, 1}}]]},
+		{DiaID[""] @ "Pointer"[DiaID["*"]]},
 
 		(* 2nd level of indirection. *)
-		{"Int64"}
+		{DiaID["*"] @ "Int64"}
 	}
 ]
 
 VerificationTest[
-	typeToIndirectionColumns @ DiaStruct["String", <|
+	typeToIndirectionColumns[{}, DiaStruct["String", <|
 		"size" -> "Int64",
 		"len" -> "Int64",
 		"ptr" -> "Pointer"["UInt8"]
-	|>],
+	|>]],
 	{
 		{
 			DiaStruct["String", <|
 				"size" -> "Int64",
 				"len" -> "Int64",
-				"ptr" -> "Pointer"[DiaID[{"Indirection", {2, 1}}]]
+				"ptr" -> DiaID["ptr"] @ "Pointer"[DiaID["ptr.*"]]
 			|>]
 		},
 		{
-			"UInt8"
+			DiaID["ptr.*"] @ "UInt8"
 		}
 	}
 ]
 
+(* TID:240725/1: Don't double wrap DiaID around nested pointer. *)
 VerificationTest[
-	typeToIndirectionColumns @ "Pointer"[
+	typeToIndirectionColumns[{}, "Pointer"[
 		"Pointer"[
 			"Pointer"[
 				"UInt8"
 			]
 		]
-	],
+	]],
 	{
 		{
-			"Pointer"[DiaID[{"Indirection", {2, 1}}]]
+			DiaID[""] @ "Pointer"[DiaID["*"]]
 		},
 		{
-			"Pointer"[DiaID[{"Indirection", {3, 1}}]]
+			DiaID["*"] @ "Pointer"[DiaID["*.*"]]
 		},
 		{
-			"Pointer"[DiaID[{"Indirection", {4, 1}}]]
+			DiaID["*.*"] @ "Pointer"[DiaID["*.*.*"]]
 		},
 		{
-			"UInt8"
+			DiaID["*.*.*"] @ "UInt8"
 		}
 	}
 ]
 
 VerificationTest[
-	typeToIndirectionColumns @ DiaStruct["Data", <|
+	typeToIndirectionColumns[{}, DiaStruct["Data", <|
 		"ptr1" -> "Pointer"["UInt8"],
 		"ptr2" -> "Pointer"["Pointer"["UInt16"]],
 		"ptr3" -> "Pointer"[
@@ -110,34 +134,34 @@ VerificationTest[
 				]
 			|>]
 		]
-	|>],
+	|>]],
 	{
 		(* 0th level of indirection. *)
 		{
 			DiaStruct["Data", <|
-				"ptr1" -> "Pointer"[DiaID[{"Indirection", {2, 1}}]],
-				"ptr2" -> "Pointer"[DiaID[{"Indirection", {2, 2}}]],
-				"ptr3" -> "Pointer"[DiaID[{"Indirection", {2, 3}}]]
+				"ptr1" -> DiaID["ptr1"] @ "Pointer"[DiaID["ptr1.*"]],
+				"ptr2" -> DiaID["ptr2"] @ "Pointer"[DiaID["ptr2.*"]],
+				"ptr3" -> DiaID["ptr3"] @ "Pointer"[DiaID["ptr3.*"]]
 			|>]
 		},
 		(* 1st level of indirection. *)
 		{
-			"UInt8",
-			"Pointer"[DiaID[{"Indirection", {3, 1}}]],
-			DiaStruct["Level1", <|
-				"ptr" -> "Pointer"[DiaID[{"Indirection", {3, 2}}]]
+			DiaID["ptr1.*"] @ "UInt8",
+			DiaID["ptr2.*"] @ "Pointer"[DiaID["ptr2.*.*"]],
+			DiaID["ptr3.*"] @ DiaStruct["Level1", <|
+				"ptr" -> DiaID["ptr3.*.ptr"] @ "Pointer"[DiaID["ptr3.*.ptr.*"]]
 			|>]
 		},
 		(* 2nd level of indirection. *)
 		{
-			"UInt16",
-			DiaStruct["Level2", <|
-				"ptr" -> "Pointer"[DiaID[{"Indirection", {4, 1}}]]
+			DiaID["ptr2.*.*"] @ "UInt16",
+			DiaID["ptr3.*.ptr.*"] @ DiaStruct["Level2", <|
+				"ptr" -> DiaID["ptr3.*.ptr.*.ptr"] @ "Pointer"[DiaID["ptr3.*.ptr.*.ptr.*"]]
 			|>]
 		},
 		(* 3rd level of indirection. *)
 		{
-			"UInt32"
+			DiaID["ptr3.*.ptr.*.ptr.*"] @ "UInt32"
 		}
 	}
 ]
@@ -208,5 +232,42 @@ VerificationTest[
 		DiaID["x2"] -> Rectangle[{0, 0}, {8, 1}],
 		DiaID["x3"] -> Rectangle[{0, 0}, {8, 1}],
 		DiaID["y"] -> Rectangle[{0, 1}, {8, 2}]
+	|>
+]
+
+(* Test stack/heap diagram of nested "Pointer" type. *)
+VerificationTest[
+	StackHeapDiagram[{
+		DiaStackVariable[
+			"foo",
+			"Pointer"["Pointer"["UInt8"]]
+		]
+	}, "Regions"],
+	<|
+		DiaID["foo"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["foo.*"] -> Rectangle[{9.5, 1}, {17.5, 2}],
+		DiaID["foo.*.*"] -> Rectangle[{19., 1}, {20., 2}]
+	|>
+]
+
+(* Test stack/heap diagram of multiple variables, each with indirection. *)
+VerificationTest[
+	StackHeapDiagram[{
+		DiaStackVariable[
+			"foo",
+			"Pointer"["Pointer"["UInt8"]]
+		],
+		DiaStackVariable[
+			"bar",
+			"Pointer"["Pointer"["UInt8"]]
+		]
+	}, "Regions"],
+	<|
+		DiaID["foo"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["bar"] -> Rectangle[{0, 1}, {8, 2}],
+		DiaID["foo.*"] -> Rectangle[{9.5, 1}, {17.5, 2}],
+		DiaID["bar.*"] -> Rectangle[{9.5, 3}, {17.5, 4}],
+		DiaID["foo.*.*"] -> Rectangle[{19., 1}, {20., 2}],
+		DiaID["bar.*.*"] -> Rectangle[{19., 3}, {20., 4}]
 	|>
 ]

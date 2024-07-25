@@ -479,6 +479,11 @@ MultiBlockStackDiagram[
 				];
 
 				{Thickness[0.01], Arrow[{lhsPoint, rhsPoint}]}
+			],
+			other_ :> Raise[
+				DiagramError,
+				"Unrecognized or malformed form for connection: ``",
+				InputForm[other]
 			]
 		}],
 		connections

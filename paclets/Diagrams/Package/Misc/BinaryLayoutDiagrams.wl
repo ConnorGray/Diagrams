@@ -45,6 +45,7 @@ PackageUse[Diagrams -> {
 	MultiBlockStackDiagram,
 	TreeStackDiagram,
 	DiaID,
+	DiaArrow,
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
@@ -897,9 +898,10 @@ StackHeapDiagram[
 	"Error creating StackHeapDiagram"
 ] @ Module[{
 	stackElementsColumns,
+	arrows,
 	heapColumns
 },
-	stackElementsColumns = Map[
+	{stackElementsColumns, arrows} = Reap[Map[
 		stackElement |-> ConfirmReplace[stackElement, {
 			stackVar:DiaStackVariable[__] :> (
 				stackVarToIndirectionColumns[stackVar]
@@ -911,7 +913,9 @@ StackHeapDiagram[
 			]
 		}],
 		stackData
-	];
+	], "DiaArrows"];
+
+	arrows //= Flatten;
 
 	(* Vertically join the columns from each "stack element layer" into
 		a single mega column for each level of indirection. *)
@@ -958,7 +962,7 @@ StackHeapDiagram[
 
 	MultiBlockStackDiagram[
 		stackElementsColumns,
-		{},
+		arrows,
 		1.5,
 		outputElems
 	]
@@ -982,7 +986,7 @@ stackVarToIndirectionColumns[
 ] := Module[{
 	columns
 },
-	columns = typeToIndirectionColumns[type];
+	columns = typeToIndirectionColumns[{varName}, type];
 
 	RaiseAssert[MatchQ[columns, {__List}]];
 
@@ -1012,7 +1016,10 @@ stackVarToIndirectionColumns[
 
 SetFallthroughError[typeToIndirectionColumns]
 
-typeToIndirectionColumns[type0_] := Module[{
+typeToIndirectionColumns[
+	initialNamePath: {___?StringQ},
+	type0_
+] := Module[{
 	process,
 	addIndirection,
 	nextColumn,
@@ -1024,9 +1031,12 @@ typeToIndirectionColumns[type0_] := Module[{
 
 	SetFallthroughError[process];
 
-	process[type1_] := ConfirmReplace[type1, {
+	process[
+		currentNamePath: {___?StringQ},
+		type1_
+	] := ConfirmReplace[type1, {
 		id_DiaID[type2_] :> (
-			id[process[type2]]
+			id[process[currentNamePath, type2]]
 		),
 
 		DiaStruct[structName_?StringQ, structFields_?AssociationQ] :> Module[{},
@@ -1034,7 +1044,10 @@ typeToIndirectionColumns[type0_] := Module[{
 				structName,
 				Association @ KeyValueMap[
 					{fieldName, fieldType} |-> (
-						fieldName -> process[fieldType]
+						fieldName -> process[
+							Append[currentNamePath, fieldName],
+							fieldType
+						]
 					),
 					structFields
 				]
@@ -1042,11 +1055,33 @@ typeToIndirectionColumns[type0_] := Module[{
 		],
 
 		"Pointer"[pointee_] :> Module[{
-			destDiaID = addIndirection[pointee]
+			srcDiaID,
+			destDiaID
 		},
-			RaiseAssert[MatchQ[destDiaID, DiaID[_]]];
+			srcDiaID = DiaID[StringRiffle[currentNamePath, "."]];
 
-			"Pointer"[destDiaID]
+			destDiaID = DiaID[StringRiffle[Append[currentNamePath, "*"], "."]];
+
+			addIndirection[
+				Append[currentNamePath, "*"],
+				(* TID:240725/1: Don't double wrap DiaID around nested pointer. *)
+				If[Head[pointee] === "Pointer",
+					pointee,
+					destDiaID[pointee]
+				]
+			];
+
+			RaiseAssert[MatchQ[
+				destDiaID,
+				(* DiaID[{"Indirection", {_Integer, _Integer}}] *)
+				DiaID[_?StringQ]
+			]];
+
+			(* Construct a DiaArrow pointing between the pointer field and
+				the pointee field. *)
+			Sow[DiaArrow[srcDiaID[[1]], destDiaID[[1]]], "DiaArrows"];
+
+			srcDiaID["Pointer"[destDiaID]]
 		],
 
 		int_?IntegerTypeQ :> int,
@@ -1062,20 +1097,20 @@ typeToIndirectionColumns[type0_] := Module[{
 
 	SetFallthroughError[addIndirection];
 
-	addIndirection[type_] := Module[{diaID},
+	addIndirection[currentNamePath: _, type: _] := Module[{},
+		(* TODO: Remove the commented code below if/when its clear the
+			calculated Position logic wouldn't be useful for anything. *)
 		(* Construct a DiaID that points by ID value and with a Position-like
 		   part specifiction to the pointee type. *)
 		(* TODO: If access to this Position part does not end up being used,
 			remove this and refactor this logic down to something simpler,
 			like a FoldList. *)
-		diaID = DiaID[{
+		(* diaID = DiaID[{
 			"Indirection",
 			{Length[indirectionColumns] + 2, Length[nextColumn] + 1}
-		}];
+		}]; *)
 
-		AppendTo[nextColumn, type];
-
-		diaID
+		AppendTo[nextColumn, {currentNamePath, type}];
 	];
 
 	(*----------------------*)
@@ -1083,7 +1118,7 @@ typeToIndirectionColumns[type0_] := Module[{
 	(*----------------------*)
 
 	indirectionColumns = {};
-	nextColumn = {type0};
+	nextColumn = {{initialNamePath, type0}};
 
 	(* Each iteration of this loop processes one level of indirection.
 		`nextColumn` contains the types that were behind a pointer in the
@@ -1098,7 +1133,12 @@ typeToIndirectionColumns[type0_] := Module[{
 
 		AppendTo[
 			indirectionColumns,
-			Map[process, saveNext]
+			Map[
+				tuple |-> (
+					process @@ tuple
+				),
+				saveNext
+			]
 		];
 	]];
 
