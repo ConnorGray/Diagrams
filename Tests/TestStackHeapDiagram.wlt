@@ -10,7 +10,7 @@ VerificationTest[
 	{
 		(* 1st column - Stack *)
 		{
-			{1, {Item["foo: Int64", 8, Background -> RGBColor[1, 0.9, 0.8]]}}
+			{1, {DiaID["foo"] @ Item["foo: Int64", 8, Background -> RGBColor[1, 0.9, 0.8]]}}
 		}
 	}
 ]
@@ -61,7 +61,7 @@ VerificationTest[
 	typeToIndirectionColumns[{}, "Int64"],
 	{
 		(* 0th level of indirection. *)
-		{"Int64"}
+		{DiaID[""] @ "Int64"}
 	}
 ]
 
@@ -85,8 +85,8 @@ VerificationTest[
 	{
 		{
 			DiaStruct["String", <|
-				"size" -> "Int64",
-				"len" -> "Int64",
+				"size" -> DiaID["size"] @ "Int64",
+				"len" -> DiaID["len"] @ "Int64",
 				"ptr" -> DiaID["ptr"] @ "Pointer"[DiaID["ptr.*"]]
 			|>]
 		},
@@ -185,9 +185,15 @@ VerificationTest[
 		"CausedBy" -> Failure[DiagramError, <|
 			"MessageTemplate" -> "Cannot apply DiaID[..] to type that spans multiple rows: ``",
 			"MessageParameters" -> {
+				(* TODO: The returned type here includes automatically added
+					DiaID wrappers. It would be better if we only showed a type
+					identical to what the user passed in. *)
 				InputForm[
-					DiaID["string"][
-						DiaStruct["Point", <| "x" -> "Int64", "y" -> "Int64" |>]
+					DiaID["foo"] @ DiaID["string"][
+						DiaStruct["Point", <|
+							"x" -> DiaID["foo.x"] @ "Int64",
+							"y" -> DiaID["foo.y"] @ "Int64"
+						|>]
 					]
 				]
 			}
@@ -209,7 +215,9 @@ VerificationTest[
 		]
 	}, "Regions"],
 	<|
+		DiaID["foo.x"] -> Rectangle[{0, 0}, {8, 1}],
 		DiaID["x"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["foo.y"] -> Rectangle[{0, 1}, {8, 2}],
 		DiaID["y"] -> Rectangle[{0, 1}, {8, 2}]
 	|>
 ]
@@ -228,9 +236,11 @@ VerificationTest[
 		]
 	}, "Regions"],
 	<|
+		DiaID["foo.x"] -> Rectangle[{0, 0}, {8, 1}],
 		DiaID["x"] -> Rectangle[{0, 0}, {8, 1}],
 		DiaID["x2"] -> Rectangle[{0, 0}, {8, 1}],
 		DiaID["x3"] -> Rectangle[{0, 0}, {8, 1}],
+		DiaID["foo.y"] -> Rectangle[{0, 1}, {8, 2}],
 		DiaID["y"] -> Rectangle[{0, 1}, {8, 2}]
 	|>
 ]

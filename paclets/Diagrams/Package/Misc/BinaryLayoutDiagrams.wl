@@ -1020,6 +1020,7 @@ typeToIndirectionColumns[
 	initialNamePath: {___?StringQ},
 	type0_
 ] := Module[{
+	diaIdForNamePath,
 	process,
 	addIndirection,
 	nextColumn,
@@ -1027,6 +1028,14 @@ typeToIndirectionColumns[
 },
 	(*----------------------*)
 	(* Functions            *)
+	(*----------------------*)
+
+	SetFallthroughError[diaIDForNamePath];
+
+	diaIDForNamePath[namePath:{___?StringQ}] := (
+		DiaID[StringRiffle[namePath, "."]]
+	);
+
 	(*----------------------*)
 
 	SetFallthroughError[process];
@@ -1043,12 +1052,14 @@ typeToIndirectionColumns[
 			DiaStruct[
 				structName,
 				Association @ KeyValueMap[
-					{fieldName, fieldType} |-> (
-						fieldName -> process[
-							Append[currentNamePath, fieldName],
+					{fieldName, fieldType} |-> Module[{
+						fieldNamePath = Append[currentNamePath, fieldName]
+					},
+						fieldName -> diaIDForNamePath[fieldNamePath] @ process[
+							fieldNamePath,
 							fieldType
 						]
-					),
+					],
 					structFields
 				]
 			]
@@ -1058,17 +1069,14 @@ typeToIndirectionColumns[
 			srcDiaID,
 			destDiaID
 		},
-			srcDiaID = DiaID[StringRiffle[currentNamePath, "."]];
+			srcDiaID = diaIDForNamePath[currentNamePath];
 
-			destDiaID = DiaID[StringRiffle[Append[currentNamePath, "*"], "."]];
+			destDiaID = diaIDForNamePath[Append[currentNamePath, "*"]];
 
 			addIndirection[
 				Append[currentNamePath, "*"],
 				(* TID:240725/1: Don't double wrap DiaID around nested pointer. *)
-				If[Head[pointee] === "Pointer",
-					pointee,
-					destDiaID[pointee]
-				]
+				destDiaID[pointee]
 			];
 
 			RaiseAssert[MatchQ[
@@ -1081,7 +1089,7 @@ typeToIndirectionColumns[
 				the pointee field. *)
 			Sow[DiaArrow[srcDiaID[[1]], destDiaID[[1]]], "DiaArrows"];
 
-			srcDiaID["Pointer"[destDiaID]]
+			"Pointer"[destDiaID]
 		],
 
 		int_?IntegerTypeQ :> int,
@@ -1118,7 +1126,17 @@ typeToIndirectionColumns[
 	(*----------------------*)
 
 	indirectionColumns = {};
-	nextColumn = {{initialNamePath, type0}};
+	nextColumn = {
+		{
+			initialNamePath,
+			(* NOTE: Add automatic DiaID wrapper as long as this isn't a
+				compound type (to avoid DiaID spanning multiple rows error). *)
+			If[Head[type0] =!= DiaStruct,
+				diaIDForNamePath[initialNamePath] @ type0,
+				type0
+			]
+		}
+	};
 
 	(* Each iteration of this loop processes one level of indirection.
 		`nextColumn` contains the types that were behind a pointer in the
