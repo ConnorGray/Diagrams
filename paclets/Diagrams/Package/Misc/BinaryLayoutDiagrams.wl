@@ -28,6 +28,10 @@ PackageExport[{
 
 	IntegerTypeQ,
 
+	(* NOTE: Public for testing purposes. *)
+	stackVarToIndirectionColumns,
+	typeToIndirectionColumns,
+
 	(*---------------*)
 	(* Configuration *)
 	(*---------------*)
@@ -737,6 +741,7 @@ TreeForType[
 		"Tree",
 		{
 			"Tree" :> tree,
+			(* TODO: This is unused. Remove this logic from TreeForType. *)
 			"IndirectionLayers" :> $indirectionLayers
 		}
 	]
@@ -891,30 +896,14 @@ StackHeapDiagram[
 	DiagramError,
 	"Error creating StackHeapDiagram"
 ] @ Module[{
-	stack,
-	heapColumns = {}
+	stackElementsColumns,
+	heapColumns
 },
-	stack = Flatten[#, 1]& @ Map[
+	stackElementsColumns = Map[
 		stackElement |-> ConfirmReplace[stackElement, {
-			stackVar:DiaStackVariable[__] :> Module[{
-				var,
-				indirect,
-				maxIndirectionDepth
-			},
-				{var, indirect} = flattenStackVariable[stackVar];
-
-				maxIndirectionDepth = Max[Length[heapColumns], Length[indirect]];
-
-				If[maxIndirectionDepth > 0,
-					heapColumns = Join[
-						PadRight[heapColumns, maxIndirectionDepth, {{}}],
-						PadRight[indirect, maxIndirectionDepth, {{}}],
-						2
-					];
-				];
-
-				var
-			],
+			stackVar:DiaStackVariable[__] :> (
+				stackVarToIndirectionColumns[stackVar]
+			),
 			other_ :> Raise[
 				DiagramError,
 				"Unrecognized stack element specification: ``",
@@ -924,35 +913,51 @@ StackHeapDiagram[
 		stackData
 	];
 
+	(* Vertically join the columns from each "stack element layer" into
+		a single mega column for each level of indirection. *)
+	(* TODO: Maybe it would be easier of MultiBlockStackDiagram[..] took
+		and argument structure of separate layers and did this joining
+		itself.
+
+		It could even support options controlling if the layers should be
+		"smooshed" together or shown in separate horizontal "swimlanes". *)
+	stackElementsColumns = Join[Sequence @@ stackElementsColumns, 2];
+
 	RaiseAssert2[
-		MatchQ[stack, {{_?NumberQ, _List}...}],
-		<| "Stack" -> stack |>,
-		"Invalid stack value: ``",
-		InputForm[stack]
+		MatchQ[
+			stackElementsColumns,
+			{
+				(* Nth column *)
+				{
+					(* Item in column *)
+					{_?NumberQ, _List}...
+				} ...
+			}
+		],
+		<| "Stack" -> stackElementsColumns |>,
+		"Unexpected processed stack elements structure"
 	];
 
-	(* Print["heapColumns before = ", InputForm[heapColumns]]; *)
+	(* Surround the items in the heap columns with visual indicator (vertical
+		ellipsis) that they are not contiguous in memory. *)
 
-	heapColumns = Flatten[#, 1]& @ Map[
-		heapColumn |-> Map[
+	heapColumns = stackElementsColumns[[2 ;;]];
+
+	heapColumns = Map[
+		column |-> Riffle[
+			column,
 			(* Note: Show a vertial ellipsis, working around Packages parse
 				error. *)
-			{
-				{1, {Item[FromCharacterCode[8942], Background -> White]}},
-				Splice @ typeToItems[None, #],
-				{1, {Item[FromCharacterCode[8942], Background -> White]}}
-			} &,
-			heapColumn
+			{{1, {Item[FromCharacterCode[8942], Background -> White]}}},
+			{1, 2 * Length[column] + 1, 2}
 		],
 		heapColumns
 	];
 
-	(* Print["heapColumns after = ", InputForm[heapColumns]]; *)
+	stackElementsColumns[[2 ;;]] = heapColumns;
 
 	MultiBlockStackDiagram[
-		Join[{
-			stack
-		}, heapColumns],
+		stackElementsColumns,
 		{},
 		1.5,
 		outputElems
@@ -961,29 +966,146 @@ StackHeapDiagram[
 
 (*====================================*)
 
-SetFallthroughError[flattenStackVariable]
+SetFallthroughError[stackVarToIndirectionColumns]
 
 (*
 	Input `type`: `DiaStruct[..]`
 
+	(* TODO: Update this comment *)
 	Output: {
 		{1, {Item["name.field1", ...]}},
 		{1, {Item["name.field2", ...]}},
 	}
  *)
-flattenStackVariable[
-	DiaStackVariable[name_?StringQ, type_]
+stackVarToIndirectionColumns[
+	DiaStackVariable[varName_?StringQ, type_]
 ] := Module[{
-	tree,
-	indirectionInfo
+	columns
 },
-	{tree, indirectionInfo} = TreeForType[type, {"Tree", "IndirectionLayers"}];
+	columns = typeToIndirectionColumns[type];
 
-	{typeToItems[{name}, type], indirectionInfo}
+	RaiseAssert[MatchQ[columns, {__List}]];
+
+	columns = MapIndexed[
+		{column, pos} |-> Module[{
+			name = Replace[pos, {
+				{1} -> {varName},
+				_ -> None
+			}]
+		},
+			RaiseAssert[ListQ[column]];
+
+			Flatten[#, 1]& @ Map[
+				type1 |-> typeToItems[name, type1],
+				column
+			]
+		],
+		columns
+	];
+
+	columns
 ]
 
 (*------------------------------------*)
 
+SetFallthroughError[typeToIndirectionColumns]
+
+typeToIndirectionColumns[type0_] := Module[{
+	process,
+	addIndirection,
+	nextColumn,
+	indirectionColumns
+},
+	(*----------------------*)
+	(* Functions            *)
+	(*----------------------*)
+
+	SetFallthroughError[process];
+
+	process[type1_] := ConfirmReplace[type1, {
+		id_DiaID[type2_] :> (
+			id[process[type2]]
+		),
+
+		DiaStruct[structName_?StringQ, structFields_?AssociationQ] :> Module[{},
+			DiaStruct[
+				structName,
+				Association @ KeyValueMap[
+					{fieldName, fieldType} |-> (
+						fieldName -> process[fieldType]
+					),
+					structFields
+				]
+			]
+		],
+
+		"Pointer"[pointee_] :> Module[{
+			destDiaID = addIndirection[pointee]
+		},
+			RaiseAssert[MatchQ[destDiaID, DiaID[_]]];
+
+			"Pointer"[destDiaID]
+		],
+
+		int_?IntegerTypeQ :> int,
+
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported or malformed type: ``",
+			InputForm[other]
+		]
+	}];
+
+	(*----------------------*)
+
+	SetFallthroughError[addIndirection];
+
+	addIndirection[type_] := Module[{diaID},
+		(* Construct a DiaID that points by ID value and with a Position-like
+		   part specifiction to the pointee type. *)
+		(* TODO: If access to this Position part does not end up being used,
+			remove this and refactor this logic down to something simpler,
+			like a FoldList. *)
+		diaID = DiaID[{
+			"Indirection",
+			{Length[indirectionColumns] + 2, Length[nextColumn] + 1}
+		}];
+
+		AppendTo[nextColumn, type];
+
+		diaID
+	];
+
+	(*----------------------*)
+	(* Start work           *)
+	(*----------------------*)
+
+	indirectionColumns = {};
+	nextColumn = {type0};
+
+	(* Each iteration of this loop processes one level of indirection.
+		`nextColumn` contains the types that were behind a pointer in the
+		previous iteration of this loop. *)
+	While[nextColumn =!= {}, Module[{
+		saveNext = nextColumn
+	},
+		(* Reset `nextColumn`, to be populated with the types from the next
+			level of indirection when we loop over the type from the previous
+			level of indirection ("expanding the indirection frontier"). *)
+		nextColumn = {};
+
+		AppendTo[
+			indirectionColumns,
+			Map[process, saveNext]
+		];
+	]];
+
+	indirectionColumns
+]
+
+(*------------------------------------*)
+
+(* TODO: Rename to indirectType to items? *)
 SetFallthroughError[typeToItems]
 
 (*
@@ -1000,7 +1122,7 @@ typeToItems[
 		items = typeToItems[namePath, type1]
 	},
 		ConfirmReplace[items, {
-			{ {size_, { column_Item }} } :> { {size, { id[column] }} },
+			{ {size_, { column: _Item }} } :> { {size, { id[column] }} },
 			(* TID:240724/1: DiaID on struct types *)
 			{_, __} :> Raise[
 				DiagramError,
@@ -1034,10 +1156,11 @@ typeToItems[
 		]
 	),
 
-	"Pointer"[pointee_] :> {
+	"Pointer"[pointee_DiaID] :> {
 		{1, {
 			Item[
-				withNamePath[namePath, "ptr to " <> ToString[pointee]],
+				(* withNamePath[namePath, "ptr to " <> ToString[pointee]], *)
+				withNamePath[namePath, "ptr to ..."],
 				sizeOf[type],
 				Background -> $ColorScheme["Pointer"]
 			]
