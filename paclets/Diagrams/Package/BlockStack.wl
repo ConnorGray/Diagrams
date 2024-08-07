@@ -383,13 +383,28 @@ treeBaseWidth[expr_] := ConfirmReplace[expr, {
 
 (*========================================================*)
 
+Options[MultiBlockStackDiagram] = {
+	ChartLegends -> None
+}
+
 SetFallthroughError[MultiBlockStackDiagram]
 
+(*
+	Output Elements:
+
+	* "Visual" — a representation of the graphic that renders visually
+		in the FrontEnd. Not guaranteed to have any particular structure. May
+		include chart legends if applicable.
+	* "Graphic" — guaranteed to be a Graphics[..] expression, suitable for
+		composition with other graphics, e.g. via Show.
+	* "Regions" — an Association of the named regions present in the graphic.
+*)
 MultiBlockStackDiagram[
 	stacks_List,
 	connections_List,
 	gap : _?NumberQ : 0.5,
-	outputElems : _?OutputElementsQ : Automatic
+	outputElems : _?OutputElementsQ : Automatic,
+	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating MultiBlockStackDiagram"
@@ -397,7 +412,8 @@ MultiBlockStackDiagram[
 	stackDiagrams,
 	allRegions,
 	connectionsGraphics,
-	graphic
+	graphic,
+	visual
 },
 	stackDiagrams = Map[
 		stack |-> RaiseConfirm2 @ BlockStackDiagram[stack, {"Graphics", "Regions"}],
@@ -495,10 +511,25 @@ MultiBlockStackDiagram[
 
 	graphic = Graphics[Join[stackDiagrams, connectionsGraphics]];
 
+	visual = ConfirmReplace[OptionValue[ChartLegends], {
+		None -> graphic,
+		wrapper_Function :> wrapper[graphic],
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported ChartLegends option value: ``",
+			InputForm[other]
+		]
+	}];
+
 	ConstructOutputElements[
 		outputElems,
-		"Graphics",
+		"Visual",
 		{
+			(* TODO:
+				Replace "Visual" with "Diagram" if/when Diagram[..] has a
+				more consistent symbolic structure and handling by the functions
+				in this library. *)
+			"Visual" :> visual,
 			"Graphics" :> graphic,
 			"Regions" :> allRegions
 		}

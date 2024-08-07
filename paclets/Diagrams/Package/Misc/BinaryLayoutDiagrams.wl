@@ -687,17 +687,48 @@ layersSwatchLegend[layers: {___?StringQ}] := Module[{
 
 (*========================================================*)
 
+Options[MemoryLayoutDiagram] = {
+	ChartLegends -> None
+}
+
+SetFallthroughError[MemoryLayoutDiagram]
+
 MemoryLayoutDiagram[
-	type_
+	type_,
+	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating MemoryLayoutDiagram"
 ] @ Module[{
-	tree
+	tree,
+	graphic
 },
 	tree = TreeForType[type];
 
-	TreeStackDiagram[tree]
+	graphic = TreeStackDiagram[tree];
+
+	(*--------------------------------*)
+	(* Handle the ChartLegends option *)
+	(*--------------------------------*)
+
+	ConfirmReplace[OptionValue[ChartLegends], {
+		None :> graphic,
+		Automatic :> Module[{
+			legend = typeLegend[
+				type,
+				False,
+				"IncludeBytes" -> True,
+				LegendLayout -> "Column"
+			]
+		},
+			Labeled[graphic, legend, Right]
+		],
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported ChartLegends option value: ``",
+			InputForm[other]
+		]
+	}]
 ]
 
 (*====================================*)
@@ -888,18 +919,25 @@ sizeOf[type_] := WrapRaised[
 
 (*========================================================*)
 
+Options[StackHeapDiagram] = {
+	ChartLegends -> None
+}
+
 SetFallthroughError[StackHeapDiagram]
 
 StackHeapDiagram[
 	stackData_List,
-	outputElems : _?OutputElementsQ : Automatic
+	outputElems : _?OutputElementsQ : Automatic,
+	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating StackHeapDiagram"
 ] @ Module[{
 	stackElementsColumns,
 	arrows,
-	heapColumns
+	heapColumns,
+	graphic,
+	chartLegends
 },
 	{stackElementsColumns, arrows} = Reap[Map[
 		stackElement |-> ConfirmReplace[stackElement, {
@@ -960,13 +998,109 @@ StackHeapDiagram[
 
 	stackElementsColumns[[2 ;;]] = heapColumns;
 
+	(*--------------------------------*)
+	(* Handle the ChartLegends option *)
+	(*--------------------------------*)
+
+	chartLegends = ConfirmReplace[OptionValue[ChartLegends], {
+		None -> None,
+		Automatic :> Module[{
+			legend = typeLegend[stackData]
+		},
+			graphic |-> Labeled[graphic, legend, Bottom]
+		],
+		other_ :> Raise[
+			DiagramError,
+			"Unsupported ChartLegends option value: ``",
+			InputForm[other]
+		]
+	}];
+
 	MultiBlockStackDiagram[
 		stackElementsColumns,
 		arrows,
 		1.5,
-		outputElems
+		outputElems,
+		ChartLegends -> chartLegends
 	]
 ]
+
+(*====================================*)
+
+Options[typeLegend] = {
+	(* Whether to include a legend item for "Bytes" styling.
+		Bytes are shown in MemoryLayoutDiagram but not in StackHeapDiagram. *)
+	"IncludeBytes" -> False,
+	LegendLayout -> "Row"
+}
+
+SetFallthroughError[typeLegend]
+
+typeLegend[
+	type_,
+	includeArrowLegends : _?BooleanQ : True,
+	OptionsPattern[]
+] := Module[{
+	swatchLegend,
+	lineLegend,
+	head
+},
+	swatchLegend = <|
+		If[!FreeQ[type, _?IntegerTypeQ],
+			"Integer field" -> $ColorScheme["Integer"],
+			Nothing
+		],
+		If[!FreeQ[type, "Pointer"[__]],
+			"Pointer field" -> $ColorScheme["Pointer"],
+			Nothing
+		],
+		If[TrueQ[OptionValue["IncludeBytes"]],
+			"Bytes" -> $ColorScheme["Byte"],
+			Nothing
+		]
+	|>;
+
+	lineLegend = <|
+		If[!FreeQ[type, "Pointer"[__]],
+			"Pointer" -> Directive[
+				(* $ColorScheme["Pointer"], *)
+				Black,
+				AbsoluteThickness[5]
+			],
+			Nothing
+		]
+	|>;
+
+	swatchLegend = SwatchLegend[
+		Values[swatchLegend],
+		Keys[swatchLegend],
+		LegendMarkerSize -> 20,
+		LegendLayout -> OptionValue[LegendLayout]
+	];
+
+	lineLegend = If[lineLegend =!= <||>,
+		LineLegend[
+			Values[lineLegend],
+			Keys[lineLegend]
+		],
+		Nothing
+	];
+
+	head = ConfirmReplace[OptionValue[LegendLayout], {
+		"Row" -> Row,
+		"Column" -> Column
+	}];
+
+	If[includeArrowLegends,
+		head[{
+			swatchLegend,
+			lineLegend
+		}]
+		,
+		swatchLegend
+	]
+]
+
 
 (*====================================*)
 

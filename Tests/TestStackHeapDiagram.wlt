@@ -281,3 +281,23 @@ VerificationTest[
 		DiaID["bar.*.*"] -> Rectangle[{19., 3}, {20., 4}]
 	|>
 ]
+
+Module[{visual, graphic, regions},
+	{visual, graphic, regions} = StackHeapDiagram[
+		{
+			DiaStackVariable["x", "Pointer"["Int64"]]
+		},
+		{"Visual", "Graphics", "Regions"},
+		ChartLegends -> Automatic
+	];
+
+	VerificationTest[MatchQ[visual, _Labeled]];
+	VerificationTest[MatchQ[graphic, _Graphics]];
+	VerificationTest[
+		regions,
+		<|
+			DiaID["x"] -> Rectangle[{0, 0}, {8, 1}],
+			DiaID["x.*"] -> Rectangle[{9.5, 1}, {17.5, 2}]
+		|>
+	]
+]
