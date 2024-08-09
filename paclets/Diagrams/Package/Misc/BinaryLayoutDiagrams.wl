@@ -1205,12 +1205,22 @@ typeToIndirectionColumns[
 		},
 			srcDiaID = diaIDForNamePath[currentNamePath];
 
-			destDiaID = diaIDForNamePath[Append[currentNamePath, "*"]];
+			If[MatchQ[pointee, _DiaID],
+				(* TID:240808/1: Test "Pointer"[_DiaID] aliasing pointer. *)
+				(* Uncommon case: the pointer points to the same destination
+					as an existing pointer. *)
+				destDiaID = pointee;
+				,
+				(* Typical case: the pointer points to some type, so we record
+					that indirection so that pointee type is displayed in the
+					next column. *)
+				destDiaID = diaIDForNamePath[Append[currentNamePath, "*"]];
 
-			addIndirection[
-				Append[currentNamePath, "*"],
-				(* TID:240725/1: Don't double wrap DiaID around nested pointer. *)
-				destDiaID[pointee]
+				addIndirection[
+					Append[currentNamePath, "*"],
+					(* TID:240725/1: Don't double wrap DiaID around nested pointer. *)
+					destDiaID[pointee]
+				];
 			];
 
 			RaiseAssert[MatchQ[

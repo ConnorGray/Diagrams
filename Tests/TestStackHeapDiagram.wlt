@@ -282,6 +282,7 @@ VerificationTest[
 	|>
 ]
 
+(* Test basic diagram with pointer. *)
 Module[{visual, graphic, regions},
 	{visual, graphic, regions} = StackHeapDiagram[
 		{
@@ -298,6 +299,29 @@ Module[{visual, graphic, regions},
 		<|
 			DiaID["x"] -> Rectangle[{0, 0}, {8, 1}],
 			DiaID["x.*"] -> Rectangle[{9.5, 1}, {17.5, 2}]
+		|>
+	]
+]
+
+(* TID:240808/1: Test "Pointer"[_DiaID] aliasing pointer. *)
+Module[{visual, graphic, regions},
+	{visual, graphic, regions} = StackHeapDiagram[
+		{
+			DiaStackVariable["a", "Pointer"["Int64"]],
+			(* Pointer aliases `a` *)
+			DiaStackVariable["b", "Pointer"[DiaID["a.*"]]]
+		},
+		{"Visual", "Graphics", "Regions"}
+	];
+
+	VerificationTest[visual, _Graphics, SameTest -> MatchQ];
+	VerificationTest[graphic, _Graphics, SameTest -> MatchQ];
+	VerificationTest[
+		regions,
+		<|
+			DiaID["a"] -> Rectangle[{0, 0}, {8, 1}],
+			DiaID["b"] -> Rectangle[{0, 1}, {8, 2}],
+			DiaID["a.*"] -> Rectangle[{9.5, 1}, {17.5, 2}]
 		|>
 	]
 ]
