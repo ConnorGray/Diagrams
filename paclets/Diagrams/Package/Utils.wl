@@ -10,6 +10,8 @@ PackageExport[{
 	OutputElementsQ,
 	ConstructOutputElements,
 
+	NotebookImportCell,
+
 	ToCharacterCode2,
 	GraphemeClusters,
 	UnicodeData
@@ -141,6 +143,35 @@ ConstructOutputElements[
 			InputForm[other]
 		]
 	}]
+]
+
+(*========================================================*)
+(* FrontEnd Operations                                    *)
+(*========================================================*)
+
+SetFallthroughError[NotebookImportCell]
+
+NotebookImportCell[cell_CellObject] :=
+	NotebookImportCell[NotebookRead[cell]]
+
+NotebookImportCell[cell_CellObject, form_?StringQ] :=
+	NotebookImportCell[NotebookRead[cell], form]
+
+NotebookImportCell[cell_Cell, form_?StringQ] := Module[{
+	result
+},
+	result = RaiseConfirmMatch[
+		First[
+			UsingFrontEnd @ NotebookImport[
+				Notebook[{cell}],
+				_ -> form
+			],
+			Missing["NotAvailable"]
+		],
+		_?StringQ | _?MissingQ
+	];
+
+	result
 ]
 
 (*========================================================*)
