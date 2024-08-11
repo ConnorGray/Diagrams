@@ -496,6 +496,23 @@ MultiBlockStackDiagram[
 
 				{Thickness[0.01], Arrow[{lhsPoint, rhsPoint}]}
 			],
+			DiaArrow[lhs_, rhs_, {"Jog", Left}] :> Module[{lhsPoint, rhsPoint},
+				lhsPoint = RectangleAttachmentPoint[
+					RaiseConfirm2 @ Lookup[allRegions, DiaID[lhs]],
+					{Left, 0.5}
+				];
+				rhsPoint = RectangleAttachmentPoint[
+					RaiseConfirm2 @ Lookup[allRegions, DiaID[rhs]],
+					{Left, 0.5}
+				];
+
+				{Thickness[0.01], Arrow[{
+					lhsPoint,
+					lhsPoint - {0.5, 0},
+					rhsPoint - {0.5, 0},
+					rhsPoint
+				}]}
+			],
 			other_ :> Raise[
 				DiagramError,
 				"Unrecognized or malformed form for connection: ``",

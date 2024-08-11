@@ -325,3 +325,60 @@ Module[{visual, graphic, regions},
 		|>
 	]
 ]
+
+Module[{visual, graphic, regions},
+	(* FIXME: Using "SelfReferential" for this is a hack.
+		The pragmatic effect here is really just that "SelfReferential" means
+		the destination pointee is in the same visual column as the pointer.
+
+		We should do a better job of that automatically and obviate the need
+		for "SelfReferential" here. *)
+	{graphic, regions} = StackHeapDiagram[{
+		DiaStackVariable["x", "Int64"],
+		DiaStackVariable["<tmp>", "Pointer"[DiaID["x"], "SelfReferential"]]
+	}, {"Graphics", "Regions"}] /. n_Real :> Round[n, 0.001];
+
+	VerificationTest[
+		graphic,
+		Graphics[{
+			Translate[
+				{
+					{{
+						RGBColor[1, 0.9, 0.8],
+						EdgeForm[{Thickness[0.005], GrayLevel[0.5]}],
+						Rectangle[{0, 0}, {8, 1}],
+						RGBColor[0., 0.1, 0.2],
+						Text[
+							Style[
+								"x: Int64",
+								Background -> RGBColor[1, 0.9, 0.8],
+								Bold,
+								FontFamily -> "PT Mono"
+							],
+							{4, 1/2}
+						]
+					}},
+					{{
+						RGBColor[0.94, 0.88, 0.94],
+						EdgeForm[{Thickness[0.005], GrayLevel[0.5]}],
+						Rectangle[{0, 1}, {8, 2}],
+						RGBColor[0.06, 0.12, 0.06],
+						Text[
+							Style[
+								"<tmp>: ptr to ...",
+								Background -> RGBColor[0.94, 0.88, 0.94], Bold,
+								FontFamily -> "PT Mono"
+							],
+							{4, 3/2}
+						]
+					}}
+				},
+				{0, 0}
+			],
+			{
+				Thickness[0.01],
+				Arrow[{{0, 1.5}, {-0.5, 1.5}, {-0.5, 0.5}, {0, 0.5}}]
+			}
+		}]
+	];
+]

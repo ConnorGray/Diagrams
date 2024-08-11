@@ -1199,9 +1199,16 @@ typeToIndirectionColumns[
 			]
 		],
 
-		"Pointer"[pointee_] :> Module[{
+		"Pointer"[
+			pointee_,
+			(* TODO:
+				location : ("Heap" | "Stack" | "Generic" | "SelfReferential") : "Generic"
+			*)
+			pointeeLocation : ("Generic" | "SelfReferential") : "Generic"
+		] :> Module[{
 			srcDiaID,
-			destDiaID
+			destDiaID,
+			routing
 		},
 			srcDiaID = diaIDForNamePath[currentNamePath];
 
@@ -1229,9 +1236,23 @@ typeToIndirectionColumns[
 				DiaID[_?StringQ]
 			]];
 
+			(* Determine what visual route the arrow between the pointer and
+				the pointee should take. *)
+			routing = ConfirmReplace[pointeeLocation, {
+				(* Pointer should take a straight-line path. This is the typical
+					case, where the pointer points from e.g. the Stack to
+					the 1st Heap column. *)
+				"Generic" -> Sequence[],
+				(* The pointee is in the same visual column as the pointer. *)
+				"SelfReferential" -> {"Jog", Left}
+			}];
+
 			(* Construct a DiaArrow pointing between the pointer field and
 				the pointee field. *)
-			Sow[DiaArrow[srcDiaID[[1]], destDiaID[[1]]], "DiaArrows"];
+			Sow[
+				DiaArrow[srcDiaID[[1]], destDiaID[[1]], routing],
+				"DiaArrows"
+			];
 
 			"Pointer"[destDiaID]
 		],
