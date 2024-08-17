@@ -14,7 +14,8 @@ use cgmath::{InnerSpace, Rad, Vector2};
 
 use crate::{
     graphics::{
-        Command, Coord, Directive, Graphics, Line, Primitive, SizedText,
+        rgb_color_to_skia_color, Command, Coord, Directive, Graphics, Line,
+        Primitive, SizedText,
     },
     layout::{self, PlacedArrow, PlacedBox, PlacedDiagram},
     Error,
@@ -239,7 +240,7 @@ impl Graphics {
                     state.general.thickness = Some(*abs_thickness);
                 },
                 Command::Directive(Directive::RGBColor(color)) => {
-                    state.general.color = Some(color.to_skia());
+                    state.general.color = Some(rgb_color_to_skia_color(color));
                 },
                 Command::Directive(Directive::EdgeForm(directives)) => {
                     for directive in directives {
@@ -248,7 +249,8 @@ impl Graphics {
                                 state.edges.thickness = Some(*abs_thickness);
                             },
                             Directive::RGBColor(color) => {
-                                state.edges.color = Some(color.to_skia());
+                                state.edges.color =
+                                    Some(rgb_color_to_skia_color(color));
                             },
                             Directive::EdgeForm(_) => {
                                 todo!("nested EdgeForm directives")

@@ -1,15 +1,15 @@
 use crate::{
     diagram::{Arrow, Box, Id, Text, Theme},
     graphics::{
-        Command, Coord, Directive, Graphics, Line, Primitive, RGBColor,
-        Rectangle, SizedText,
+        self, Command, Coord, Directive, Graphics, Line, Primitive, Rectangle,
+        SizedText,
     },
     Diagram,
 };
 
 use wolfram_expr::{
     convert::{
-        forms::{List, Rule},
+        forms::{List, RGBColor, Rule},
         parse_headed, parse_headed_args, parse_opt_headed_len, FromExpr,
         FromExprError,
     },
@@ -92,9 +92,9 @@ fn parse_theme_options(opts: &[Expr]) -> Result<Theme, FromExprError> {
 }
 
 fn get_color(expr: &Expr) -> Result<skia::Color, FromExprError> {
-    let RGBColor { r, g, b } = RGBColor::from_expr_req(expr)?;
+    let rgb = RGBColor::from_expr_req(expr)?;
 
-    return Ok(skia::Color::from_rgb(r, g, b));
+    return Ok(graphics::rgb_color_to_skia_color(&rgb));
 }
 
 impl FromExpr<'_> for Box {
@@ -215,18 +215,6 @@ impl FromExpr<'_> for Directive {
             e,
             "unrecognized graphics directive",
         ));
-    }
-}
-
-impl FromExpr<'_> for RGBColor {
-    fn parse_from_expr(expr: &Expr) -> Result<Self, FromExprError> {
-        let (r, g, b) = parse_headed_args(expr, st::RGBColor)?;
-
-        let to_u8_color = RGBColor::to_u8_color;
-
-        let (r, g, b) = (to_u8_color(r), to_u8_color(g), to_u8_color(b));
-
-        Ok(RGBColor { r, g, b })
     }
 }
 

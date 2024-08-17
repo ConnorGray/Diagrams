@@ -1,4 +1,4 @@
-use wolfram_expr::Number;
+use wolfram_expr::convert::forms::RGBColor;
 
 pub struct Graphics {
     pub commands: Vec<Command>,
@@ -58,17 +58,6 @@ pub struct Coord {
     pub y: f32,
 }
 
-//--------------------------------------
-// Directives
-//--------------------------------------
-
-#[derive(Debug)]
-pub struct RGBColor {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-}
-
 //======================================
 // Impls
 //======================================
@@ -97,22 +86,10 @@ impl Rectangle {
     }
 }
 
-impl RGBColor {
-    /// Convenience function to convert a Wolfram [`Number`] representing an
-    /// RGB color value into a `u8`.
-    pub fn to_u8_color(num: Number) -> u8 {
-        let value: f64 = match num {
-            Number::Real(real) => *real,
-            Number::Integer(int) => int as f64,
-        };
-
-        let value = (255.0 * value) as u8;
-
-        value
-    }
-
-    pub(crate) fn to_skia(&self) -> skia::Color {
-        let RGBColor { r, g, b } = *self;
-        skia::Color::from_rgb(r, g, b)
+pub(crate) fn rgb_color_to_skia_color(rgb: &RGBColor) -> skia::Color {
+    let RGBColor { r, g, b, a } = *rgb;
+    match a {
+        Some(a) => skia::Color::from_argb(a, r, g, b),
+        None => skia::Color::from_rgb(r, g, b),
     }
 }
