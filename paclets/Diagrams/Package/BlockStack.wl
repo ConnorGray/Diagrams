@@ -92,9 +92,9 @@ BlockStackDiagram[
 		rows
 	];
 
-	(*-----------------------------------*)
-	(* Process output type specification *)
-	(*-----------------------------------*)
+	(*---------------------------------------*)
+	(* Process output elements specification *)
+	(*---------------------------------------*)
 
 	ConstructOutputElements[
 		outputElems,

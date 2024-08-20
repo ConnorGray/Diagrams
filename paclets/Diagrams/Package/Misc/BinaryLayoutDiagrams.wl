@@ -104,6 +104,7 @@ StringEncodingDiagram[
 	text_?StringQ,
 	layers : {___},
 	encoding0 : (_?StringQ | Automatic) : Automatic,
+	outputElems : _?OutputElementsQ : Automatic,
 	opts:OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
@@ -251,7 +252,10 @@ StringEncodingDiagram[
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
-	ConfirmReplace[OptionValue[ChartLegends], {
+	(* FIXME: We should not be wrapping `diagram` in Labeled, these legends
+		should instead be a property of Diagram[..] that get used when its
+		rendered as FrontEnd boxes. *)
+	diagram = ConfirmReplace[OptionValue[ChartLegends], {
 		None :> diagram,
 		Automatic :> Module[{
 			legend = layersSwatchLegend[layers]
@@ -263,7 +267,20 @@ StringEncodingDiagram[
 			"Unsupported ChartLegends option value: ``",
 			InputForm[other]
 		]
-	}]
+	}];
+
+	(*---------------------------------------*)
+	(* Process output elements specification *)
+	(*---------------------------------------*)
+
+	ConstructOutputElements[
+		outputElems,
+		"Diagram",
+		{
+			"Diagram" :> diagram,
+			"Graphics" :> diagram[[1, "Graphics"]]
+		}
+	]
 ]
 
 (*====================================*)
@@ -565,6 +582,7 @@ SetFallthroughError[BinaryLayoutDiagram]
 BinaryLayoutDiagram[
 	rows:{(_List | Delimiter | _Labeled)...},
 	fontMultiplier : _ : 0.0045,
+	outputElems : _?OutputElementsQ : Automatic,
 	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
@@ -641,7 +659,10 @@ BinaryLayoutDiagram[
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
-	ConfirmReplace[OptionValue[ChartLegends], {
+	(* FIXME: We should not be wrapping `diagram` in Labeled, these legends
+		should instead be a property of Diagram[..] that get used when its
+		rendered as FrontEnd boxes. *)
+	diagram = ConfirmReplace[OptionValue[ChartLegends], {
 		None :> diagram,
 		layers:{___?StringQ} :> Module[{
 			legend = layersSwatchLegend[layers]
@@ -653,7 +674,20 @@ BinaryLayoutDiagram[
 			"Unsupported ChartLegends option value: ``",
 			InputForm[other]
 		]
-	}]
+	}];
+
+	(*---------------------------------------*)
+	(* Process output elements specification *)
+	(*---------------------------------------*)
+
+	ConstructOutputElements[
+		outputElems,
+		"Diagram",
+		{
+			"Diagram" :> diagram,
+			"Graphics" :> diagram[[1, "Graphics"]]
+		}
+	]
 ]
 
 (*====================================*)
@@ -701,24 +735,28 @@ SetFallthroughError[MemoryLayoutDiagram]
 
 MemoryLayoutDiagram[
 	type_,
+	outputElems : _?OutputElementsQ : Automatic,
 	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating MemoryLayoutDiagram"
 ] @ Module[{
 	tree,
-	graphic
+	diagram
 },
 	tree = TreeForType[type];
 
-	graphic = TreeStackDiagram[tree];
+	diagram = TreeStackDiagram[tree];
 
 	(*--------------------------------*)
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
-	ConfirmReplace[OptionValue[ChartLegends], {
-		None :> graphic,
+	(* FIXME: We should not be wrapping `diagram` in Labeled, these legends
+		should instead be a property of Diagram[..] that get used when its
+		rendered as FrontEnd boxes. *)
+	diagram = ConfirmReplace[OptionValue[ChartLegends], {
+		None :> diagram,
 		Automatic :> Module[{
 			legend = typeLegend[
 				type,
@@ -727,14 +765,27 @@ MemoryLayoutDiagram[
 				LegendLayout -> "Column"
 			]
 		},
-			Labeled[graphic, legend, Right]
+			Labeled[diagram, legend, Right]
 		],
 		other_ :> Raise[
 			DiagramError,
 			"Unsupported ChartLegends option value: ``",
 			InputForm[other]
 		]
-	}]
+	}];
+
+	(*---------------------------------------*)
+	(* Process output elements specification *)
+	(*---------------------------------------*)
+
+	ConstructOutputElements[
+		outputElems,
+		"Diagram",
+		{
+			"Diagram" :> diagram,
+			"Graphics" :> diagram[[1, "Graphics"]]
+		}
+	]
 ]
 
 (*====================================*)
