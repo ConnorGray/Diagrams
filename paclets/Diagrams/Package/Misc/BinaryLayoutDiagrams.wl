@@ -122,7 +122,7 @@ StringEncodingDiagram[
 	handle,
 	directives = {},
 	fontMultiplier,
-	graphic
+	diagram
 },
 	RaiseConfirmMatch[
 		OptionValue[CharacterEncoding],
@@ -233,11 +233,16 @@ StringEncodingDiagram[
 	]];\[LineSeparator]
 	Graphics[directives, BaseStyle -> {FontSize -> 25}]*)
 
-	graphic = Show[
-		RaiseConfirm2 @ BinaryLayoutDiagram[
-			Map[handle, layers],
-			fontMultiplier
-		],
+	diagram = RaiseConfirm2 @ BinaryLayoutDiagram[
+		Map[handle, layers],
+		fontMultiplier
+	];
+
+	(* FIXME:
+		Pass these down or set them by default in BinaryLayoutDiagram instead
+		of mutating `diagram` "Graphics" field here. *)
+	diagram[[1, "Graphics"]] = Show[
+		RaiseConfirmMatch[diagram[[1, "Graphics"]], _Graphics],
 		ImageSize -> imageSize,
 		PlotRangePadding -> 0
 	];
@@ -247,11 +252,11 @@ StringEncodingDiagram[
 	(*--------------------------------*)
 
 	ConfirmReplace[OptionValue[ChartLegends], {
-		None :> graphic,
+		None :> diagram,
 		Automatic :> Module[{
 			legend = layersSwatchLegend[layers]
 		},
-			Labeled[graphic, legend, Right]
+			Labeled[diagram, legend, Right]
 		],
 		other_ :> Raise[
 			DiagramError,
@@ -358,7 +363,8 @@ show8BitCharacterSetUnicodeCorrespondance[
 		Reverse @ Map[
 			row |-> {1, row},
 			Partition[items, UpTo[16]]
-		]
+		],
+		"Graphics"
 	];
 
 	(*--------------------------------*)
@@ -565,7 +571,7 @@ BinaryLayoutDiagram[
 	"Error creating BinaryLayoutDiagram"
 ] @ Module[{
 	blockRows,
-	graphic
+	diagram
 },
 	blockRows = Map[
 		row0 |-> Module[{
@@ -629,18 +635,18 @@ BinaryLayoutDiagram[
 		rows
 	];
 
-	graphic = BlockStackDiagram[blockRows];
+	diagram = BlockStackDiagram[blockRows];
 
 	(*--------------------------------*)
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
 	ConfirmReplace[OptionValue[ChartLegends], {
-		None :> graphic,
+		None :> diagram,
 		layers:{___?StringQ} :> Module[{
 			legend = layersSwatchLegend[layers]
 		},
-			Labeled[graphic, legend, Right]
+			Labeled[diagram, legend, Right]
 		],
 		other_ :> Raise[
 			DiagramError,

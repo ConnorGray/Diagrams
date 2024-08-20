@@ -1,6 +1,7 @@
 Package["Diagrams`BlockStack`"]
 
 PackageUse[Diagrams -> {
+	Diagram,
 	DiagramError,
 	DiaID,
 	DiaArrow,
@@ -97,8 +98,12 @@ BlockStackDiagram[
 
 	ConstructOutputElements[
 		outputElems,
-		"Graphics",
+		"Diagram",
 		{
+			"Diagram" -> Diagram[<|
+				"Graphics" -> graphic,
+				"Regions" -> $regions
+			|>],
 			"Graphics" :> graphic,
 			"Regions" :> $regions
 		}
@@ -392,9 +397,8 @@ SetFallthroughError[MultiBlockStackDiagram]
 (*
 	Output Elements:
 
-	* "Visual" — a representation of the graphic that renders visually
-		in the FrontEnd. Not guaranteed to have any particular structure. May
-		include chart legends if applicable.
+	* "Diagram" — a Diagram[..] object representation that renders visually in
+		the FrontEnd. May include chart legends if applicable.
 	* "Graphic" — guaranteed to be a Graphics[..] expression, suitable for
 		composition with other graphics, e.g. via Show.
 	* "Regions" — an Association of the named regions present in the graphic.
@@ -413,7 +417,7 @@ MultiBlockStackDiagram[
 	allRegions,
 	connectionsGraphics,
 	graphic,
-	visual
+	diagram
 },
 	stackDiagrams = Map[
 		stack |-> RaiseConfirm2 @ BlockStackDiagram[stack, {"Graphics", "Regions"}],
@@ -526,11 +530,22 @@ MultiBlockStackDiagram[
 	(* Construct the output elements  *)
 	(*--------------------------------*)
 
-	graphic = Graphics[Join[stackDiagrams, connectionsGraphics]];
+	graphic = Graphics[
+		Join[stackDiagrams, connectionsGraphics],
+		PlotRangePadding -> 0
+	];
 
-	visual = ConfirmReplace[OptionValue[ChartLegends], {
-		None -> graphic,
-		wrapper_Function :> wrapper[graphic],
+	diagram = Diagram[<|
+		"Graphics" -> graphic,
+		"Regions" -> allRegions
+	|>];
+
+	(* FIXME: Handle ChartLegends differently, by making these a "typed"
+		property of the Diagram[..] object, and adding them in the caller
+		instead of here. *)
+	diagram = ConfirmReplace[OptionValue[ChartLegends], {
+		None -> diagram,
+		wrapper_Function :> wrapper[diagram],
 		other_ :> Raise[
 			DiagramError,
 			"Unsupported ChartLegends option value: ``",
@@ -540,13 +555,9 @@ MultiBlockStackDiagram[
 
 	ConstructOutputElements[
 		outputElems,
-		"Visual",
+		"Diagram",
 		{
-			(* TODO:
-				Replace "Visual" with "Diagram" if/when Diagram[..] has a
-				more consistent symbolic structure and handling by the functions
-				in this library. *)
-			"Visual" :> visual,
+			"Diagram" :> diagram,
 			"Graphics" :> graphic,
 			"Regions" :> allRegions
 		}

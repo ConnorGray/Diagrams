@@ -288,11 +288,11 @@ Module[{visual, graphic, regions},
 		{
 			DiaStackVariable["x", "Pointer"["Int64"]]
 		},
-		{"Visual", "Graphics", "Regions"},
+		{"Diagram", "Graphics", "Regions"},
 		ChartLegends -> Automatic
 	];
 
-	VerificationTest[MatchQ[visual, _Labeled]];
+	VerificationTest[MatchQ[visual, Labeled[_Diagram, __]]];
 	VerificationTest[MatchQ[graphic, _Graphics]];
 	VerificationTest[
 		regions,
@@ -311,10 +311,10 @@ Module[{visual, graphic, regions},
 			(* Pointer aliases `a` *)
 			DiaStackVariable["b", "Pointer"[DiaID["a.*"]]]
 		},
-		{"Visual", "Graphics", "Regions"}
+		{"Diagram", "Graphics", "Regions"}
 	];
 
-	VerificationTest[visual, _Graphics, SameTest -> MatchQ];
+	VerificationTest[visual, Diagram[_?AssociationQ], SameTest -> MatchQ];
 	VerificationTest[graphic, _Graphics, SameTest -> MatchQ];
 	VerificationTest[
 		regions,
@@ -379,6 +379,6 @@ Module[{visual, graphic, regions},
 				Thickness[0.01],
 				Arrow[{{0, 1.5}, {-0.5, 1.5}, {-0.5, 0.5}, {0, 0.5}}]
 			}
-		}]
+		}, PlotRangePadding -> 0]
 	];
 ]

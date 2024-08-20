@@ -215,6 +215,29 @@ Diagram /: MakeBoxes[
 	] *)
 ]
 
+Diagram /: MakeBoxes[
+	diagram:Diagram[diagramProps_?AssociationQ],
+	form : StandardForm
+] := Module[{
+	graphics
+},
+	graphics = diagramProps["Graphics"];
+
+	RaiseAssert[
+		MatchQ[graphics, _Graphics],
+		"Unable to generate boxes for Diagram[<|...|>] with missing or invalid \"Graphics\" property."
+	];
+
+	(* Add the custom frame color that indicates this graphic is the rendered
+		form of a Diagram[..]. (Same as how Tree has its own frame color.) *)
+	graphics = Show[
+		graphics,
+		BaseStyle -> {Symbol["System`GraphicsHighlightColor"] -> Lighter[Blue]}
+	];
+
+	ToBoxes @ Interpretation[graphics, diagram]
+]
+
 (*----------------------------------------------------------------------------*)
 
 Subgraphs[graph_Graph] := Map[
