@@ -11,6 +11,7 @@ PackageModule["Library"]
 
 (* Diagram Kinds *)
 PackageModule["BlockStack"]
+PackageModule["ProgramDiagrams"]
 
 PackageExport[{
 	Diagrams,
@@ -58,7 +59,9 @@ PackageExport[{
 
 	BlockStackDiagram,
 	TreeStackDiagram,
-	MultiBlockStackDiagram
+	MultiBlockStackDiagram,
+
+	ProgramDiagram
 }]
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."

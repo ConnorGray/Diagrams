@@ -21,5 +21,9 @@ wolfram-library-link = "0.2.10"
 
 unicode-data = { path = "../unicode-data" }
 
+melior = "0.18.5"
+
+iced-x86 = { "version" = "1.21.0", features = ["code_asm"] }
+
 [dev-dependencies]
 open = "2.1.1"
