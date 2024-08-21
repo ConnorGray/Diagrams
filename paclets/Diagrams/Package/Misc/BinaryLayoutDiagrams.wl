@@ -39,6 +39,7 @@ PackageExport[{
 }]
 
 PackageUse[Diagrams -> {
+	Diagram,
 	DiagramError,
 	DiagramGraphicsImage,
 	BlockStackDiagram,
@@ -239,6 +240,8 @@ StringEncodingDiagram[
 		fontMultiplier
 	];
 
+	RaiseConfirmMatch[diagram, Diagram[_?AssociationQ, ___?OptionQ]];
+
 	(* FIXME:
 		Pass these down or set them by default in BinaryLayoutDiagram instead
 		of mutating `diagram` "Graphics" field here. *)
@@ -252,15 +255,16 @@ StringEncodingDiagram[
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
-	(* FIXME: We should not be wrapping `diagram` in Labeled, these legends
-		should instead be a property of Diagram[..] that get used when its
-		rendered as FrontEnd boxes. *)
-	diagram = ConfirmReplace[OptionValue[ChartLegends], {
-		None :> diagram,
+	ConfirmReplace[OptionValue[ChartLegends], {
+		None -> Null,
 		Automatic :> Module[{
 			legend = layersSwatchLegend[layers]
 		},
-			Labeled[diagram, legend, Right]
+			(* TODO: What if the diagram already has this option present? *)
+			AppendTo[
+				diagram,
+				ChartLegends -> Placed[legend, Right]
+			];
 		],
 		other_ :> Raise[
 			DiagramError,
@@ -659,15 +663,16 @@ BinaryLayoutDiagram[
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
-	(* FIXME: We should not be wrapping `diagram` in Labeled, these legends
-		should instead be a property of Diagram[..] that get used when its
-		rendered as FrontEnd boxes. *)
-	diagram = ConfirmReplace[OptionValue[ChartLegends], {
-		None :> diagram,
+	ConfirmReplace[OptionValue[ChartLegends], {
+		None -> Null,
 		layers:{___?StringQ} :> Module[{
 			legend = layersSwatchLegend[layers]
 		},
-			Labeled[diagram, legend, Right]
+			(* TODO: What if the diagram already has this option present? *)
+			AppendTo[
+				diagram,
+				ChartLegends -> Placed[legend, Right]
+			];
 		],
 		other_ :> Raise[
 			DiagramError,
@@ -752,11 +757,8 @@ MemoryLayoutDiagram[
 	(* Handle the ChartLegends option *)
 	(*--------------------------------*)
 
-	(* FIXME: We should not be wrapping `diagram` in Labeled, these legends
-		should instead be a property of Diagram[..] that get used when its
-		rendered as FrontEnd boxes. *)
-	diagram = ConfirmReplace[OptionValue[ChartLegends], {
-		None :> diagram,
+	ConfirmReplace[OptionValue[ChartLegends], {
+		None -> Null,
 		Automatic :> Module[{
 			legend = typeLegend[
 				type,
@@ -765,7 +767,11 @@ MemoryLayoutDiagram[
 				LegendLayout -> "Column"
 			]
 		},
-			Labeled[diagram, legend, Right]
+			(* TODO: What if the diagram already has this option present? *)
+			AppendTo[
+				diagram,
+				ChartLegends -> Placed[legend, Right]
+			];
 		],
 		other_ :> Raise[
 			DiagramError,

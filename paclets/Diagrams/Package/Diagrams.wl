@@ -127,7 +127,10 @@ Diagrams::assertfail = "``"
 
 
 PackageUse[Diagrams -> {
-	Errors -> {CreateErrorType, RaiseError, RaiseConfirm, RaiseAssert},
+	Errors -> {
+		CreateErrorType, RaiseError, Raise, RaiseConfirm, RaiseAssert,
+		ConfirmReplace
+	},
 	Render -> SizedText,
 	Utils -> {RectangleSize},
 	Layout -> {$DebugDiagramLayout},
@@ -216,10 +219,14 @@ Diagram /: MakeBoxes[
 ]
 
 Diagram /: MakeBoxes[
-	diagram:Diagram[diagramProps_?AssociationQ],
+	diagram:Diagram[
+		diagramProps_?AssociationQ,
+		diagramOptsSeq___?OptionQ
+	],
 	form : StandardForm
 ] := Module[{
-	graphics
+	graphics,
+	chartLegends = Lookup[{diagramOptsSeq}, ChartLegends, None]
 },
 	graphics = diagramProps["Graphics"];
 
@@ -234,6 +241,20 @@ Diagram /: MakeBoxes[
 		graphics,
 		BaseStyle -> {Symbol["System`GraphicsHighlightColor"] -> Lighter[Blue]}
 	];
+
+	(*------------------------------------*)
+	(* Show the ChartLegends, if present. *)
+	(*------------------------------------*)
+
+	graphics = ConfirmReplace[chartLegends, {
+		None :> graphics,
+		Placed[legend_, pos_] :> Labeled[graphics, legend, pos],
+		other_ :> Raise[
+			DiagramError,
+			"Invalid form for Diagram ChartLegends option: ``",
+			InputForm[other]
+		]
+	}];
 
 	ToBoxes @ Interpretation[graphics, diagram]
 ]
