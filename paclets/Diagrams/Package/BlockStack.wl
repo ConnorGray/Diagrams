@@ -16,7 +16,7 @@ PackageUse[Diagrams -> {
 		}
 	},
 	Utils -> {
-		OutputElementsQ, ConstructOutputElements,
+		OutputElementsQ, ConstructOutputElements, ForwardOptions,
 		RectangleAttachmentPoint
 	},
 	Errors -> {
@@ -54,9 +54,14 @@ addRegion[id: _DiaID, value: _] := (
 
 SetFallthroughError[BlockStackDiagram]
 
+Options[BlockStackDiagram] = {
+	Sequence @@ Options[Graphics]
+}
+
 BlockStackDiagram[
 	rows0_List,
-	outputElems : _?OutputElementsQ : Automatic
+	outputElems : _?OutputElementsQ : Automatic,
+	optsSeq:OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating BlockStackDiagram"
@@ -66,7 +71,11 @@ BlockStackDiagram[
 	rows = rows0,
 	graphic
 },
-	graphic = Graphics[#, PlotRangePadding -> 0]& @ FoldPairList[
+	graphic = Graphics[
+		#,
+		PlotRangePadding -> 0,
+		ForwardOptions[optsSeq]
+	]& @ FoldPairList[
 		{yOffset, row} |-> Module[{
 			rowHeight,
 			rowElements,

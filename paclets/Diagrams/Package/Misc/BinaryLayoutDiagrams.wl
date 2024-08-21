@@ -58,7 +58,7 @@ PackageUse[Diagrams -> {
 	},
 	Utils -> {
 		ToCharacterCode2, GraphemeClusters, UnicodeData,
-		OutputElementsQ, ConstructOutputElements
+		OutputElementsQ, ConstructOutputElements, ForwardOptions
 	}
 }]
 
@@ -237,19 +237,11 @@ StringEncodingDiagram[
 
 	diagram = RaiseConfirm2 @ BinaryLayoutDiagram[
 		Map[handle, layers],
-		fontMultiplier
+		fontMultiplier,
+		ImageSize -> imageSize
 	];
 
 	RaiseConfirmMatch[diagram, Diagram[_?AssociationQ, ___?OptionQ]];
-
-	(* FIXME:
-		Pass these down or set them by default in BinaryLayoutDiagram instead
-		of mutating `diagram` "Graphics" field here. *)
-	diagram[[1, "Graphics"]] = Show[
-		RaiseConfirmMatch[diagram[[1, "Graphics"]], _Graphics],
-		ImageSize -> imageSize,
-		PlotRangePadding -> 0
-	];
 
 	(*--------------------------------*)
 	(* Handle the ChartLegends option *)
@@ -578,7 +570,8 @@ binaryLayoutDiagramRow[
 (*====================================*)
 
 Options[BinaryLayoutDiagram] = {
-	ChartLegends -> None
+	ChartLegends -> None,
+	Sequence @@ Options[Graphics]
 }
 
 SetFallthroughError[BinaryLayoutDiagram]
@@ -587,7 +580,7 @@ BinaryLayoutDiagram[
 	rows:{(_List | Delimiter | _Labeled)...},
 	fontMultiplier : _ : 0.0045,
 	outputElems : _?OutputElementsQ : Automatic,
-	OptionsPattern[]
+	optsSeq:OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating BinaryLayoutDiagram"
@@ -657,7 +650,10 @@ BinaryLayoutDiagram[
 		rows
 	];
 
-	diagram = BlockStackDiagram[blockRows];
+	diagram = BlockStackDiagram[
+		blockRows,
+		ForwardOptions[optsSeq]
+	];
 
 	(*--------------------------------*)
 	(* Handle the ChartLegends option *)

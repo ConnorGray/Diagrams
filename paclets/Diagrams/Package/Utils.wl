@@ -9,6 +9,7 @@ PackageExport[{
 
 	OutputElementsQ,
 	ConstructOutputElements,
+	ForwardOptions,
 
 	NotebookImportCell,
 
@@ -144,6 +145,27 @@ ConstructOutputElements[
 		]
 	}]
 ]
+
+(*====================================*)
+
+(*
+	ForwardOptions can be used to pass down a sequence of options, passing only
+	the subset of options accepted by the callee, discarding those options that
+	were only relevant in the context of the caller function.
+
+	ForwardOptions must be the last argument to a function to work.
+*)
+ClearAll[ForwardOptions];
+
+ForwardOptions /: head_Symbol[
+	args___,
+	ForwardOptions[opts___?OptionQ]
+] := (
+	head[
+		args,
+		Sequence @@ Flatten@FilterRules[{opts}, Options[head]]
+	]
+)
 
 (*========================================================*)
 (* FrontEnd Operations                                    *)
