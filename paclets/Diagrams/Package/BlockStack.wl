@@ -12,7 +12,7 @@ PackageUse[Diagrams -> {
 
 	Layout -> {
 		Utils -> {
-			AbsoluteTranslate
+			AbsoluteTranslate, AnnotationToGraphics
 		}
 	},
 	Utils -> {
@@ -489,49 +489,8 @@ MultiBlockStackDiagram[
 	(* Compute the connection arrows  *)
 	(*--------------------------------*)
 
-	(* TODO: Use PlaceArrowsBasedOnBoxes for this. *)
 	connectionsGraphics = Map[
-		connection |-> ConfirmReplace[connection, {
-			DiaArrow[lhs_, rhs_] :> Module[{lhsPoint, rhsPoint},
-				(* TODO: Improve Lookup error handling. *)
-				(* FIXME:
-					The use of Right and Left below assume that all arrows
-					move from left-er columns towards right-er columns. There's
-					no reason to think that will always be the case. *)
-				lhsPoint = RectangleAttachmentPoint[
-					RaiseConfirm2 @ Lookup[allRegions, DiaID[lhs]],
-					{Right, 0.5}
-				];
-				rhsPoint = RectangleAttachmentPoint[
-					RaiseConfirm2 @ Lookup[allRegions, DiaID[rhs]],
-					{Left, 0.5}
-				];
-
-				{Thickness[0.01], Arrow[{lhsPoint, rhsPoint}]}
-			],
-			DiaArrow[lhs_, rhs_, {"Jog", Left}] :> Module[{lhsPoint, rhsPoint},
-				lhsPoint = RectangleAttachmentPoint[
-					RaiseConfirm2 @ Lookup[allRegions, DiaID[lhs]],
-					{Left, 0.5}
-				];
-				rhsPoint = RectangleAttachmentPoint[
-					RaiseConfirm2 @ Lookup[allRegions, DiaID[rhs]],
-					{Left, 0.5}
-				];
-
-				{Thickness[0.01], Arrow[{
-					lhsPoint,
-					lhsPoint - {0.5, 0},
-					rhsPoint - {0.5, 0},
-					rhsPoint
-				}]}
-			],
-			other_ :> Raise[
-				DiagramError,
-				"Unrecognized or malformed form for connection: ``",
-				InputForm[other]
-			]
-		}],
+		connection |-> AnnotationToGraphics[connection, allRegions],
 		connections
 	];
 

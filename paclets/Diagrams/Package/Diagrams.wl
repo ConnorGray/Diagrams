@@ -27,6 +27,7 @@ PackageExport[{
 
 	(* Operations on Diagram[..] *)
 	DiagramImage, DiagramGraph,
+	DiagramAnnotate,
 
 	(* Options on Diagram[..] and diagram elements *)
 	DiagramLayout, DiagramTheme,
@@ -52,6 +53,12 @@ PackageExport[{
 	Subgraphs, DiagramBlock, DiagramArrow,
 
 	DiaID,
+
+	(*----------------------*)
+	(* Annotation concepts. *)
+	(*----------------------*)
+	DiaBracket,
+	DiaHighlight,
 
 	(*-------------------*)
 	(* Diagram Functions *)
@@ -128,12 +135,15 @@ Diagrams::assertfail = "``"
 
 PackageUse[Diagrams -> {
 	Errors -> {
-		CreateErrorType, RaiseError, Raise, RaiseConfirm, RaiseAssert,
-		ConfirmReplace
+		CreateErrorType, RaiseError, Raise, RaiseConfirm, RaiseConfirm2,
+		RaiseAssert, ConfirmReplace, SetFallthroughError
 	},
 	Render -> SizedText,
-	Utils -> {RectangleSize},
-	Layout -> {$DebugDiagramLayout},
+	Utils -> {RectangleSize, RectangleAttachmentPoint},
+	Layout -> {
+		$DebugDiagramLayout,
+		Utils -> {AnnotationToGraphics}
+	},
 	Library -> {$LibraryFunctions}
 }]
 
@@ -675,3 +685,33 @@ AttachmentQ[spec_] := MatchQ[
 AttachmentQ[args___] :=
 	RaiseError["unexpected arguments to AttachmentQ: ``", InputForm[{args}]]
 
+(*========================================================*)
+
+SetFallthroughError[DiagramAnnotate]
+
+DiagramAnnotate[
+	diagram0:Diagram[assoc_?AssociationQ, ___?OptionQ],
+	annotations0_
+] := Module[{
+	diagram = diagram0,
+	annotations = Replace[annotations0, elem:Except[_List] :> {elem}],
+	graphics,
+	regions,
+	annotationGraphics
+},
+	graphics = RaiseConfirm @ Lookup[assoc, "Graphics"];
+	regions  = RaiseConfirm @ Lookup[assoc, "Regions"];
+
+	annotationGraphics = Map[
+		AnnotationToGraphics,
+		annotations
+	];
+
+	(* FIXME: Recalculate ImageSize to preserve the apparent size of the main
+		diagram portion of the graphic. *)
+	graphics = Show[graphics, Graphics[annotationGraphics]];
+
+	diagram[[1, "Graphics"]] = graphics;
+
+	diagram
+]

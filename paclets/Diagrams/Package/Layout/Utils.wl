@@ -4,6 +4,8 @@ PackageExport[{
 	PlaceArrowsBasedOnBoxes,
 	GroupBoxesByGraphRow,
 
+	AnnotationToGraphics,
+
 	RowWidth,
 
 	MakePlacedBox,
@@ -21,11 +23,18 @@ GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
 
 Bounded::usage = "Bounded[g, rect] represents a placed diagram element g whose content bounding box is rect."
 
+AnnotationToGraphics::usage = "\
+AnnotationToGraphics[annotation$, regions$] returns Graphics directives visualizing annotation$.
+"
+
 PackageUse[Diagrams -> {
 	Diagram, DiagramBoxes, DiagramGraph, DiagramArrowIds, DiagramElementId,
 	DiagramElementContent, DiaArrow, DiaBox, RenderedTextSize,
+	DiaID, DiaBracket, DiaHighlight,
+	DiagramError,
 	Errors -> {
-		RaiseError, RaiseConfirm, RaiseAssert, RaiseConfirmMatch,
+		Raise, RaiseError, RaiseConfirm, RaiseAssert, RaiseConfirmMatch,
+		ConfirmReplace, SetFallthroughError, RaiseConfirm2,
 		AddUnmatchedArgumentsHandler
 	},
 	Render -> SizedText,
@@ -266,6 +275,159 @@ Module[{
 
 	rows
 ]]
+
+(*======================================*)
+
+SetFallthroughError[AnnotationToGraphics]
+
+AnnotationToGraphics[
+	annotation: _,
+	regions: _?AssociationQ
+] := Module[{},
+	ConfirmReplace[annotation, {
+		(*============================*)
+		(* Arrows                     *)
+		(*============================*)
+
+		DiaArrow[lhs_, rhs_] :> Module[{
+			lhsPoint, rhsPoint
+		},
+			(* TODO: Improve Lookup error handling. *)
+			(* FIXME:
+				The use of Right and Left below assume that all arrows
+				move from left-er columns towards right-er columns. There's
+				no reason to think that will always be the case. *)
+			lhsPoint = RectangleAttachmentPoint[
+				RaiseConfirm2 @ Lookup[regions, DiaID[lhs]],
+				{Right, 0.5}
+			];
+			rhsPoint = RectangleAttachmentPoint[
+				RaiseConfirm2 @ Lookup[regions, DiaID[rhs]],
+				{Left, 0.5}
+			];
+
+			{Thickness[0.01], Arrow[{lhsPoint, rhsPoint}]}
+		],
+
+		DiaArrow[lhs_, rhs_, {"Jog", Left}] :> Module[{lhsPoint, rhsPoint},
+			lhsPoint = RectangleAttachmentPoint[
+				RaiseConfirm2 @ Lookup[regions, DiaID[lhs]],
+				{Left, 0.5}
+			];
+			rhsPoint = RectangleAttachmentPoint[
+				RaiseConfirm2 @ Lookup[regions, DiaID[rhs]],
+				{Left, 0.5}
+			];
+
+			{Thickness[0.01], Arrow[{
+				lhsPoint,
+				lhsPoint - {0.5, 0},
+				rhsPoint - {0.5, 0},
+				rhsPoint
+			}]}
+		],
+
+		(*============================*)
+		(* Brackets                   *)
+		(*============================*)
+
+		(* TODO: Support BaseStyle option. *)
+		DiaBracket[
+			boundingRectSpec: _,
+			side: (Left | Right | Top | Bottom) : Bottom,
+			label: _?StringQ : None
+		] :> Module[{
+			idRects,
+			boundingRect,
+			startPoint,
+			endPoint,
+			offset,
+			line
+		},
+			boundingRect = ConfirmReplace[boundingRectSpec, {
+				{"BoundingBox", ids_List} :> Module[{idRects},
+					idRects = Map[
+						id |-> RaiseConfirm2 @ Lookup[regions, DiaID[id]],
+						ids
+					];
+
+					RaiseAssert[MatchQ[idRects, {__Rectangle}]];
+
+					RectangleBoundingBox[idRects]
+				],
+				rect_Rectangle :> rect,
+				other_ :> Raise[
+					DiagramError,
+					"Unrecognized form for "
+				]
+			}];
+
+			startPoint = RectangleAttachmentPoint[boundingRect, {side, 0}];
+			endPoint   = RectangleAttachmentPoint[boundingRect, {side, 1}];
+
+			offset = ConfirmReplace[side, {
+				Top -> {0, 0.2},
+				Bottom -> {0, -0.2},
+				Left -> {-0.2, 0},
+				Right -> {0.2, 0}
+			}];
+
+			line = Line[{
+				startPoint + offset,
+				startPoint + 3 * offset,
+				endPoint + 3 * offset,
+				endPoint + offset
+			}];
+
+			{
+				Darker[Green],
+				Thickness[0.008],
+				line,
+				(* FIXME: Improve label positioning for Left and Right sides. *)
+				If[label =!= None,
+					Module[{midpoint},
+						midpoint = Midpoint[line[[1, 2 ;; 3]]];
+
+						Splice[{
+							Line[{midpoint, midpoint + 2 * offset}],
+							Text[label, midpoint + 3 * offset]
+						}]
+					],
+					Nothing
+				]
+			}
+		],
+
+		(*============================*)
+		(* Highlights                 *)
+		(*============================*)
+
+		DiaHighlight[
+			ids: _List,
+			highlightColor: _?ColorQ : RGBColor[1, 1, 0, 0.5]
+		] :> Module[{
+			idRects,
+			boundingRect
+		},
+			idRects = Map[
+				id |-> RaiseConfirm2 @ Lookup[regions, DiaID[id]],
+				ids
+			];
+
+			RaiseAssert[MatchQ[idRects, {__Rectangle}]];
+
+			boundingRect = RectangleBoundingBox[idRects];
+
+			{Opacity[0.5], highlightColor, boundingRect}
+		],
+
+		other_ :> Raise[
+			DiagramError,
+			"Unrecognized diagram annotation form: ``",
+			InputForm[other]
+		]
+	}]
+]
 
 (*========================================================*)
 (* Helper functions                                       *)
