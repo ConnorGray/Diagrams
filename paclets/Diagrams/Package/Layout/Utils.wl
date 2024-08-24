@@ -15,7 +15,6 @@ PackageExport[{
 	ContentQ,
 
 	AbsoluteTranslate,
-	RectangleBoundingBox,
 	Bounded
 }]
 
@@ -39,7 +38,10 @@ PackageUse[Diagrams -> {
 	},
 	Render -> SizedText,
 	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
-	Utils -> {RectangleWidth, RectangleHeight, RectangleAttachmentPoint}
+	Utils -> {
+		RectangleWidth, RectangleHeight, RectangleAttachmentPoint,
+		RectangleBoundingBox
+	}
 }]
 
 (*======================================*)
@@ -817,23 +819,3 @@ AbsoluteTranslate[
 	Rectangle[min + vector, max + vector, opts]
 
 (*====================================*)
-
-RectangleBoundingBox[rect_Rectangle] := rect;
-
-RectangleBoundingBox[rects:{___Rectangle}] := Module[{
-	minX, minY, maxX, maxY
-},
-	RaiseConfirmMatch[
-		rects,
-		{Rectangle[{_?NumberQ, _?NumberQ}, {_?NumberQ, _?NumberQ}]...}
-	];
-
-	minX = Min @ Part[rects, All, 1, 1];
-	minY = Min @ Part[rects, All, 1, 2];
-	maxX = Max @ Part[rects, All, 2, 1];
-	maxY = Max @ Part[rects, All, 2, 2];
-
-	Rectangle[{minX, minY}, {maxX, maxY}]
-]
-
-AddUnmatchedArgumentsHandler[RectangleBoundingBox]
