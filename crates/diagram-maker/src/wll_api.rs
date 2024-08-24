@@ -2,7 +2,7 @@ use wolfram_library_link::{
     self as wll, export,
     expr::{
         convert::{FromExpr, FromExprError},
-        Expr, ExprKind, Symbol,
+        st, Expr, ExprKind, Symbol,
     },
     wstp::Link,
     NumericArray,
@@ -17,7 +17,7 @@ use inkwell::{
     memory_buffer::MemoryBuffer,
     targets::{
         CodeModel, FileType, InitializationConfig, RelocMode, Target,
-        TargetMachine, TargetTriple,
+        TargetTriple,
     },
     OptimizationLevel,
 };
@@ -411,14 +411,120 @@ fn compile_llvm_ir_to_assembly(args: Vec<Expr>) -> Expr {
     // Compile Module to assembly for target machine
     //----------------------------------------------
 
-    let buffer = target_machine
+    let assembly_buffer = target_machine
         .write_to_memory_buffer(&module, FileType::Assembly)
         .unwrap();
 
-    let str = std::str::from_utf8(buffer.as_slice())
+    let assembly = std::str::from_utf8(assembly_buffer.as_slice())
         .expect("failed to parse Assembly as UTF-8");
 
-    Expr::string(str)
+    //--------------------------------------------------
+    // Compile Module to machine code for target machine
+    //--------------------------------------------------
+
+    let object_buffer = target_machine
+        .write_to_memory_buffer(&module, FileType::Object)
+        .unwrap();
+
+    let object_file_buffer_expr = Expr::list(
+        object_buffer
+            .as_slice()
+            .into_iter()
+            .map(|byte: &u8| Expr::from(*byte))
+            .collect(),
+    );
+
+    let object_file = object_buffer
+        .create_object_file()
+        .expect("failed to create object file");
+
+    let symbols: Vec<Expr> =
+        object_file
+            .get_symbols()
+            .map(|sym| {
+                let name = match sym.get_name() {
+                    Some(name) => {
+                        let name = name.to_str().expect("PRECOMMIT");
+                        Expr::string(name)
+                    },
+                    None => Expr::normal(Symbol::new("System`Missing"), vec![]),
+                };
+
+                let addr = sym.get_address();
+                let size = sym.size();
+
+                // PRECOMMIT: Remove this.
+                // let file_offset = unsafe {
+                //     inkwell::llvm_sys::LLVMGetSymbolFileOffset(sym.as_mut_ptr())
+                // };
+
+                Expr::normal(
+                    st::Association,
+                    vec![
+                        Expr::rule("Name", name),
+                        Expr::rule(
+                            "Address",
+                            Expr::from(i64::try_from(addr).expect(
+                                "object file symbol addr overflows i64",
+                            )),
+                        ),
+                        // PRECOMMIT: remove
+                        // Expr::rule("FileOffset", file_offset),
+                        Expr::rule(
+                            "Size",
+                            Expr::from(i64::try_from(size).expect(
+                                "object file symbol size overflows i64",
+                            )),
+                        ),
+                    ],
+                )
+            })
+            .collect();
+
+    let sections: Vec<Expr> = object_file
+        .get_sections()
+        .map(|section| {
+            let section_name = match section.get_name() {
+                Some(name) => {
+                    let name = name.to_str().expect("PRECOMMIT");
+                    Expr::string(name)
+                },
+                None => Expr::normal(Symbol::new("System`Missing"), vec![]),
+            };
+
+            let section_addr = i64::try_from(section.get_address())
+                .expect("section address overflows i64");
+            let section_size = i64::try_from(section.size())
+                .expect("section size overflows i64");
+
+            Expr::normal(
+                st::Association,
+                vec![
+                    Expr::rule("SectionName", Expr::from(section_name)),
+                    Expr::rule("SectionAddress", Expr::from(section_addr)),
+                    Expr::rule("SectionSize", Expr::from(section_size)),
+                ],
+            )
+        })
+        .collect();
+
+    //----------------------------------
+    // Returns result
+    //----------------------------------
+
+    Expr::normal(
+        st::Association,
+        vec![
+            Expr::rule(Expr::string("LLVMIR"), Expr::string(llvm_ir_str)),
+            Expr::rule(Expr::string("Assembly"), Expr::string(assembly)),
+            Expr::rule(Expr::string("ObjectFileSymbols"), Expr::list(symbols)),
+            Expr::rule(Expr::string("Sections"), Expr::list(sections)),
+            Expr::rule(
+                Expr::string("ObjectFileBuffer"),
+                object_file_buffer_expr,
+            ),
+        ],
+    )
 }
 
 //======================================
