@@ -1,7 +1,9 @@
-use wolfram_expr::ExprKind;
 use wolfram_library_link::{
     self as wll, export,
-    expr::{convert::FromExpr, Expr, Symbol},
+    expr::{
+        convert::{FromExpr, FromExprError},
+        Expr, ExprKind, Symbol,
+    },
     wstp::Link,
     NumericArray,
 };
@@ -9,6 +11,16 @@ use wolfram_library_link::{
 use unicode_segmentation::UnicodeSegmentation;
 
 use unicode_data::{GeneralCategory, MappedCharacterSet};
+
+use inkwell::{
+    context::Context,
+    memory_buffer::MemoryBuffer,
+    targets::{
+        CodeModel, FileType, InitializationConfig, RelocMode, Target,
+        TargetMachine, TargetTriple,
+    },
+    OptimizationLevel,
+};
 
 use crate::{
     graphics::Graphics,
@@ -344,4 +356,94 @@ fn mlir_thing(args: Vec<Expr>) -> Expr {
     let () = manager.run(&mut module).expect("pass running failed");
 
     return Expr::string(format!("{}", module.as_operation()));
+}
+
+//==========================================================
+// LLVM
+//==========================================================
+
+#[wll::export(wstp)]
+fn compile_llvm_ir_to_assembly(args: Vec<Expr>) -> Expr {
+    if args.len() != 2 {
+        panic!("expected two arguments: [llvmIR_String, optLevel_String]")
+    }
+
+    let llvm_ir_str =
+        String::from_expr_req(&args[0]).expect("expected LLVM IR text");
+    let New(opt) = New::<OptimizationLevel>::from_expr_req(&args[1]).unwrap();
+
+    let context = Context::create();
+
+    //----------------------------------
+    // Create Module
+    //----------------------------------
+
+    let llvm_ir = MemoryBuffer::create_from_memory_range(
+        llvm_ir_str.as_bytes(),
+        "User LLVM IR string",
+    );
+
+    let module = context
+        .create_module_from_ir(llvm_ir)
+        .expect("failed to parse LLVM IR");
+
+    //----------------------------------
+    // Create TargetMachine
+    //----------------------------------
+
+    Target::initialize_x86(&InitializationConfig::default());
+
+    let reloc = RelocMode::Default;
+    let model = CodeModel::Default;
+    let target = Target::from_name("x86-64").unwrap();
+    let target_machine = target
+        .create_target_machine(
+            &TargetTriple::create("x86_64-pc-linux-gnu"),
+            "x86-64",
+            "+avx2",
+            opt,
+            reloc,
+            model,
+        )
+        .unwrap();
+
+    //----------------------------------------------
+    // Compile Module to assembly for target machine
+    //----------------------------------------------
+
+    let buffer = target_machine
+        .write_to_memory_buffer(&module, FileType::Assembly)
+        .unwrap();
+
+    let str = std::str::from_utf8(buffer.as_slice())
+        .expect("failed to parse Assembly as UTF-8");
+
+    Expr::string(str)
+}
+
+//======================================
+// FromExpr Impls
+//======================================
+
+struct New<T>(T);
+
+impl FromExpr<'_> for New<OptimizationLevel> {
+    fn parse_from_expr(expr: &Expr) -> Result<Self, FromExprError> {
+        let string = <&str>::parse_from_expr(expr)?;
+
+        let opt = match string {
+            "None" => OptimizationLevel::None,
+            "Less" => OptimizationLevel::Less,
+            "Default" => OptimizationLevel::Default,
+            "Aggressive" => OptimizationLevel::Aggressive,
+            _ => {
+                return Err(FromExprError::unexpected_custom(
+                    expr,
+                    "not a recognized LLVM optimization level",
+                ))
+            },
+        };
+
+        Ok(New(opt))
+    }
 }

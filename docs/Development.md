@@ -5,6 +5,12 @@ Diagram Maker project.
 
 ### Command quick reference
 
+#### Set up your environment:
+
+```shell
+$ source env.sh
+```
+
 #### Build the main `Diagrams` paclet artifact:
 
 ```shell
