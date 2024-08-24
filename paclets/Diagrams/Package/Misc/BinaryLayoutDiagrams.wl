@@ -457,18 +457,21 @@ binaryLayoutDiagramRow[
 	fontMultiplier : _ : 1
 ] := Module[{
 },
-	Map[
-		elem |-> Module[{expr},
+	MapIndexed[
+		{elem, pos} |-> Module[{
+			expr,
+			indexStr = ToString[pos[[1]]]
+		},
 			expr = ConfirmReplace[elem, {
 				DiaBit[value:(0|1)] :> (
-					Item[
+					DiaID["Bit." <> indexStr] @ Item[
 						"",
 						Background -> GrayLevel[Clip[value, {0.15,0.95}]],
 						FontSize -> Scaled[fontMultiplier * 8]
 					]
 				),
 				DiaByte[value_] :> (
-					Item[
+					DiaID["Byte." <> indexStr] @ Item[
 						value,
 						1,
 						Background -> $ColorScheme["Byte"],
@@ -479,7 +482,7 @@ binaryLayoutDiagramRow[
 					value_?IntegerQ,
 					width : _?IntegerQ : 1
 				] :> (
-					Item[
+					DiaID["Codepoint." <> indexStr] @ Item[
 						(* "U+" <> ToUpperCase @ IntegerString[value, 16], *)
 						value,
 						width,
@@ -491,7 +494,7 @@ binaryLayoutDiagramRow[
 					char_?StringQ,
 					width : _?IntegerQ : 1
 				] :> (
-					Item[
+					DiaID["Character." <> indexStr] @ Item[
 						char,
 						width,
 						Background -> $ColorScheme["Character"],
@@ -502,7 +505,7 @@ binaryLayoutDiagramRow[
 					grapheme_?StringQ,
 					width : _?IntegerQ
 				] :> (
-					Item[
+					DiaID["Grapheme." <> indexStr] @ Item[
 						grapheme,
 						width,
 						Background -> $ColorScheme["Grapheme"],
@@ -552,7 +555,9 @@ binaryLayoutDiagramRow[
 						];
 					];
 
-					Item[
+					RaiseAssert[indexStr === "1"];
+
+					DiaID["String"] @ Item[
 						label,
 						width,
 						Background -> $ColorScheme["String"],
