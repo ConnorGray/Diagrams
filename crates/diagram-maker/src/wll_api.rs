@@ -27,6 +27,7 @@ use goblin::Object;
 use crate::{
     graphics::Graphics,
     layout::{layout, LayoutAlgorithm},
+    utils::elf_utils::SectionHeaderType,
     Diagram,
 };
 
@@ -480,6 +481,10 @@ fn elf_to_expr(elf: goblin::elf::Elf) -> Expr {
                     None => Expr::normal(Symbol::new("System`Missing"), vec![]),
                 };
 
+            let section_type =
+                SectionHeaderType::try_from(section_header.sh_type)
+                    .expect("invalid section header type value");
+
             let section_addr = i64::try_from(section_header.sh_addr)
                 .expect("section header address overflows i64");
 
@@ -493,6 +498,10 @@ fn elf_to_expr(elf: goblin::elf::Elf) -> Expr {
                 st::Association,
                 vec![
                     Expr::rule("SectionName", section_name),
+                    Expr::rule(
+                        "SectionType",
+                        Expr::from(section_type.as_str()),
+                    ),
                     Expr::rule("SectionAddress", Expr::from(section_addr)),
                     Expr::rule("SectionOffset", Expr::from(section_offset)),
                     Expr::rule("SectionSize", Expr::from(section_size)),

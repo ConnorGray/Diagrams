@@ -8,6 +8,8 @@ mod themes;
 
 mod wll_api;
 
+mod utils;
+
 pub use crate::diagram::Diagram;
 
 #[derive(Debug, Clone)]
