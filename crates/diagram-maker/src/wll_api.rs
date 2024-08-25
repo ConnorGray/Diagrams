@@ -22,6 +22,8 @@ use inkwell::{
     OptimizationLevel,
 };
 
+use goblin::Object;
+
 use crate::{
     graphics::Graphics,
     layout::{layout, LayoutAlgorithm},
@@ -364,13 +366,15 @@ fn mlir_thing(args: Vec<Expr>) -> Expr {
 
 #[wll::export(wstp)]
 fn compile_llvm_ir_to_assembly(args: Vec<Expr>) -> Expr {
-    if args.len() != 2 {
-        panic!("expected two arguments: [llvmIR_String, optLevel_String]")
+    if args.len() != 3 {
+        panic!("expected arguments: [llvmIR_String, optLevel_String, outputElem_String]")
     }
 
     let llvm_ir_str =
         String::from_expr_req(&args[0]).expect("expected LLVM IR text");
     let New(opt) = New::<OptimizationLevel>::from_expr_req(&args[1]).unwrap();
+    let output_elem = <&str>::from_expr_req(&args[2])
+        .expect("expected output element specification string");
 
     let context = Context::create();
 
@@ -434,79 +438,18 @@ fn compile_llvm_ir_to_assembly(args: Vec<Expr>) -> Expr {
             .collect(),
     );
 
-    let object_file = object_buffer
-        .create_object_file()
-        .expect("failed to create object file");
-
-    let symbols: Vec<Expr> =
-        object_file
-            .get_symbols()
-            .map(|sym| {
-                let name = match sym.get_name() {
-                    Some(name) => {
-                        let name = name.to_str().expect("PRECOMMIT");
-                        Expr::string(name)
-                    },
-                    None => Expr::normal(Symbol::new("System`Missing"), vec![]),
-                };
-
-                let addr = sym.get_address();
-                let size = sym.size();
-
-                // PRECOMMIT: Remove this.
-                // let file_offset = unsafe {
-                //     inkwell::llvm_sys::LLVMGetSymbolFileOffset(sym.as_mut_ptr())
-                // };
-
-                Expr::normal(
-                    st::Association,
-                    vec![
-                        Expr::rule("Name", name),
-                        Expr::rule(
-                            "Address",
-                            Expr::from(i64::try_from(addr).expect(
-                                "object file symbol addr overflows i64",
-                            )),
-                        ),
-                        // PRECOMMIT: remove
-                        // Expr::rule("FileOffset", file_offset),
-                        Expr::rule(
-                            "Size",
-                            Expr::from(i64::try_from(size).expect(
-                                "object file symbol size overflows i64",
-                            )),
-                        ),
-                    ],
-                )
-            })
-            .collect();
-
-    let sections: Vec<Expr> = object_file
-        .get_sections()
-        .map(|section| {
-            let section_name = match section.get_name() {
-                Some(name) => {
-                    let name = name.to_str().expect("PRECOMMIT");
-                    Expr::string(name)
-                },
-                None => Expr::normal(Symbol::new("System`Missing"), vec![]),
-            };
-
-            let section_addr = i64::try_from(section.get_address())
-                .expect("section address overflows i64");
-            let section_size = i64::try_from(section.size())
-                .expect("section size overflows i64");
-
-            Expr::normal(
-                st::Association,
-                vec![
-                    Expr::rule("SectionName", Expr::from(section_name)),
-                    Expr::rule("SectionAddress", Expr::from(section_addr)),
-                    Expr::rule("SectionSize", Expr::from(section_size)),
-                ],
-            )
-        })
-        .collect();
+    let object_info = match Object::parse(object_buffer.as_slice()) {
+        Ok(Object::Elf(elf)) => match output_elem {
+            "Debug" => return Expr::string(format!("{elf:#?}")),
+            "Data" => elf_to_expr(elf),
+            other => panic!("unrecognized output element: {other:?}"),
+        },
+        Ok(Object::Mach(mach)) => {
+            return Expr::string(format!("{mach:#?}"));
+            // println!("mach: {:#?}", mach);
+        },
+        other => panic!("{other:?}"),
+    };
 
     //----------------------------------
     // Returns result
@@ -517,12 +460,107 @@ fn compile_llvm_ir_to_assembly(args: Vec<Expr>) -> Expr {
         vec![
             Expr::rule(Expr::string("LLVMIR"), Expr::string(llvm_ir_str)),
             Expr::rule(Expr::string("Assembly"), Expr::string(assembly)),
-            Expr::rule(Expr::string("ObjectFileSymbols"), Expr::list(symbols)),
-            Expr::rule(Expr::string("Sections"), Expr::list(sections)),
             Expr::rule(
                 Expr::string("ObjectFileBuffer"),
                 object_file_buffer_expr,
             ),
+            Expr::rule(Expr::string("ObjectInfo"), object_info),
+        ],
+    )
+}
+
+fn elf_to_expr(elf: goblin::elf::Elf) -> Expr {
+    let sections: Vec<Expr> = elf
+        .section_headers
+        .into_iter()
+        .map(|section_header| {
+            let section_name =
+                match elf.shdr_strtab.get_at(section_header.sh_name) {
+                    Some(name) => Expr::string(name),
+                    None => Expr::normal(Symbol::new("System`Missing"), vec![]),
+                };
+
+            let section_addr = i64::try_from(section_header.sh_addr)
+                .expect("section header address overflows i64");
+
+            let section_offset = i64::try_from(section_header.sh_offset)
+                .expect("section header address overflows i64");
+
+            let section_size = i64::try_from(section_header.sh_size)
+                .expect("section header address overflows i64");
+
+            Expr::normal(
+                st::Association,
+                vec![
+                    Expr::rule("SectionName", section_name),
+                    Expr::rule("SectionAddress", Expr::from(section_addr)),
+                    Expr::rule("SectionOffset", Expr::from(section_offset)),
+                    Expr::rule("SectionSize", Expr::from(section_size)),
+                ],
+            )
+        })
+        .collect();
+
+    let symbols: Vec<Expr> = elf
+        .syms
+        .into_iter()
+        .map(|sym| {
+            let symbol_name = match elf.strtab.get_at(sym.st_name) {
+                Some(name) => Expr::string(name),
+                None => Expr::normal(Symbol::new("System`Missing"), vec![]),
+            };
+
+            let value = i64::try_from(sym.st_value)
+                .expect("symbol table entry value overflows i64");
+
+            let size = i64::try_from(sym.st_size)
+                .expect("symbol table entry size overflows i64");
+
+            let section_index = i64::try_from(sym.st_shndx)
+                .expect("symbol table entry section index overflows i64");
+
+            // From Figure-16, https://refspecs.linuxfoundation.org/elf/elf.pdf
+            let symbol_binding = match sym.st_bind() {
+                goblin::elf::sym::STB_LOCAL => "Local",
+                goblin::elf::sym::STB_GLOBAL => "Global",
+                goblin::elf::sym::STB_WEAK => "Weak",
+                goblin::elf::sym::STB_LOPROC => "LOPROC",
+                goblin::elf::sym::STB_HIPROC => "HIPROC",
+                other => todo!("handle unrecognized st_bind() value: {other}"),
+            };
+
+            // From Figure-17, https://refspecs.linuxfoundation.org/elf/elf.pdf
+            let symbol_type = match sym.st_type() {
+                goblin::elf::sym::STT_NOTYPE => "NoType",
+                goblin::elf::sym::STT_OBJECT => "Object",
+                goblin::elf::sym::STT_FUNC => "Function",
+                goblin::elf::sym::STT_SECTION => "Section",
+                goblin::elf::sym::STT_FILE => "File",
+                goblin::elf::sym::STT_LOPROC => "LOPROC",
+                goblin::elf::sym::STT_HIPROC => "HIPROC",
+                other => todo!("handle unrecognized st_type() value: {other}"),
+            };
+
+            Expr::normal(
+                st::Association,
+                vec![
+                    // Expr::rule("EntryKind", entry_kind),
+                    Expr::rule("SymbolName", Expr::from(symbol_name)),
+                    Expr::rule("SymbolValue", Expr::from(value)),
+                    Expr::rule("SymbolSize", Expr::from(size)),
+                    Expr::rule("SymbolBinding", Expr::from(symbol_binding)),
+                    Expr::rule("SymbolType", Expr::from(symbol_type)),
+                    Expr::rule("SectionIndex", Expr::from(section_index)),
+                ],
+            )
+        })
+        .collect();
+
+    Expr::normal(
+        st::Association,
+        vec![
+            Expr::rule("Sections", Expr::list(sections)),
+            Expr::rule("Symbols", Expr::list(symbols)),
         ],
     )
 }
