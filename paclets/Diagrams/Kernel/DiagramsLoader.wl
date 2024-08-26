@@ -17,9 +17,9 @@ $ContextPath = DeleteDuplicates @ Join[
 		packageObj["PackageContext"],
 		"Diagrams`Concepts`",
 		"Diagrams`Layout`",
-		"Diagrams`Misc`BinaryLayoutDiagrams`",
 		"Diagrams`Utils`",
-		"Diagrams`BlockStack`"
+		"Diagrams`Kinds`BlockStack`",
+		"Diagrams`Kinds`BinaryLayout`"
 	},
 	$ContextPath
 ];

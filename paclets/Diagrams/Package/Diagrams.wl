@@ -6,12 +6,9 @@ PackageModule["Layout"]
 PackageModule["Layouts"]
 PackageModule["Render"]
 PackageModule["Utils"]
-PackageModule["Misc"]
 PackageModule["Library"]
+PackageModule["Kinds"]     (* Diagram Kinds *)
 
-(* Diagram Kinds *)
-PackageModule["BlockStack"]
-PackageModule["ProgramDiagrams"]
 
 PackageExport[{
 	Diagrams,

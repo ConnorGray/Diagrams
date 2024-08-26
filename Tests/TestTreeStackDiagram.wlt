@@ -9,7 +9,7 @@ AppendTo[$ContextPath, "Diagrams`Misc`BinaryLayoutDiagrams`Private`"]
 
 VerificationTest[
 	Context[treeToLayers],
-	"Diagrams`BlockStack`"
+	"Diagrams`Kinds`BlockStack`"
 ]
 
 VerificationTest[

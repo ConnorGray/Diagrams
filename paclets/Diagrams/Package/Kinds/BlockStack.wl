@@ -1,4 +1,4 @@
-Package["Diagrams`BlockStack`"]
+Package["Diagrams`Kinds`BlockStack`"]
 
 PackageUse[Diagrams -> {
 	Diagram,

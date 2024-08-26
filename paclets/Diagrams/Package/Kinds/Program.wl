@@ -1,4 +1,4 @@
-Package["Diagrams`ProgramDiagram`"]
+Package["Diagrams`Kinds`Program`"]
 
 PackageUse[Diagrams -> {
 	DiagramError,
