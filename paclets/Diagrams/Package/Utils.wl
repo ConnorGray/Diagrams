@@ -1,6 +1,7 @@
 Package["Diagrams`Utils`"]
 
 PackageExport[{
+	(* Layout Utilities *)
 	RectangleWidth,
 	RectangleHeight,
 	RectangleSize,
@@ -8,12 +9,16 @@ PackageExport[{
 	RectangleAttachmentPoint,
 	RectangleBoundingBox,
 
+	(* Developer UX *)
 	OutputElementsQ,
 	ConstructOutputElements,
 	ForwardOptions,
 
+	(* FrontEnd Operations *)
 	NotebookImportCell,
+	CopyToClipboard2,
 
+	(* Strings *)
 	ToCharacterCode2,
 	GraphemeClusters,
 	UnicodeData
@@ -217,6 +222,37 @@ NotebookImportCell[cell_Cell, form_?StringQ] := Module[{
 	];
 
 	result
+]
+
+(*====================================*)
+
+SetFallthroughError[CopyToClipboard2]
+
+(*
+	Fix CopyToClipboard["1—3"] (where thats an emdash, \[LongDash]) resulting
+	in pasting "1\[LongDash]3" into a different text editing program.
+
+	Similar issues arise when using things like Unicode box drawing characters.
+*)
+CopyToClipboard2[text: _?StringQ] := Module[{
+	file
+},
+	(* Save UTF-8 encoded bytes to a text file. *)
+	file = Export[CreateFile[] <> ".txt", text];
+
+	(* Use macOS builtin utility pbcopy to do the copy to the clipboard. *)
+	RunProcess[
+		{
+			"zsh",
+			"-c",
+			"cat " <> file <> " | pbcopy"
+		},
+		ProcessEnvironment -> Prepend[
+			GetEnvironment[],
+			(* Ensure `pbcopy` decodes the piped incoming bytes as UTF-8. *)
+			"LANG" -> "en_US.UTF-8"
+		]
+	];
 ]
 
 (*========================================================*)

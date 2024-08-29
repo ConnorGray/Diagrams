@@ -45,7 +45,20 @@ FileSystemTreeDiagram[
 			"Graphics" :> fileTreeGraphics[tree],
 			"TextGraphics" :> fileTreeTextGraphics[
 				tree,
-				{"|   ", "    ", "|-- ", "\-- "}
+				With[{
+					(* Work around Package Format parsing brokenness. *)
+					tBar = FromCharacterCode@FromDigits["251C", 16],
+					vert = FromCharacterCode@FromDigits["2502", 16],
+					hori = FromCharacterCode@FromDigits["2500", 16],
+					corn = FromCharacterCode@FromDigits["2514", 16]
+				},
+					{
+						hori <> "   ",
+						"    ",
+						tBar <> hori <> hori <> " ",
+						corn <> hori <> hori <> " "
+					}
+				]
 			],
 			"ASCIIGraphics" :> fileTreeTextGraphics[
 				tree,
