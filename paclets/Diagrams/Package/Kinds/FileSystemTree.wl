@@ -5,7 +5,7 @@ PackageUse[Diagrams -> {
 
 	DiagramError,
 
-	Utils -> {OutputElementsQ, ConstructOutputElements},
+	Utils -> {OutputElementsQ, ConstructOutputElements, ForwardOptions},
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
@@ -14,6 +14,10 @@ PackageUse[Diagrams -> {
 }]
 
 (*========================================================*)
+
+Options[FileSystemTreeDiagram] = {
+	LabelingFunction -> None
+}
 
 SetFallthroughError[FileSystemTreeDiagram]
 
@@ -27,16 +31,29 @@ SetFallthroughError[FileSystemTreeDiagram]
  *)
 FileSystemTreeDiagram[
 	tree0: _?DirectoryQ | _?TreeQ,
-	outputElems: _?OutputElementsQ | Automatic : Automatic
+	outputElems: _?OutputElementsQ | Automatic | {"Custom", _List} : Automatic,
+	optsSeq:OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating FileSystemTreeDiagram"
-] @ Module[{
+] @ Catch @ Module[{
 	tree = ConfirmReplace[tree0, {
 		tr: _?TreeQ :> tr,
 		dir: _?DirectoryQ :> FileSystemTree[dir]
 	}]
 },
+	(* Handle {"Custom", ..} output spec if present. *)
+	(* TID:240829/1: FileSystemTreeDiagram {"Custom", _} specification *)
+	Replace[outputElems, {
+		{"Custom",
+			specs: _List,
+			labelFunc: _ : None
+		} :> Throw @ fileTreeTextGraphicsHelper[
+			tree,
+			specs,
+			ForwardOptions[optsSeq]
+		]
+	}];
 
 	ConstructOutputElements[
 		outputElems,
@@ -58,11 +75,13 @@ FileSystemTreeDiagram[
 						tBar <> hori <> hori <> " ",
 						corn <> hori <> hori <> " "
 					}
-				]
+				],
+				ForwardOptions[optsSeq]
 			],
 			"ASCIIGraphics" :> fileTreeTextGraphics[
 				tree,
-				{"|   ", "    ", "|-- ", "\-- "}
+				{"|   ", "    ", "|-- ", "\-- "},
+				ForwardOptions[optsSeq]
 			]
 		}
 	]
@@ -74,6 +93,10 @@ SetFallthroughError[fileTreeGraphics]
 
 (*======================================*)
 
+Options[fileTreeTextGraphics] = {
+	LabelingFunction -> None
+}
+
 SetFallthroughError[fileTreeTextGraphics]
 
 fileTreeTextGraphics[
@@ -83,9 +106,36 @@ fileTreeTextGraphics[
 		innerLast: _?StringQ,
 		leafContinue: _?StringQ,
 		leafLast: _?StringQ
-	}
+	},
+	optsSeq:OptionsPattern[]
+] := (
+	StringTrim @ StringJoin @ fileTreeTextGraphicsHelper[
+		rootTree,
+		{innerContinue, innerLast, leafContinue, leafLast},
+		ForwardOptions[optsSeq]
+	]
+)
+
+(*======================================*)
+
+Options[fileTreeTextGraphicsHelper] = {
+	LabelingFunction -> None
+}
+
+SetFallthroughError[fileTreeTextGraphicsHelper]
+
+fileTreeTextGraphicsHelper[
+	rootTree: _?TreeQ,
+	{
+		innerContinue: _,
+		innerLast: _,
+		leafContinue: _,
+		leafLast: _
+	},
+	OptionsPattern[]
 ] := Block[{
-	textOutput = "",
+	output = {},
+	labelFunc = OptionValue[LabelingFunction],
 	(* { isLast: __?BooleanQ } *)
 	(* Whether the element being processed at the given depth is the last of
 		its siblings. *)
@@ -102,8 +152,8 @@ fileTreeTextGraphics[
 
 	SetFallthroughError[write];
 
-	write[str: _?StringQ] := (
-		textOutput = StringJoin[textOutput, str]
+	write[fragment: _] := (
+		AppendTo[output, fragment];
 	);
 
 	(*--------------------------------*)
@@ -112,6 +162,16 @@ fileTreeTextGraphics[
 
 	visit[str: _?StringQ] := (
 		write[str];
+
+		(* TID:240829/2: FileSystemTreeDiagram LabelingFunction on ASCIIGraphics *)
+		If[labelFunc =!= None,
+			write[
+				WrapRaised[DiagramError, "Error in custom LabelingFunction"][
+					labelFunc[path, str]
+				]
+			];
+		];
+
 		write[newline];
 	);
 
@@ -164,5 +224,5 @@ fileTreeTextGraphics[
 
 	visit[rootTree];
 
-	StringTrim[textOutput]
+	output
 ]
