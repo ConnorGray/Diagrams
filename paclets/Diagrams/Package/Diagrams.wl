@@ -65,7 +65,8 @@ PackageExport[{
 	TreeStackDiagram,
 	MultiBlockStackDiagram,
 
-	ProgramDiagram
+	ProgramDiagram,
+	FileSystemTreeDiagram
 }]
 
 Diagram::usage = "Diagram[{elements}] represents a diagram composed of elements."
