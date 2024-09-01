@@ -101,3 +101,33 @@ Root (0)
 \\-- Five (1)
     \\-- Six (2)"
 ]
+
+(* TID:240901/1: FileSystemTreeDiagram ItemDisplayFunction on ASCIIGraphics *)
+(* Also tests composition of ItemDisplayFunction and LabelingFunction.  *)
+VerificationTest[
+	FileSystemTreeDiagram[
+		Tree["Root", {
+			"One",
+			"Two",
+			Tree["Three", {"Four"}],
+			Tree["Five", {"Six"}]
+		}],
+		"ASCIIGraphics",
+		ItemDisplayFunction -> Function[{node},
+			Style[node, Bold]
+		],
+		LabelingFunction -> Function[{path, node},
+			(*Label each node with its depth.*)
+			" (" <> ToString[Length[path]] <> ")"
+		]
+	],
+	Row[{
+		Style["Root", Bold], " (0)", "\n",
+		"|-- ", Style["One", Bold], " (1)", "\n",
+		"|-- ", Style["Two", Bold], " (1)", "\n",
+		"|-- ", Style["Three", Bold], " (1)", "\n",
+		"|   ", "\\-- ", Style["Four", Bold], " (2)", "\n",
+		"\\-- ", Style["Five", Bold], " (1)", "\n",
+		"    ", "\\-- ", Style["Six", Bold], " (2)", "\n"
+	}]
+]

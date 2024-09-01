@@ -15,6 +15,11 @@ PackageUse[Diagrams -> {
 
 (*========================================================*)
 
+(* Workaround Package Format wonkiness. *)
+$newline = FromCharacterCode[10];
+
+(*========================================================*)
+
 Options[FileSystemTreeDiagram] = {
 	LabelingFunction -> None
 }
@@ -31,7 +36,11 @@ SetFallthroughError[FileSystemTreeDiagram]
  *)
 FileSystemTreeDiagram[
 	tree0: _?DirectoryQ | _?TreeQ,
-	outputElems: _?OutputElementsQ | Automatic | {"Custom", _List} : Automatic,
+	outputElems: Alternatives[
+		_?OutputElementsQ,
+		Automatic,
+		{"Custom", _}
+	] : Automatic,
 	optsSeq:OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
@@ -94,7 +103,8 @@ SetFallthroughError[fileTreeGraphics]
 (*======================================*)
 
 Options[fileTreeTextGraphics] = {
-	LabelingFunction -> None
+	LabelingFunction -> None,
+	ItemDisplayFunction -> Automatic
 }
 
 SetFallthroughError[fileTreeTextGraphics]
@@ -108,17 +118,39 @@ fileTreeTextGraphics[
 		leafLast: _?StringQ
 	},
 	optsSeq:OptionsPattern[]
-] := (
-	StringTrim @ StringJoin @ fileTreeTextGraphicsHelper[
+] := Module[{output},
+	output = fileTreeTextGraphicsHelper[
 		rootTree,
 		{innerContinue, innerLast, leafContinue, leafLast},
 		ForwardOptions[optsSeq]
-	]
-)
+	];
+
+	ConfirmReplace[output, {
+		(* If all elements are a string, return a string. *)
+		{___?StringQ} :> StringTrim[StringJoin[output]],
+		_List :> (
+			(* Assert that some custom option was specified. E.g.
+				an option like ItemDisplayFunction -> (Style[#, Bold]&) should
+				be the only way to get non-String values in the output list. *)
+			RaiseAssert2[
+				{optsSeq} =!= {},
+				"Unexpected non-list-of-strings result when no custom styling options were specified: ``",
+				InputForm[output]
+			];
+
+			(* NOTE:
+				This is an odd case where an option can change the *type*
+				of the result (from String to Row). This is pragmantic for
+				keeping the visual display correct. *)
+			Row[output]
+		)
+	}]
+]
 
 (*======================================*)
 
 Options[fileTreeTextGraphicsHelper] = {
+	ItemDisplayFunction -> Automatic,
 	LabelingFunction -> None
 }
 
@@ -136,12 +168,14 @@ fileTreeTextGraphicsHelper[
 ] := Block[{
 	output = {},
 	labelFunc = OptionValue[LabelingFunction],
+	itemDisplayFunc = Replace[
+		OptionValue[ItemDisplayFunction],
+		Automatic -> Identity
+	],
 	(* { isLast: __?BooleanQ } *)
 	(* Whether the element being processed at the given depth is the last of
 		its siblings. *)
 	path = {},
-	(* Workaround Package Format wonkiness. *)
-	newline = FromCharacterCode[10],
 	(* Functions *)
 	write,
 	visit
@@ -161,7 +195,9 @@ fileTreeTextGraphicsHelper[
 	SetFallthroughError[visit];
 
 	visit[str: _?StringQ] := (
-		write[str];
+		(* TID:240901/1:
+			FileSystemTreeDiagram ItemDisplayFunction on ASCIIGraphics *)
+		write[itemDisplayFunc[str]];
 
 		(* TID:240829/2: FileSystemTreeDiagram LabelingFunction on ASCIIGraphics *)
 		If[labelFunc =!= None,
@@ -172,7 +208,7 @@ fileTreeTextGraphicsHelper[
 			];
 		];
 
-		write[newline];
+		write[$newline];
 	);
 
 	visit[tree: _?TreeQ] := Module[{
