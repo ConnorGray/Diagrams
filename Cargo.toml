@@ -1,5 +1,5 @@
 [workspace]
-
+resolver = "2"
 members = ["crates/diagram-maker", "crates/unicode-data"]
 
 # FIXME: Publish this functionality to crates.io and remove this patch.
