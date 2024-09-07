@@ -33,8 +33,7 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	Errors -> {
 		Raise, RaiseError, RaiseConfirm, RaiseAssert, RaiseConfirmMatch,
-		ConfirmReplace, SetFallthroughError, RaiseConfirm2,
-		AddUnmatchedArgumentsHandler
+		ConfirmReplace, SetFallthroughError, RaiseConfirm2
 	},
 	Render -> SizedText,
 	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
@@ -45,6 +44,8 @@ PackageUse[Diagrams -> {
 }]
 
 (*======================================*)
+
+SetFallthroughError[PlaceArrowsBasedOnBoxes]
 
 PlaceArrowsBasedOnBoxes[
 	arrows:{___DiaArrow},
@@ -211,6 +212,8 @@ PlaceArrowsBasedOnBoxes[
 ]
 
 (*======================================*)
+
+SetFallthroughError[GroupBoxesByGraphRow]
 
 (* Group the elements of `boxes` by the row they occupy in a Graph layout. *)
 (*
@@ -435,6 +438,8 @@ AnnotationToGraphics[
 (* Helper functions                                       *)
 (*========================================================*)
 
+SetFallthroughError[boxAttachmentPoint]
+
 boxAttachmentPoint[
 	PlacedBox[
 		_DiaBox,
@@ -447,9 +452,9 @@ boxAttachmentPoint[
 	RectangleAttachmentPoint[borderRect, attachment]
 )
 
-AddUnmatchedArgumentsHandler[boxAttachmentPoint]
-
 (*====================================*)
+
+SetFallthroughError[closestSides]
 
 closestSides[
 	a_Rectangle,
@@ -489,6 +494,10 @@ closestSides[
 	best[[2]]
 ]
 
+(*====================================*)
+
+SetFallthroughError[makeBoxesById]
+
 makeBoxesById[boxes:{___DiaBox}] := Module[{
 	boxesById = <||>
 },
@@ -513,6 +522,8 @@ makeBoxesById[boxes:{___DiaBox}] := Module[{
 
 (*====================================*)
 
+SetFallthroughError[MakePlacedBox]
+
 MakePlacedBox[
 	box: _DiaBox,
 	offset: {_?NumberQ, _?NumberQ} : {0, 0},
@@ -530,9 +541,9 @@ MakePlacedBox[
 	PlacedBox[box, placedContent, contentRect, borderRect]
 ]
 
-AddUnmatchedArgumentsHandler[MakePlacedBox]
-
 (*====================================*)
+
+SetFallthroughError[LayoutBoxContent]
 
 LayoutBoxContent[boxContent: _] := LayoutBoxContent[boxContent, {0, 0}]
 
@@ -658,8 +669,6 @@ LayoutBoxContent[
 	{elements, contentBoundingRect, borderRect}
 ]
 
-AddUnmatchedArgumentsHandler[LayoutBoxContent]
-
 (*====================================*)
 
 (* NOTE: This function has been superceded by LayoutBoxContent. Kept for the
@@ -719,6 +728,8 @@ AddUnmatchedArgumentsHandler[MakeBoxRectangles]
 
 (*====================================*)
 
+SetFallthroughError[RowWidth]
+
 (* Returns the total width of `row` if the boxes were layed out next to each
    other in a row with padding of `$BoxPadding` and margin of `$Margin`. *)
 RowWidth[row:{___DiaBox}] := Module[{
@@ -743,6 +754,8 @@ RowWidth[row:{___DiaBox}] := Module[{
 
 (*====================================*)
 
+SetFallthroughError[PlacedBoxBorderRectangle]
+
 PlacedBoxBorderRectangle[
 	PlacedBox[
 		_DiaBox,
@@ -752,9 +765,9 @@ PlacedBoxBorderRectangle[
 	]
 ] := borderRect
 
-AddUnmatchedArgumentsHandler[PlacedBoxBorderRectangle]
-
 (*====================================*)
+
+SetFallthroughError[ContentQ]
 
 ContentQ[expr_] :=
 	MatchQ[expr, Alternatives[
@@ -765,6 +778,8 @@ ContentQ[expr_] :=
 (*====================================*)
 (* Utility functions                  *)
 (*====================================*)
+
+SetFallthroughError[rectangleSidePoints]
 
 rectangleSidePoints[
 	rect:Rectangle[{left_, bottom_}, {right_, top_}],
@@ -786,6 +801,8 @@ rectangleSidePoints[
 
 (****************************************)
 
+SetFallthroughError[rectangleSidePoints]
+
 sidesDistanceFactor[
 	{a0:{_, _}, a1:{_, _}},
 	{b0:{_, _}, b1:{_, _}}
@@ -797,6 +814,8 @@ sidesDistanceFactor[
 ]
 
 (****************************************)
+
+SetFallthroughError[rectangleSidePoints]
 
 AbsoluteTranslate[
 	primitives_?ListQ,
