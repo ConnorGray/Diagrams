@@ -21,7 +21,7 @@ PackageUse[Diagrams -> {
 	},
 	Errors -> {
 		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace,
-		RaiseAssert, RaiseConfirm2
+		RaiseConfirm, RaiseAssert
 	}
 }]
 
@@ -429,7 +429,7 @@ MultiBlockStackDiagram[
 	diagram
 },
 	stackDiagrams = Map[
-		stack |-> RaiseConfirm2 @ BlockStackDiagram[stack, {"Graphics", "Regions"}],
+		stack |-> RaiseConfirm @ BlockStackDiagram[stack, {"Graphics", "Regions"}],
 		stacks
 	];
 

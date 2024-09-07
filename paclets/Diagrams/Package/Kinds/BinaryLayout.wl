@@ -49,7 +49,7 @@ PackageUse[Diagrams -> {
 	DiaArrow,
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
-		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
+		RaiseConfirm, RaiseConfirmMatch, WrapRaised,
 		RaiseAssert
 	},
 	Library -> {$LibraryFunctions},
@@ -237,7 +237,7 @@ StringEncodingDiagram[
 	]];\[LineSeparator]
 	Graphics[directives, BaseStyle -> {FontSize -> 25}]*)
 
-	diagram = RaiseConfirm2 @ BinaryLayoutDiagram[
+	diagram = RaiseConfirm @ BinaryLayoutDiagram[
 		Map[handle, layers],
 		fontMultiplier,
 		ImageSize -> imageSize

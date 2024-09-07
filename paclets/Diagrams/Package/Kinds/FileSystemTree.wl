@@ -8,7 +8,7 @@ PackageUse[Diagrams -> {
 	Utils -> {OutputElementsQ, ConstructOutputElements, ForwardOptions},
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
-		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
+		RaiseConfirm, RaiseConfirmMatch, WrapRaised,
 		RaiseAssert
 	}
 }]

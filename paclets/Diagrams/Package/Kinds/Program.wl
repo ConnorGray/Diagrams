@@ -6,7 +6,7 @@ PackageUse[Diagrams -> {
 	Library -> {$LibraryFunctions},
 	Errors -> {
 		SetFallthroughError, Raise, Handle, WrapRaised, ConfirmReplace,
-		RaiseAssert, RaiseConfirm2
+		RaiseAssert
 	}
 }]
 

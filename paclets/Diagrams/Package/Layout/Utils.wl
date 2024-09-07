@@ -33,7 +33,7 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	Errors -> {
 		Raise, RaiseError, RaiseConfirm, RaiseAssert, RaiseConfirmMatch,
-		ConfirmReplace, SetFallthroughError, RaiseConfirm2
+		ConfirmReplace, SetFallthroughError
 	},
 	Render -> SizedText,
 	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
@@ -303,11 +303,11 @@ AnnotationToGraphics[
 				move from left-er columns towards right-er columns. There's
 				no reason to think that will always be the case. *)
 			lhsPoint = RectangleAttachmentPoint[
-				RaiseConfirm2 @ Lookup[regions, DiaID[lhs]],
+				RaiseConfirm @ Lookup[regions, DiaID[lhs]],
 				{Right, 0.5}
 			];
 			rhsPoint = RectangleAttachmentPoint[
-				RaiseConfirm2 @ Lookup[regions, DiaID[rhs]],
+				RaiseConfirm @ Lookup[regions, DiaID[rhs]],
 				{Left, 0.5}
 			];
 
@@ -316,11 +316,11 @@ AnnotationToGraphics[
 
 		DiaArrow[lhs_, rhs_, {"Jog", Left}] :> Module[{lhsPoint, rhsPoint},
 			lhsPoint = RectangleAttachmentPoint[
-				RaiseConfirm2 @ Lookup[regions, DiaID[lhs]],
+				RaiseConfirm @ Lookup[regions, DiaID[lhs]],
 				{Left, 0.5}
 			];
 			rhsPoint = RectangleAttachmentPoint[
-				RaiseConfirm2 @ Lookup[regions, DiaID[rhs]],
+				RaiseConfirm @ Lookup[regions, DiaID[rhs]],
 				{Left, 0.5}
 			];
 
@@ -352,7 +352,7 @@ AnnotationToGraphics[
 			boundingRect = ConfirmReplace[boundingRectSpec, {
 				{"BoundingBox", ids_List} :> Module[{idRects},
 					idRects = Map[
-						id |-> RaiseConfirm2 @ Lookup[regions, DiaID[id]],
+						id |-> RaiseConfirm @ Lookup[regions, DiaID[id]],
 						ids
 					];
 
@@ -415,7 +415,7 @@ AnnotationToGraphics[
 			boundingRect
 		},
 			idRects = Map[
-				id |-> RaiseConfirm2 @ Lookup[regions, DiaID[id]],
+				id |-> RaiseConfirm @ Lookup[regions, DiaID[id]],
 				ids
 			];
 

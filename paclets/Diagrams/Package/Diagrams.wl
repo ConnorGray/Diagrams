@@ -132,7 +132,7 @@ Diagrams::error = "``"
 
 PackageUse[Diagrams -> {
 	Errors -> {
-		CreateErrorType, RaiseError, Raise, RaiseConfirm, RaiseConfirm2,
+		CreateErrorType, RaiseError, Raise, RaiseConfirm,
 		RaiseAssert, ConfirmReplace, SetFallthroughError
 	},
 	Render -> SizedText,
