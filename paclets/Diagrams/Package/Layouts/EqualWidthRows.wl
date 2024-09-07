@@ -12,9 +12,12 @@ PackageUse[Diagrams -> {
 		}
 	},
 	Utils -> {RectangleWidth, RectangleHeight},
-	Errors -> {RaiseError, RaiseAssert}
+	Errors -> {RaiseError, RaiseAssert, SetFallthroughError}
 }]
 
+(*========================================================*)
+
+SetFallthroughError[DoEqualWidthRowsLayout]
 
 DoEqualWidthRowsLayout[
 	diagram_Diagram

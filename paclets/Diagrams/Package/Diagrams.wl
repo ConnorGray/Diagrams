@@ -472,6 +472,8 @@ RenderedTextSize[args___] :=
 
 (*----------------------------------------------------------------------------*)
 
+SetFallthroughError[DiagramGraph]
+
 DiagramGraph[
 	diagram_Diagram
 ] := Module[{
@@ -501,11 +503,6 @@ DiagramGraph[
 
 	Graph[vertices, edges, VertexLabels -> "Name"]
 ]
-
-(*------------------------------------*)
-
-DiagramGraph[args___] :=
-	RaiseError["unexpected arguments to DiagramGraph: ``", InputForm[{args}]]
 
 (****************************************)
 
@@ -565,6 +562,8 @@ DiagramGraph[
 
 (*====================================*)
 
+SetFallthroughError[MakeDiagramPrimitives]
+
 MakeDiagramPrimitives[arrow_DiaArrow] := arrow
 MakeDiagramPrimitives[box_DiaBox] := box
 
@@ -575,12 +574,11 @@ MakeDiagramPrimitives[elem_] :=
 		InputForm[{elem}]
 	]
 
-MakeDiagramPrimitives[args___] :=
-	RaiseError["unexpected arguments to MakeDiagramPrimitives: ``", InputForm[{args}]]
-
 (*====================================*)
 (* Diagram property accessors         *)
 (*====================================*)
+
+SetFallthroughError[DiagramTitle]
 
 DiagramTitle[
 	diagram:Diagram[
@@ -591,10 +589,9 @@ DiagramTitle[
 	]
 ] := title
 
-DiagramTitle[args___] :=
-	RaiseError["unexpected arguments to DiagramTitle: ``", InputForm[{args}]]
-
 (*====================================*)
+
+SetFallthroughError[DiagramBoxes]
 
 DiagramBoxes[
 	diagram:Diagram[
@@ -605,10 +602,9 @@ DiagramBoxes[
 	]
 ] := boxes
 
-DiagramBoxes[args___] :=
-	RaiseError["unexpected arguments to DiagramBoxes: ``", InputForm[{args}]]
-
 (*====================================*)
+
+SetFallthroughError[DiagramArrows]
 
 DiagramArrows[
 	diagram:Diagram[
@@ -619,10 +615,9 @@ DiagramArrows[
 	]
 ] := arrows
 
-DiagramArrows[args___] :=
-	RaiseError["unexpected arguments to DiagramArrows: ``", InputForm[{args}]]
-
 (*====================================*)
+
+SetFallthroughError[DiagramElementId]
 
 DiagramElementId[DiaBox[
 	id_?StringQ,
@@ -630,20 +625,18 @@ DiagramElementId[DiaBox[
 	___?OptionQ
 ]] := id
 
-DiagramElementId[args___] :=
-	RaiseError["unexpected arguments to DiagramElementId: ``", InputForm[{args}]]
-
 (*====================================*)
+
+SetFallthroughError[DiagramElementContent]
 
 DiagramElementContent[DiaBox[id_?StringQ,                            ___?OptionQ]] := id
 DiagramElementContent[DiaBox[id_?StringQ, content:Except[_?OptionQ], ___?OptionQ]] := content
 
 DiagramElementContent[DiaArrow[_ -> _, id_?StringQ, Optional[_, None], ___?OptionQ]] := id
 
-DiagramElementContent[args___] :=
-	RaiseError["unexpected arguments to DiagramElementContent: ``", InputForm[{args}]]
-
 (*====================================*)
+
+SetFallthroughError[DiagramArrowIds]
 
 DiagramArrowIds[arrow_DiaArrow] := Replace[arrow, {
 	(* Check for a few possibly common mistakes first. *)
@@ -655,10 +648,9 @@ DiagramArrowIds[arrow_DiaArrow] := Replace[arrow, {
 	_ :> RaiseError["unexpected DiaArrow structure: ``", InputForm[arrow]]
 }]
 
-DiagramArrowIds[args___] :=
-	RaiseError["unexpected arguments to DiagramArrowIds: ``", InputForm[{args}]]
-
 (*====================================*)
+
+SetFallthroughError[AttachmentId]
 
 AttachmentId[spec_] := Replace[spec, {
 	id_?StringQ :> id,
@@ -666,10 +658,9 @@ AttachmentId[spec_] := Replace[spec, {
 	_ :> RaiseError["unrecognized attachment specification: ``", spec]
 }]
 
-AttachmentId[args___] :=
-	RaiseError["unexpected arguments to AttachmentId: ``", InputForm[{args}]]
-
 (*------------------------------------*)
+
+SetFallthroughError[AttachmentQ]
 
 AttachmentQ[spec_] := MatchQ[
 	spec,
@@ -678,9 +669,6 @@ AttachmentQ[spec_] := MatchQ[
 		{_?StringQ, Nearest}
 	]
 ]
-
-AttachmentQ[args___] :=
-	RaiseError["unexpected arguments to AttachmentQ: ``", InputForm[{args}]]
 
 (*========================================================*)
 

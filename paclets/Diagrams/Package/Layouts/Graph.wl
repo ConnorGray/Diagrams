@@ -12,8 +12,12 @@ PackageUse[Diagrams -> {
 		}
 	},
 	Utils -> {RectangleWidth, RectangleHeight},
-	Errors -> {RaiseError, RaiseAssert, RaiseConfirm}
+	Errors -> {RaiseError, RaiseAssert, RaiseConfirm, SetFallthroughError}
 }]
+
+(*========================================================*)
+
+SetFallthroughError[DoGraphLayout]
 
 (* Layout all diagram boxes based on their Graph[..] layout. *)
 DoGraphLayout[

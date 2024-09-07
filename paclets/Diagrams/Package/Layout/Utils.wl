@@ -69,6 +69,10 @@ PlaceArrowsBasedOnBoxes[
 	incrSideAttachmentCount,
 	getSideLerpFactor
 },
+	(*================================*)
+
+	SetFallthroughError[incrSideAttachmentCount];
+
 	incrSideAttachmentCount[id_?StringQ, side_] := Module[{
 		key, value
 	},
@@ -79,7 +83,8 @@ PlaceArrowsBasedOnBoxes[
 
 		AssociateTo[arrowsData, key -> value];
 	];
-	incrSideAttachmentCount[args___] := RaiseError["bad args: ", {args}];
+
+	(*================================*)
 
 	getSideLerpFactor[boxId_?StringQ, side_] := Module[{
 		count = Lookup[arrowsDataCounts, Key @ {boxId, side}, 0],

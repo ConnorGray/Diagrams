@@ -13,9 +13,12 @@ PackageUse[Diagrams -> {
 		}
 	},
 	Utils -> {RectangleWidth, RectangleHeight},
-	Errors -> {RaiseError, RaiseAssert}
+	Errors -> {RaiseError, RaiseAssert, SetFallthroughError}
 }]
 
+(*========================================================*)
+
+SetFallthroughError[DoRowsLayout]
 
 (* Layout all diagram boxes in a series of rows. *)
 DoRowsLayout[

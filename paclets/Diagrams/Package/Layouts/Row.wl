@@ -10,8 +10,12 @@ PackageUse[Diagrams -> {
 		Utils -> {MakePlacedBox, PlacedBoxBorderRectangle, PlaceArrowsBasedOnBoxes}
 	},
 	Utils -> {RectangleWidth},
-	Errors -> {RaiseError, RaiseAssert}
+	Errors -> {RaiseError, RaiseAssert, SetFallthroughError}
 }]
+
+(*========================================================*)
+
+SetFallthroughError[DoRowLayout]
 
 (* Layout all diagram boxes in a single row. *)
 DoRowLayout[

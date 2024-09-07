@@ -23,12 +23,15 @@ $DebugDiagramLayout = False
 PackageUse[Diagrams -> {
 	Diagram, DiagramLayout, DiagramTitle, LayoutDiagram, PlacedDiagram,
 	BoxPadding,
-	Errors -> {RaiseError, RaiseAssert},
+	Errors -> {RaiseError, RaiseAssert, SetFallthroughError},
 	Layouts -> {
 		DoRowLayout, DoRowsLayout, DoEqualWidthRowsLayout, DoGraphLayout
 	}
 }]
 
+(*========================================================*)
+
+SetFallthroughError[LayoutDiagram]
 
 LayoutDiagram[
 	diagram_Diagram,
@@ -83,8 +86,3 @@ LayoutDiagram[
 
 	result
 ]
-
-(*------------------------------------*)
-
-LayoutDiagram[args___] :=
-	RaiseError["unexpected arguments to LayoutDiagram: ``", InputForm[{args}]]

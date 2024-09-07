@@ -9,7 +9,7 @@ PackageUse[Diagrams -> {
 	DiagramElementContent,
 	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow, Utils -> Bounded},
 	Utils -> {RectangleSize, RectangleCenter},
-	Errors -> {RaiseError, RaiseConfirm, RaiseConfirmMatch}
+	Errors -> {RaiseError, RaiseConfirm, RaiseConfirmMatch, SetFallthroughError}
 }]
 
 SizedText::usage = "SizedText[s, rect]"
@@ -151,9 +151,8 @@ RenderPlacedDiagramToGraphics[
 (* Helper functions                   *)
 (*====================================*)
 
+SetFallthroughError[DiagramElementDirectives]
+
 DiagramElementDirectives[DiaArrow[_, _, directive_]] := directive
 
 DiagramElementDirectives[_DiaArrow] := {}
-
-DiagramElementDirectives[args___] :=
-	RaiseError["unexpected arguments to DiagramElementDirectives: ``", InputForm[{args}]]
