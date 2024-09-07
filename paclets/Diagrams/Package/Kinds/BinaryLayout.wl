@@ -50,7 +50,7 @@ PackageUse[Diagrams -> {
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
-		RaiseAssert, RaiseAssert2
+		RaiseAssert
 	},
 	Library -> {$LibraryFunctions},
 	Render -> {
@@ -1031,7 +1031,7 @@ StackHeapDiagram[
 		"smooshed" together or shown in separate horizontal "swimlanes". *)
 	stackElementsColumns = Join[Sequence @@ stackElementsColumns, 2];
 
-	RaiseAssert2[
+	RaiseAssert[
 		MatchQ[
 			stackElementsColumns,
 			{

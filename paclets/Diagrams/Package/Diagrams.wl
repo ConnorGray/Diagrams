@@ -128,7 +128,6 @@ RenderedTextSize
 (*========================================================*)
 
 Diagrams::error = "``"
-Diagrams::assertfail = "``"
 
 
 PackageUse[Diagrams -> {

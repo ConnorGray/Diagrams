@@ -9,7 +9,7 @@ PackageUse[Diagrams -> {
 	Errors -> {
 		Raise, Handle, ConfirmReplace, SetFallthroughError,
 		RaiseConfirm, RaiseConfirm2, RaiseConfirmMatch, WrapRaised,
-		RaiseAssert2
+		RaiseAssert
 	}
 }]
 
@@ -132,7 +132,7 @@ fileTreeTextGraphics[
 			(* Assert that some custom option was specified. E.g.
 				an option like ItemDisplayFunction -> (Style[#, Bold]&) should
 				be the only way to get non-String values in the output list. *)
-			RaiseAssert2[
+			RaiseAssert[
 				{optsSeq} =!= {},
 				"Unexpected non-list-of-strings result when no custom styling options were specified: ``",
 				InputForm[output]
@@ -228,7 +228,7 @@ fileTreeTextGraphicsHelper[
 					we're currently visiting is the last of its siblings. *)
 				path = Append[path, isLastChild]
 			},
-				RaiseAssert2[MatchQ[path, {__?BooleanQ}]];
+				RaiseAssert[MatchQ[path, {__?BooleanQ}]];
 
 				Scan[
 					(* If this isn't the last child at this depth in the
