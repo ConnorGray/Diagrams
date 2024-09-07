@@ -126,10 +126,12 @@ StringEncodingDiagram[
 	fontMultiplier,
 	diagram
 },
-	RaiseConfirmMatch[
-		OptionValue[CharacterEncoding],
-		"__unused",
+	WrapRaised[
+		DiagramError,
 		"CharacterEncoding option has been deprecated. Use 2nd argument instead."
+	] @ RaiseConfirmMatch[
+		OptionValue[CharacterEncoding],
+		"__unused"
 	];
 
 	(* TODO:

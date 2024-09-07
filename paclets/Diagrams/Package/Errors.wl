@@ -23,7 +23,6 @@ PackageExport[{
 RaiseError::usage  = "RaiseError[formatStr, args___] throws a Failure object indicating an error encountered during the build process.";
 RaiseAssert::usage = "RaiseAssert[cond, formatStr, args___] throws a Failure object indicating a failed assertion encountered during the build process.";
 RaiseConfirm
-RaiseConfirmMatch::usage = "RaiseConfirmMatch[expr, form, formatStr, args___] returns expr if form matches expr, and raises an error otherwise."
 
 $RaiseErrorTag
 
@@ -144,33 +143,6 @@ RaiseAssert[args___] := Throw[
 		]]
 	|>],
 	$RaiseErrorTag
-]
-
-(**********************************************************)
-
-Attributes[RaiseConfirmMatch] = {HoldFirst}
-
-RaiseConfirmMatch[
-	expr0_,
-	patt_,
-	formatStr : _?StringQ : Automatic,
-	args___
-] := Module[{
-	expr = expr0
-},
-	If[MatchQ[expr, patt],
-		expr
-		,
-		Replace[formatStr, {
-			Automatic :> RaiseError[
-				"RaiseConfirmMatch: pattern '``' does not match result: ``",
-				patt,
-				expr
-			],
-			_?StringQ :> RaiseError[formatStr, args],
-			_ :> RaiseError["unreachable RaiseConfirmMatch condition"]
-		}];
-	]
 ]
 
 (*========================================================*)
