@@ -978,7 +978,7 @@ sizeOf[type_] := WrapRaised[
 
 	other_ :> Raise[
 		DiagramError,
-		"Unrecognzied type specification: ``",
+		"Unrecognized type specification: ``",
 		InputForm[other]
 	]
 }]
