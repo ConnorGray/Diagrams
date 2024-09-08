@@ -806,7 +806,7 @@ rectangleSidePoints[
 
 (****************************************)
 
-SetFallthroughError[rectangleSidePoints]
+SetFallthroughError[sidesDistanceFactor]
 
 sidesDistanceFactor[
 	{a0:{_, _}, a1:{_, _}},
@@ -820,7 +820,7 @@ sidesDistanceFactor[
 
 (****************************************)
 
-SetFallthroughError[rectangleSidePoints]
+SetFallthroughError[AbsoluteTranslate]
 
 AbsoluteTranslate[
 	primitives_?ListQ,
