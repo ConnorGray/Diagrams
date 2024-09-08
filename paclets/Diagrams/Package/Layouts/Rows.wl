@@ -7,7 +7,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin,
 		PlacedBox,
-		Utils -> {
+		LayoutUtils -> {
 			MakePlacedBox, RowWidth, PlaceArrowsBasedOnBoxes,
 			PlacedBoxBorderRectangle, GroupBoxesByGraphRow
 		}

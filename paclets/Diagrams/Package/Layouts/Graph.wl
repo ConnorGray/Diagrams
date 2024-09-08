@@ -6,7 +6,7 @@ PackageUse[Diagrams -> {
 	Layouts -> DoGraphLayout,
 	Layout -> {
 		PlacedBox,
-		Utils -> {
+		LayoutUtils -> {
 			MakePlacedBox, RowWidth, PlaceArrowsBasedOnBoxes,
 			GroupBoxesByGraphRow
 		}

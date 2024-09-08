@@ -139,7 +139,7 @@ PackageUse[Diagrams -> {
 	Utils -> {RectangleSize, RectangleAttachmentPoint},
 	Layout -> {
 		$DebugDiagramLayout,
-		Utils -> {AnnotationToGraphics}
+		LayoutUtils -> {AnnotationToGraphics}
 	},
 	Library -> {$LibraryFunctions}
 }]

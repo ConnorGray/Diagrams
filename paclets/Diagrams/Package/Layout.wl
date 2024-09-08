@@ -1,6 +1,6 @@
 Package["Diagrams`Layout`"]
 
-PackageModule["Utils"]
+PackageModule["LayoutUtils"]
 
 PackageExport[{
 	PlacedBox, PlacedArrow,

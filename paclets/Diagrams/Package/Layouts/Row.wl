@@ -7,7 +7,9 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin,
 		PlacedBox,
-		Utils -> {MakePlacedBox, PlacedBoxBorderRectangle, PlaceArrowsBasedOnBoxes}
+		LayoutUtils -> {
+			MakePlacedBox, PlacedBoxBorderRectangle, PlaceArrowsBasedOnBoxes
+		}
 	},
 	Utils -> {RectangleWidth},
 	Errors -> {RaiseError, RaiseAssert, SetFallthroughError}

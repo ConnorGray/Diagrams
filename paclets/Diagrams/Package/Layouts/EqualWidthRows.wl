@@ -6,7 +6,7 @@ PackageUse[Diagrams -> {
 	Layouts -> DoEqualWidthRowsLayout,
 	Layout -> {
 		$Margin, $BoxPadding, PlacedBox,
-		Utils -> {
+		LayoutUtils -> {
 			MakePlacedBox, PlacedBoxBorderRectangle, RowWidth, GroupBoxesByGraphRow,
 			PlaceArrowsBasedOnBoxes
 		}

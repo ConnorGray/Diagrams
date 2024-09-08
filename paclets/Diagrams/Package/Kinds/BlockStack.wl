@@ -11,7 +11,7 @@ PackageUse[Diagrams -> {
 	TreeStackDiagram,
 
 	Layout -> {
-		Utils -> {
+		LayoutUtils -> {
 			AbsoluteTranslate, AnnotationToGraphics
 		}
 	},

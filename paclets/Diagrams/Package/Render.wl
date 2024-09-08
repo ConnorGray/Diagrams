@@ -7,7 +7,10 @@ PackageExport[{
 PackageUse[Diagrams -> {
 	PlacedDiagram, RenderPlacedDiagramToGraphics, DiaBox, DiaArrow,
 	DiagramElementContent,
-	Layout -> {$DebugDiagramLayout, PlacedBox, PlacedArrow, Utils -> Bounded},
+	Layout -> {
+		$DebugDiagramLayout, PlacedBox, PlacedArrow,
+		LayoutUtils -> Bounded
+	},
 	Utils -> {RectangleSize, RectangleCenter},
 	Errors -> {RaiseError, RaiseConfirm, RaiseConfirmMatch, SetFallthroughError}
 }]
