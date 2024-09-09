@@ -13,6 +13,7 @@ PackageExport[{
 	OutputElementsQ,
 	ConstructOutputElements,
 	ForwardOptions,
+	AbsoluteOptions2,
 
 	(* FrontEnd Operations *)
 	NotebookImportCell,
@@ -194,6 +195,24 @@ ForwardOptions /: head_Symbol[
 		Sequence @@ Flatten@FilterRules[{opts}, Options[head]]
 	]
 )
+
+(*====================================*)
+
+SetFallthroughError[AbsoluteOptions2]
+
+AbsoluteOptions2[expr:(head_Symbol[___])] := Module[{
+	defaultOpts = Options[head]
+},
+	DeleteDuplicatesBy[
+		(* {___Rule} *)
+		Join[
+			Options[expr],
+			Options[head]
+		],
+		(* Delete by duplicate Rule LHS (i.e. the option name). *)
+		First
+	]
+]
 
 (*========================================================*)
 (* FrontEnd Operations                                    *)

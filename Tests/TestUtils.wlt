@@ -34,6 +34,8 @@ VerificationTest[
 (*========================================================*)
 
 (*====================================*)
+(* ForwardOptions                     *)
+(*====================================*)
 
 Module[{
 	foo, bar
@@ -86,5 +88,36 @@ Module[{
 	VerificationTest[
 		foo[5, "A" -> 7, "B" -> 10, ForwardOptions["B" -> 11]],
 		{5, "bar opts"["B" -> 10, "B" -> 11]}
+	];
+]
+
+(*====================================*)
+(* AbsoluteOptions2                   *)
+(*====================================*)
+
+Module[{
+	foo, bar
+},
+	(*-------*)
+	(* Setup *)
+	(*-------*)
+
+	Options[foo] = {
+		"A" -> 1,
+		"B" -> 2
+	};
+
+	(*-------*)
+	(* Tests *)
+	(*-------*)
+
+	VerificationTest[
+		AbsoluteOptions2[foo[]],
+		{"A" -> 1, "B" -> 2}
+	];
+
+	VerificationTest[
+		AbsoluteOptions2[foo["A" -> 999]],
+		{"A" -> 999, "B" -> 2}
 	];
 ]
