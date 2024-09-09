@@ -38,7 +38,7 @@ DoRowLayout[
 
 	Scan[
 		Replace[{
-			box_DiaBox :> Module[{
+			box: _DiaBox :> Module[{
 				id = DiagramElementId[box],
 				borderRect,
 				placedBox

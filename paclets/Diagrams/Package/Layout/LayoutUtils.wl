@@ -48,8 +48,8 @@ PackageUse[Diagrams -> {
 SetFallthroughError[PlaceArrowsBasedOnBoxes]
 
 PlaceArrowsBasedOnBoxes[
-	arrows:{___DiaArrow},
-	placedBoxes_,
+	arrows: {___DiaArrow},
+	placedBoxes: _?AssociationQ,
 	sides : _ : Automatic
 ] := Module[{
 	(*
@@ -576,7 +576,7 @@ LayoutBoxContent[
 
 	elements = Map[
 		element |-> Replace[element, {
-			str_?StringQ | Text[str_?StringQ] :> Module[{textWidth, textHeight, rect},
+			str: _?StringQ | Text[str: _?StringQ] :> Module[{textWidth, textHeight, rect},
 				{textWidth, textHeight} =
 					RaiseConfirm @ RenderedTextSize[str, $TextWidth];
 
@@ -586,7 +586,7 @@ LayoutBoxContent[
 
 				Bounded[{SizedText[str, rect]}, rect]
 			],
-			Column[columnElements_?ListQ] :> Module[{
+			Column[columnElements: _?ListQ] :> Module[{
 				placedColumnElements,
 				columnYOffset = 0
 			},
