@@ -1,8 +1,14 @@
 Package["Diagrams`Concepts`"]
 
 PackageExport[{
+	$BoxConcepts,
+
 	DiaFunctionPointer,
-	DiaPaclet
+	DiaPaclet,
+	DiaSoftwareProcess,
+	DiaSoftwareExecutable,
+	DiaDynamicLibrary,
+	DiaFunction
 }]
 
 (* TODO:
@@ -18,12 +24,33 @@ DiaFunctionPointer::usage = "DiaFunctionPointer[libA -> libB, name] represents p
 
 DiaPaclet::usage = "DiaPaclet[paclet] represents a Wolfram paclet."
 
+DiaSoftwareProcess::usage = "DiaSoftwareProcess[id, content] represents a software OS process."
+DiaSoftwareExecutable::usage = "DiaSoftwareExecutable[id, content] represents a software executable program."
+DiaDynamicLibrary::usage = "DiaDynamicLibrary[id, content] represents a software dynamic library."
+DiaFunction::usage = "DiaFunction[id, content] represents a named software function."
 
 PackageUse[Diagrams -> {
 	DiaBox, DiaArrow, AttachmentQ, MakeDiagramPrimitives,
+	DiagramError,
 	Render -> {SizedText},
-	Errors -> {RaiseError, RaiseAssert, RaiseConfirmMatch}
+	Utils -> AbsoluteOptions2,
+	Errors -> {
+		Raise, RaiseError, RaiseAssert, RaiseConfirmMatch, ConfirmReplace,
+		SetFallthroughError
+	}
 }]
+
+(*========================================================*)
+
+$BoxConcepts = {
+	DiaFunction,
+	DiaPaclet,
+	DiaSoftwareProcess,
+	DiaSoftwareExecutable,
+	DiaDynamicLibrary
+}
+
+(*====================================*)
 
 
 $functionPointerArrowheads = Arrowheads[{
@@ -62,8 +89,12 @@ DiaFunctionPointer /: MakeDiagramPrimitives[
 
 (*====================================*)
 
+Options[DiaPaclet] = {
+	Background -> Lighter[Blend[{Green, Blue}], 0.7]
+}
+
 DiaPaclet /: MakeDiagramPrimitives[
-	diaPaclet_DiaPaclet
+	diaPaclet: _DiaPaclet
 ] := Module[{
 	paclet,
 	pacletName,
@@ -93,6 +124,92 @@ DiaPaclet /: MakeDiagramPrimitives[
 				Nothing
 			]
 		}],
-		Background -> Lighter[Blend[{Green, Blue}], 0.7]
+		AbsoluteOptions2[diaPaclet]
+	]
+]
+
+(*====================================*)
+
+Options[DiaSoftwareProcess] = {
+	Background -> Blend[{Gray, Blue}, 0.7]
+}
+
+DiaSoftwareProcess /: MakeDiagramPrimitives[
+	primitive: _DiaSoftwareProcess
+] := (
+	processStandardPrimitive[primitive]
+)
+
+(*====================================*)
+
+Options[DiaSoftwareExecutable] = {
+	Background -> Blend[{Gray, Blue}, 0.3]
+}
+
+DiaSoftwareExecutable /: MakeDiagramPrimitives[
+	primitive: _DiaSoftwareExecutable
+] := (
+	processStandardPrimitive[primitive]
+)
+
+(*====================================*)
+
+Options[DiaDynamicLibrary] = {
+	Background -> Blend[{Gray, Purple}, 0.7]
+}
+
+DiaDynamicLibrary /: MakeDiagramPrimitives[
+	primitive: _DiaDynamicLibrary
+] := (
+	processStandardPrimitive[primitive]
+)
+
+(*====================================*)
+
+Options[DiaFunction] = {
+	Background -> Blend[{Gray, Orange}, 0.7]
+}
+
+DiaFunction /: MakeDiagramPrimitives[
+	primitive: _DiaFunction
+] := (
+	processStandardPrimitive[primitive]
+)
+
+(*========================================================*)
+(* Helpers                                                *)
+(*========================================================*)
+
+SetFallthroughError[processStandardPrimitive]
+
+processStandardPrimitive[
+	primitive: (head_Symbol[args___])
+] := Module[{
+	id,
+	content
+},
+	{id, content} = ConfirmReplace[primitive, {
+		head[
+			id: _?StringQ,
+			___?OptionQ
+		] :> {id, id},
+		head[
+			id: _?StringQ,
+			content: Except[_?OptionQ],
+			___?OptionQ
+		] :> {id, content},
+		other_ :> Raise[
+			DiagramError,
+			"Unexpected form for diagram primitive: ``",
+			InputForm[other]
+		]
+	}];
+
+	content = MakeDiagramPrimitives[content];
+
+	DiaBox[
+		id,
+		content,
+		Sequence @@ AbsoluteOptions2[primitive]
 	]
 ]

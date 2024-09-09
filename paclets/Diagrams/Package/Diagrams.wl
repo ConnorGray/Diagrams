@@ -339,13 +339,41 @@ DiagramGraph[
 SetFallthroughError[MakeDiagramPrimitives]
 
 MakeDiagramPrimitives[arrow_DiaArrow] := arrow
+(* FIXME: We should recursive into the content of DiaBox primitives, because
+	the user might specified non-primitive content. Add test and fix this. *)
 MakeDiagramPrimitives[box_DiaBox] := box
+
+(* FIXME:
+	Strings should be valid as DiaBox content, not valid as a root-level
+	element? *)
+MakeDiagramPrimitives[str: _?StringQ] := (
+	str
+)
+
+MakeDiagramPrimitives[Row[content: _List]] := (
+	Row[Map[MakeDiagramPrimitives, content]]
+)
+MakeDiagramPrimitives[Column[content: _List]] := (
+	Column[Map[MakeDiagramPrimitives, content]]
+)
+
+MakeDiagramPrimitives[content: _List] :=
+	Raise[
+		DiagramError,
+		<| "Content" -> content |>,
+		StringJoin[
+			"MakeDiagramPrimitives: Lists ({..}) are not a valid diagram content primitive.",
+			(* FIXME: Work around Package Format "\n" parsing bug. *)
+			FromCharacterCode[10],
+			"Hint: Consider using Row or Column to add manual layout."
+		]
+	]
 
 
 MakeDiagramPrimitives[elem_] :=
 	RaiseError[
 		"MakeDiagramPrimitives: unable to convert unrecognized diagram element form: ``.",
-		InputForm[{elem}]
+		InputForm[elem]
 	]
 
 (*====================================*)
