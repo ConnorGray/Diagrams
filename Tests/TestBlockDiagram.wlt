@@ -29,3 +29,24 @@ Module[{diagram},
 		{"Graphics"}
 	];
 ]
+
+(* TID:240908/2: BlockDiagram of box with Row of inner boxes. *)
+Module[{diagram},
+	diagram = BlockDiagram[
+		DiaBox[
+			"Parent",
+			Row[{
+				DiaBox["Foo"],
+				DiaBox["Bar"]
+			}]
+		],
+		{}
+	];
+
+	VerificationTest[Head[diagram], Diagram];
+
+	VerificationTest[
+		Keys[diagram[[1]]],
+		{"Graphics"}
+	];
+]

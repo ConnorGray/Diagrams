@@ -586,6 +586,42 @@ LayoutBoxContent[
 
 				Bounded[{SizedText[str, rect]}, rect]
 			],
+			(* TID:240908/2: BlockDiagram of box with Row of inner boxes. *)
+			Row[rowElements: _?ListQ] :> Module[{
+				placedRowElements,
+				rowXOffset = 0
+			},
+				placedRowElements = Map[
+					rowElement |-> Module[{result},
+						result = LayoutBoxContent[
+							rowElement,
+							{
+								xOffset + xPadding + rowXOffset,
+								yOffset + yPadding
+							},
+							(* Don't include inner box padding. *)
+							0
+						];
+						RaiseConfirmMatch[
+							result,
+							{
+								{Bounded[_?ListQ, _Rectangle]...},
+								_Rectangle,
+								_Rectangle
+							}
+						];
+
+						RaiseAssert[result[[2]] === result[[3]]];
+
+						rowXOffset += RectangleWidth[result[[2]]] + $Margin;
+
+						result
+					],
+					rowElements
+				];
+
+				boundedForLaidOutContent[placedRowElements]
+			],
 			Column[columnElements: _?ListQ] :> Module[{
 				placedColumnElements,
 				columnYOffset = 0
@@ -612,7 +648,7 @@ LayoutBoxContent[
 
 						RaiseAssert[result[[2]] === result[[3]]];
 
-						columnYOffset += RectangleHeight[result[[2]]];
+						columnYOffset += RectangleHeight[result[[2]]] + $Margin;
 
 						result
 					],
