@@ -9,8 +9,6 @@ PackageUse[Diagrams -> {
 
 	BlockDiagram,
 
-	makeSizedTextInset,
-
 	MakeDiagramPrimitives,
 	LayoutDiagram,
 	RenderPlacedDiagramToGraphics,
@@ -78,9 +76,6 @@ BlockDiagram[
 
 			RaiseAssert[ListQ[graphics]];
 
-			graphics = ReplaceAll[graphics,
-				sizedText: _SizedText :> makeSizedTextInset[sizedText]
-			];
 
 			graphics = Graphics[graphics, Axes -> axes];
 
