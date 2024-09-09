@@ -22,10 +22,11 @@ SetFallthroughError[DoRowsLayout]
 
 (* Layout all diagram boxes in a series of rows. *)
 DoRowsLayout[
-	diagram_Diagram
+	boxes0: _List,
+	arrows0: _List
 ] := Module[{
-	boxes = DiagramBoxes[diagram],
-	arrows = DiagramArrows[diagram],
+	boxes = boxes0,
+	arrows = arrows0,
 	rows,
 	maxRowWidth = 0,
 	xOffset = 0.0,
@@ -33,7 +34,7 @@ DoRowsLayout[
 	placedBoxes = <||>,
 	placedArrows = {}
 },
-	rows = GroupBoxesByGraphRow[diagram];
+	rows = GroupBoxesByGraphRow[boxes, arrows];
 
 	RaiseAssert[MatchQ[rows, {{DiaBox[__] ...} ...}]];
 

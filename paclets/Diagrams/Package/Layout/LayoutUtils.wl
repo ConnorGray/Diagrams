@@ -18,7 +18,7 @@ PackageExport[{
 	Bounded
 }]
 
-GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[diagram]"
+GroupBoxesByGraphRow::usage = "GroupBoxesByGraphRow[boxes, arrows]"
 
 Bounded::usage = "Bounded[g, rect] represents a placed diagram element g whose content bounding box is rect."
 
@@ -230,10 +230,10 @@ SetFallthroughError[GroupBoxesByGraphRow]
 	lifting for a first approximation of the diagram layout, which can then
 	further refined based on e.g. box sizes.
 *)
-GroupBoxesByGraphRow[diagram_Diagram] := With[{
-	boxes = DiagramBoxes[diagram]
-},
-Module[{
+GroupBoxesByGraphRow[
+	boxes: _List,
+	arrows: _List
+] := Module[{
 	rows,
 	boxesById = makeBoxesById[boxes]
 },
@@ -242,7 +242,7 @@ Module[{
 		embedding,
 		vertices
 	},
-		graph = DiagramGraph[diagram];
+		graph = DiagramGraph[boxes, arrows];
 		RaiseAssert[GraphQ[graph]];
 
 		embedding = GraphEmbedding[
@@ -284,7 +284,7 @@ Module[{
 	RaiseAssert[MatchQ[rows, {{DiaBox[__] ...} ...}]];
 
 	rows
-]]
+]
 
 (*======================================*)
 

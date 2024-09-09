@@ -21,11 +21,8 @@ SetFallthroughError[DoRowLayout]
 
 (* Layout all diagram boxes in a single row. *)
 DoRowLayout[
-	Diagram[
-		boxes:{___DiaBox},
-		arrows:{___DiaArrow},
-		___?OptionQ
-	]
+	boxes: {___DiaBox},
+	arrows: {___DiaArrow}
 ] := Module[{
 	xOffset,
 	placedBoxes,

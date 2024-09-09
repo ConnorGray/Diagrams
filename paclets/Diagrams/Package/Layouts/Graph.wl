@@ -21,17 +21,18 @@ SetFallthroughError[DoGraphLayout]
 
 (* Layout all diagram boxes based on their Graph[..] layout. *)
 DoGraphLayout[
-	diagram_Diagram
+	boxes0: _List,
+	arrows0: _List
 ] := Module[{
-	boxes = DiagramBoxes[diagram],
-	arrows = DiagramArrows[diagram],
+	boxes = boxes0,
+	arrows = arrows0,
 	graph,
 	embedding,
 	vertices,
 	placedBoxes = <||>,
 	placedArrows = {}
 },
-	graph = DiagramGraph[diagram];
+	graph = DiagramGraph[boxes, arrows];
 	RaiseAssert[GraphQ[graph]];
 
 	embedding = GraphEmbedding[

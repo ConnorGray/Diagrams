@@ -5,6 +5,7 @@ Package["Diagrams`Kinds`"]
 	into the overall Diagrams package framework.
 *)
 
+PackageModule["Block"]
 PackageModule["BlockStack"]
 PackageModule["BinaryLayout"]
 PackageModule["Program"]

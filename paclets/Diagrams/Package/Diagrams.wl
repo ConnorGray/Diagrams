@@ -23,7 +23,7 @@ PackageExport[{
 	MakeDiagramPrimitives,
 
 	(* Operations on Diagram[..] *)
-	DiagramImage, DiagramGraph,
+	DiagramGraph,
 	DiagramAnnotate,
 
 	(* Options on Diagram[..] and diagram elements *)
@@ -51,6 +51,9 @@ PackageExport[{
 
 	DiaID,
 
+	(* FIXME: Make this private. Or generalize this and move it to Utils`? *)
+	makeSizedTextInset,
+
 	(*----------------------*)
 	(* Annotation concepts. *)
 	(*----------------------*)
@@ -61,6 +64,7 @@ PackageExport[{
 	(* Diagram Functions *)
 	(*-------------------*)
 
+	BlockDiagram,
 	BlockStackDiagram,
 	TreeStackDiagram,
 	MultiBlockStackDiagram,
@@ -81,8 +85,7 @@ MakeDiagramPrimitives::usage = "MakeDiagramPrimitives[expr] will convert expr in
 (* Operations on Diagram[..] *)
 (*---------------------------*)
 
-DiagramImage::usage = "DiagramImage[diagram] returns an image containing the graphical representation of diagram."
-DiagramGraph::usage = "DiagramGraph[diagram] returns a Graph object representing the relations between diagram elements blocks."
+DiagramGraph::usage = "DiagramGraph[boxes, arrows] returns a Graph object representing the relations between diagram elements blocks."
 
 (*---------------------------------------------*)
 (* Options on Diagram[..] and diagram elements *)
@@ -113,7 +116,7 @@ AttachmentQ::usage = "AttachmentQ[spec] will return True if spec is a valid diag
 (* Internal / intermediate diagram operations *)
 (*--------------------------------------------*)
 
-LayoutDiagram::usage = "LayoutDiagram[diagram] uses a suitable layout algorithm to produce a PlacedDiagram"
+LayoutDiagram::usage = "LayoutDiagram[boxes, arrows] uses a suitable layout algorithm to produce a PlacedDiagram"
 
 RenderPlacedDiagramToGraphics
 
@@ -128,6 +131,7 @@ RenderedTextSize
 (*========================================================*)
 
 Diagrams::error = "``"
+Diagrams::deprecated = "``"
 
 
 PackageUse[Diagrams -> {
@@ -146,16 +150,10 @@ PackageUse[Diagrams -> {
 
 (*----------------------------------------------------------------------------*)
 
-Options[Diagram] = {
-	DiagramLayout -> Automatic,
-	DiagramTheme -> Automatic,
-
-	(* Graphics options *)
-	Axes :> $DebugDiagramLayout
-};
-
-(*--------------------------------------*)
-
+(* TODO:
+	This is a legacy definition for backwards-compatibility. Remove this after
+	I've updated all my old Diagram[..] instances and validated the new
+	BlockDiagram function works the same. *)
 (* FIXME:
 	Should Diagram[..] actually eagerly evaluate the high-level element types
 	into primitives? Perhaps this should be delayed until rendering time? *)
@@ -164,53 +162,20 @@ Options[Diagram] = {
 	MakeDiagramPrimitives to reduce the forms to primitive ones.
 *)
 Diagram[
-	Optional[title_?StringQ, None],
+	Optional[title: _?StringQ, None],
 	boxes:{___},
 	arrows:{___},
-	opts___?OptionQ
-] /; Or[
-	MemberQ[boxes, Except[_DiaBox]],
-	MemberQ[arrows, Except[_DiaArrow]]
-] := Diagram[
-	Replace[title, None :> Sequence[]],
-	Map[validatedMakeDiagramPrimitives, boxes],
-	Map[validatedMakeDiagramPrimitives, arrows],
-	opts
-]
+	opts: ___?OptionQ
+] := (
+	Message[
+		Diagrams::deprecated,
+		"Diagrams[boxes_, arrows_] form has been replaced with BlockDiagram[..]"
+	];
 
-
-(*
-	Validate that the return values of MakeDiagramPrimitives are in fact valid
-	diagram primitives. Doing this validation is particularly important for UX
-	because MakeDiagramPrimitives is intended to be overloaded by users, so we
-	want to be proactive and helpful about validating the forms they return to
-	us.
-*)
-(* TODO:
-	If we're reducing forms that should reduce to DiaArrow, we should be
-	validating that we didn't get a DiaBox[..], and vice versa. *)
-validatedMakeDiagramPrimitives[args___] := Module[{result},
-	result = MakeDiagramPrimitives[args];
-
-	Replace[result, {
-		DiaBox[id_?StringQ, Optional[content:Except[_?OptionQ], None], ___?OptionQ] :> result,
-		(* FIXME: Validate these attachment specifications proactively. *)
-		DiaArrow[lhs_ -> rhs_, _?StringQ, Optional[_, None], ___?OptionQ] :> result,
-		_ :> RaiseError[
-			"MakeDiagramPrimitives of `` returned invalid diagram primitive: ``",
-			InputForm[args],
-			InputForm[result]
-		]
-	}]
-]
+	BlockDiagram[boxes, arrows, opts]
+)
 
 (*======================================*)
-
-Diagram /: MakeBoxes[
-	obj : Diagram[boxes:{___}, arrows:{___}, opts___?OptionQ],
-	form : StandardForm
-] := Module[{},
-	ToBoxes @ Interpretation[DiagramImage[obj], obj]
 
 	(* BoxForm`ArrangeSummaryBox[
 		Diagram,
@@ -223,7 +188,6 @@ Diagram /: MakeBoxes[
 		{},
 		form
 	] *)
-]
 
 Diagram /: MakeBoxes[
 	diagram:Diagram[
@@ -274,62 +238,6 @@ Subgraphs[graph_Graph] := Map[
 ]
 
 (*----------------------------------------------------------------------------*)
-
-Options[DiagramImage] = {Method -> Automatic}
-
-DiagramImage[diagram_Diagram, OptionsPattern[]] := Replace[OptionValue[Method], {
-	Automatic :> Module[{
-		theme = RaiseConfirm @ Lookup[Options[diagram], DiagramTheme, Automatic],
-		placed,
-		graphics,
-		title = DiagramTitle[diagram],
-		axes = Replace[Lookup[Options[diagram], Axes], {
-			_?MissingQ | Automatic :> TrueQ[$DebugDiagramLayout],
-			other_ :> other
-		}]
-	},
-		placed = LayoutDiagram[diagram];
-		graphics = RenderPlacedDiagramToGraphics[placed, theme];
-
-		RaiseAssert[ListQ[graphics]];
-
-		graphics = ReplaceAll[graphics,
-			sizedText_SizedText :> makeSizedTextInset[sizedText]
-		];
-
-		graphics = Graphics[graphics, Axes -> axes];
-
-		If[StringQ[title],
-			Labeled[
-				graphics,
-				title,
-				Top,
-				Frame -> True,
-				FrameMargins -> 10,
-				Background -> LightGray,
-				RoundingRadius -> 6,
-				Spacings -> 4
-			]
-			,
-			graphics
-		]
-	],
-	"alpha-v2" :> Module[{placed, graphics},
-		placed = LayoutDiagram[diagram];
-		graphics = RenderPlacedDiagramToGraphics[placed];
-
-		DiagramGraphicsImage[Graphics[N @ Flatten @ graphics]]
-	],
-	"alpha-v1" :> Module[{result},
-		result = $LibraryFunctions["diagram_image"][diagram];
-
-		Replace[result, {
-			bytes:{___?IntegerQ} :> ImageCrop @ ImportByteArray[ByteArray[bytes], "PNG"]
-		}]
-	]
-}]
-
-(*------------------------------------*)
 
 makeSizedTextInset[sizedText_SizedText] := Module[{
 	str,
@@ -475,10 +383,11 @@ RenderedTextSize[args___] :=
 SetFallthroughError[DiagramGraph]
 
 DiagramGraph[
-	diagram_Diagram
+	boxes0: _List,
+	arrows0: _List
 ] := Module[{
-	boxes = DiagramBoxes[diagram],
-	arrows = DiagramArrows[diagram],
+	boxes = boxes0,
+	arrows = arrows0,
 	vertices,
 	edges
 },

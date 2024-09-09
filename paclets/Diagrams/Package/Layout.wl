@@ -22,8 +22,11 @@ $DebugDiagramLayout = False
 
 PackageUse[Diagrams -> {
 	Diagram, DiagramLayout, DiagramTitle, LayoutDiagram, PlacedDiagram,
+	DiagramError,
 	BoxPadding,
-	Errors -> {RaiseError, RaiseAssert, SetFallthroughError},
+	Errors -> {
+		RaiseError, RaiseAssert, SetFallthroughError, ConfirmReplace
+	},
 	Layouts -> {
 		DoRowLayout, DoRowsLayout, DoEqualWidthRowsLayout, DoGraphLayout
 	}
@@ -34,18 +37,15 @@ PackageUse[Diagrams -> {
 SetFallthroughError[LayoutDiagram]
 
 LayoutDiagram[
-	diagram_Diagram,
-	algoSpec0 : _?StringQ : Automatic
+	boxes: _?ListQ,
+	arrows: _?ListQ,
+	algo0 : _ : Automatic
 ] := Module[{
-	title = DiagramTitle[diagram],
-	diagramOpts = Options[diagram],
-	algo,
+	algo = algo0,
 	algoOpts,
 	result
 },
-	algo = Replace[algoSpec0, Automatic :> OptionValue[Diagram, diagramOpts, DiagramLayout]];
-
-	{algo, algoOpts} = Replace[algo, {
+	{algo, algoOpts} = ConfirmReplace[algo, {
 		name : (Automatic | _?StringQ) :> {name, {}},
 		{name : (Automatic | _?StringQ), opts___?OptionQ} :> {name, {opts}},
 		_ :> RaiseError["Invalid diagram layout specification: ``", algo]
@@ -61,20 +61,12 @@ LayoutDiagram[
 		]
 	},
 		result = Replace[algo, {
-			"Row" :> DoRowLayout[diagram],
-			"Rows" :> DoRowsLayout[diagram],
-			"EqualWidthRows" :> DoEqualWidthRowsLayout[diagram],
-			"Graph" :> DoGraphLayout[diagram],
+			"Row" :> DoRowLayout[boxes, arrows],
+			"Rows" :> DoRowsLayout[boxes, arrows],
+			"EqualWidthRows" :> DoEqualWidthRowsLayout[boxes, arrows],
+			"Graph" :> DoGraphLayout[boxes, arrows],
 			_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 		}];
-	];
-
-	If[
-		And[
-			StringQ[title],
-			MatchQ[result, PlacedDiagram[boxes_?ListQ, arrows_?ListQ]]
-		],
-		result = PlacedDiagram[title, boxes, arrows]
 	];
 
 	RaiseAssert[
