@@ -44,15 +44,15 @@ SetFallthroughError[BlockDiagram]
 
 BlockDiagram[
 	Optional[title: _?StringQ, None],
-	boxes0: _?ListQ,
-	arrows0: _?ListQ,
+	boxes0: _,
+	arrows0: _,
 	OptionsPattern[]
 ] := Handle[_Failure] @ WrapRaised[
 	DiagramError,
 	"Error creating BlockDiagram"
 ] @ Module[{
-	boxes = boxes0,
-	arrows = arrows0
+	boxes = Replace[boxes0, single:Except[_List] :> {single}],
+	arrows = Replace[arrows0, single:Except[_List] :> {single}]
 },
 	boxes = Map[validatedMakeDiagramPrimitives, boxes];
 	arrows = Map[validatedMakeDiagramPrimitives, arrows];
