@@ -5,6 +5,7 @@ PackageExport[{
 }]
 
 PackageUse[Diagrams -> {
+	DiagramError,
 	PlacedDiagram, RenderPlacedDiagramToGraphics, DiaBox, DiaArrow,
 	DiagramElementContent,
 	Layout -> {
@@ -12,7 +13,10 @@ PackageUse[Diagrams -> {
 		LayoutUtils -> Bounded
 	},
 	Utils -> {RectangleSize, RectangleCenter},
-	Errors -> {RaiseError, RaiseConfirm, RaiseConfirmMatch, SetFallthroughError}
+	Errors -> {
+		Raise, RaiseError, RaiseAssert, RaiseConfirm, RaiseConfirmMatch,
+		SetFallthroughError, ConfirmReplace
+	}
 }]
 
 SizedText::usage = "SizedText[s, rect]"
@@ -29,6 +33,8 @@ $DefaultTheme = <|
 	(* "ArrowStroke" -> rgbColor[252, 243, 0] *)
 |>
 
+$theme := Raise[DiagramError, "illegal unscoped access of $theme"]
+
 (*--------------------------------------------------------*)
 
 RenderPlacedDiagramToGraphics[
@@ -38,78 +44,23 @@ RenderPlacedDiagramToGraphics[
 		arrows:{___PlacedArrow}
 	],
 	theme0 : (_?AssociationQ | Automatic) : Automatic
-] := Module[{
-	graphics = {},
-	theme = Replace[theme0, {
+] := Block[{
+	$theme = Replace[theme0, {
 		Automatic :> $DefaultTheme,
 		(* If custom theme rules were specified, use defaults from $DefaultTheme.
 		   Rules in `theme0` will override those in $DefaultTheme. *)
 		_?AssociationQ :> Join[$DefaultTheme, theme0]
 	}]
+}, Module[{
+	graphics
 },
 	(*------------*)
 	(* Draw boxes *)
 	(*------------*)
 
-	Scan[
-		Replace[{
-			PlacedBox[
-				DiaBox[
-					id_?StringQ,
-					Optional[content0:Except[_?OptionQ], None],
-					opts___?OptionQ
-				],
-				placedContent_?ListQ,
-				contentRect_Rectangle,
-				(* Border rect *)
-				Rectangle[min_, max_]
-			] :> Module[{
-				contentGraphics,
-				background = Lookup[
-					{opts},
-					Background,
-					RaiseConfirm @ Lookup[theme, "BoxBackground"]
-				]
-			},
-				(* Draw the background and border first. *)
-				AppendTo[graphics, {
-					(* FaceForm[RaiseConfirm @ Lookup[theme, "BoxBackground"]], *)
-					background,
-					EdgeForm[{
-						RaiseConfirm @ Lookup[theme, "BoxBorder"],
-						AbsoluteThickness[4.0]
-					}],
-					Rectangle[min, max, RoundingRadius -> 3]
-				}];
-
-				(* FIXME: Re-implement usage of the "BoxTextColor" theme property. *)
-				contentGraphics = ReplaceRepeated[placedContent, {
-					Bounded[{g_Graphics}, rect_] :> Echo @ {
-						Inset[
-							g,
-							RectangleCenter[rect],
-							Automatic,
-							RectangleSize[rect]
-						]
-					},
-					Bounded[c_?ListQ, _Rectangle] :> c
-				}];
-
-				RaiseConfirmMatch[contentGraphics, _?ListQ];
-
-				AppendTo[graphics, contentGraphics];
-
-				If[TrueQ[$DebugDiagramLayout],
-					AppendTo[graphics, {
-						FaceForm[Transparent],
-						EdgeForm[Directive[Dashed, Red]],
-						contentRect
-					}];
-				];
-			],
-			other_ :> RaiseError["unexpected diagram placed box structure: ``", other]
-		}],
-		boxes
+	graphics = Map[
+		placedContentToGraphics,
+		Values[boxes]
 	];
 
 	(*-------------*)
@@ -124,7 +75,7 @@ RenderPlacedDiagramToGraphics[
 				endPoint:{_?NumberQ, _?NumberQ}
 			] :> Module[{},
 				AppendTo[graphics, {
-					RaiseConfirm @ Lookup[theme, "ArrowStroke"],
+					RaiseConfirm @ Lookup[$theme, "ArrowStroke"],
 					AbsoluteThickness[4.0],
 					Arrowheads[0.06],
 					Replace[
@@ -157,7 +108,84 @@ RenderPlacedDiagramToGraphics[
 	];
 
 	graphics
-]
+]]
+
+(*------------------------------------*)
+
+SetFallthroughError[placedContentToGraphics]
+
+placedContentToGraphics[placedContent0: _] := ConfirmReplace[placedContent0, {
+	PlacedBox[
+		DiaBox[
+			_?StringQ,
+			Optional[unused: Except[_?OptionQ], None],
+			opts: ___?OptionQ
+		],
+		placedContent1: _?ListQ,
+		contentRect: _Rectangle,
+		(* Border rect *)
+		Rectangle[min: _, max: _]
+	] :> Module[{
+		graphics = {},
+		contentGraphics,
+		background = Lookup[
+			{opts},
+			Background,
+			RaiseConfirm @ Lookup[$theme, "BoxBackground"]
+		]
+	},
+		(* Draw the background and border first. *)
+		AppendTo[graphics, {
+			(* FaceForm[RaiseConfirm @ Lookup[theme, "BoxBackground"]], *)
+			background,
+			EdgeForm[{
+				RaiseConfirm @ Lookup[$theme, "BoxBorder"],
+				AbsoluteThickness[4.0]
+			}],
+			Rectangle[min, max, RoundingRadius -> 3]
+		}];
+
+		(* FIXME: Re-implement usage of the "BoxTextColor" theme property. *)
+		contentGraphics = placedContentToGraphics[placedContent1];
+
+		RaiseConfirmMatch[contentGraphics, _?ListQ];
+
+		AppendTo[graphics, contentGraphics];
+
+		If[TrueQ[$DebugDiagramLayout],
+			AppendTo[graphics, {
+				FaceForm[Transparent],
+				EdgeForm[Directive[Dashed, Red]],
+				contentRect
+			}];
+		];
+
+		graphics
+	],
+
+	list: _List :> (
+		Map[placedContentToGraphics, list]
+	),
+
+	(* This is lazily converted to more fundamental text primitives. *)
+	text: SizedText[_?StringQ, _Rectangle] :> text,
+	Bounded[{g: _Graphics}, rect_] :> {
+		Inset[
+			g,
+			RectangleCenter[rect],
+			Automatic,
+			RectangleSize[rect]
+		]
+	},
+	Bounded[innerContent: _?ListQ, _Rectangle] :> (
+		Map[placedContentToGraphics, innerContent]
+	),
+	other: _ :> Raise[
+		DiagramError,
+		"unexpected form for placed content cannot be converted to Graphics directives: ``",
+		InputForm[other]
+	]
+}]
 
 (*====================================*)
 

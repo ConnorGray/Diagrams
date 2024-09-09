@@ -594,7 +594,10 @@ LayoutBoxContent[
 					columnElement |-> Module[{result},
 						result = LayoutBoxContent[
 							columnElement,
-							{xOffset, yOffset + columnYOffset},
+							{
+								xOffset + xPadding,
+								yOffset + yPadding + columnYOffset
+							},
 							(* Don't include inner box padding. *)
 							0
 						];
@@ -653,6 +656,28 @@ LayoutBoxContent[
 				rect = Rectangle[{xOffset, yOffset}, {xOffset + 20, yOffset + 20}];
 
 				Bounded[{graphic}, rect]
+			],
+			(* TID:240908/1: BlockDiagram of box with Column of inner boxes. *)
+			innerBox: _DiaBox :> Module[{
+				innerPlacedBox,
+				innerPlacedContent,
+				innerContentRect,
+				innerBorderRect
+			},
+				innerPlacedBox = MakePlacedBox[
+					innerBox,
+					{xOffset + xPadding, yOffset + yPadding}
+				];
+
+				ConfirmReplace[innerPlacedBox, {
+					PlacedBox[_, one_, two_, three_] :> (
+						innerPlacedContent = one;
+						innerContentRect = two;
+						innerBorderRect = three;
+					)
+				}];
+
+				Bounded[{innerPlacedBox}, innerBorderRect]
 			],
 			other_ :> RaiseError[
 				"Unrecognized diagram box content element: ``",
@@ -777,7 +802,8 @@ SetFallthroughError[ContentQ]
 ContentQ[expr_] :=
 	MatchQ[expr, Alternatives[
 		SizedText[_?StringQ, _Rectangle],
-		Graphics[___]
+		Graphics[___],
+		PlacedBox[__]
 	]]
 
 (*====================================*)
