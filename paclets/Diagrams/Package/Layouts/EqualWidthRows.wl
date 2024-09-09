@@ -1,7 +1,7 @@
 Package["Diagrams`Layouts`EqualWidthRows`"]
 
 PackageUse[Diagrams -> {
-	Diagram, PlacedDiagram, DiagramBoxes, DiagramArrows, DiagramElementId,
+	Diagram, PlacedDiagram, DiagramElementId,
 	DiagramElementContent, DiaBox,
 	Layouts -> DoEqualWidthRowsLayout,
 	Layout -> {

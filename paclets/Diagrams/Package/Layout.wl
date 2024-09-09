@@ -21,7 +21,7 @@ $DebugDiagramLayout = False
 
 
 PackageUse[Diagrams -> {
-	Diagram, DiagramLayout, DiagramTitle, LayoutDiagram, PlacedDiagram,
+	Diagram, DiagramLayout, LayoutDiagram, PlacedDiagram,
 	DiagramError,
 	BoxPadding,
 	Errors -> {

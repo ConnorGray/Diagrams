@@ -32,8 +32,6 @@ PackageExport[{
 	BoxPadding,
 
 	(* Operations querying data in a Diagram[..] or diagram element *)
-	DiagramTitle, DiagramBoxes, DiagramArrows,
-
 	DiagramElementId, DiagramElementContent,
 
 	DiagramArrowIds,
@@ -96,10 +94,6 @@ BoxPadding::usage = "BoxPadding is a suboption to DiagramLayout that specifies t
 (*---------------------------------------------------------------*)
 (* Operations querying data in a Diagram[..] or diagram element. *)
 (*---------------------------------------------------------------*)
-
-DiagramTitle::usage = "DiagramTitle[diagram]"
-DiagramBoxes::usage = "DiagramBoxes[diagram]"
-DiagramArrows::usage = "DiagramArrows[diagram]"
 
 DiagramElementId::usage = "DiagramElementId[elem] will return the unique identifer associated with a diagram element."
 DiagramElementContent::usage = "DiagramElementContent[elem] will return the textual or graphical content associated with a diagram element, if applicable."
@@ -356,45 +350,6 @@ MakeDiagramPrimitives[elem_] :=
 
 (*====================================*)
 (* Diagram property accessors         *)
-(*====================================*)
-
-SetFallthroughError[DiagramTitle]
-
-DiagramTitle[
-	diagram:Diagram[
-		Optional[title_?StringQ, None],
-		{___DiaBox},
-		{___DiaArrow},
-		___?OptionQ
-	]
-] := title
-
-(*====================================*)
-
-SetFallthroughError[DiagramBoxes]
-
-DiagramBoxes[
-	diagram:Diagram[
-		Optional[_?StringQ, None],
-		boxes:{___DiaBox},
-		{___DiaArrow},
-		___?OptionQ
-	]
-] := boxes
-
-(*====================================*)
-
-SetFallthroughError[DiagramArrows]
-
-DiagramArrows[
-	diagram:Diagram[
-		Optional[_?StringQ, None],
-		{___DiaBox},
-		arrows:{___DiaArrow},
-		___?OptionQ
-	]
-] := arrows
-
 (*====================================*)
 
 SetFallthroughError[DiagramElementId]

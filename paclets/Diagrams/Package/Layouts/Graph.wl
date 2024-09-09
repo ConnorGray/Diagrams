@@ -2,7 +2,7 @@ Package["Diagrams`Layouts`Graph`"]
 
 PackageUse[Diagrams -> {
 	Diagram, DiaBox, DiaArrow, DiagramElementContent, DiagramElementId,
-	PlacedDiagram, DiagramGraph, DiagramBoxes, DiagramArrows,
+	PlacedDiagram, DiagramGraph,
 	Layouts -> DoGraphLayout,
 	Layout -> {
 		PlacedBox,

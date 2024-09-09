@@ -27,7 +27,7 @@ AnnotationToGraphics[annotation$, regions$] returns Graphics directives visualiz
 "
 
 PackageUse[Diagrams -> {
-	Diagram, DiagramBoxes, DiagramGraph, DiagramArrowIds, DiagramElementId,
+	Diagram, DiagramGraph, DiagramArrowIds, DiagramElementId,
 	DiagramElementContent, DiaArrow, DiaBox, RenderedTextSize,
 	DiaID, DiaBracket, DiaHighlight,
 	DiagramError,

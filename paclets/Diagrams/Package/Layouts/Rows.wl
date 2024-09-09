@@ -2,7 +2,7 @@ Package["Diagrams`Layouts`Rows`"]
 
 PackageUse[Diagrams -> {
 	Diagram, DiaBox, DiaArrow, DiagramElementContent, DiagramElementId,
-	PlacedDiagram, DiagramBoxes, DiagramArrows,
+	PlacedDiagram,
 	Layouts -> DoRowsLayout,
 	Layout -> {
 		$Margin,
