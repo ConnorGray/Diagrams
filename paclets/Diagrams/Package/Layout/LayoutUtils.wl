@@ -588,8 +588,7 @@ LayoutBoxContent[
 			],
 			Column[columnElements: _?ListQ] :> Module[{
 				placedColumnElements,
-				columnYOffset = 0,
-				columnBoundingBox
+				columnYOffset = 0
 			},
 				placedColumnElements = Map[
 					columnElement |-> Module[{result},
@@ -626,32 +625,7 @@ LayoutBoxContent[
 					Reverse[columnElements]
 				];
 
-				RaiseConfirmMatch[
-					placedColumnElements,
-					{{{___Bounded}, _Rectangle, _Rectangle}...}
-				];
-
-				columnBoundingBox = RectangleBoundingBox @ RaiseConfirmMatch[
-					Part[placedColumnElements, All, 2],
-					{___Rectangle}
-				];
-
-				placedColumnElements = Part[placedColumnElements, All, 1];
-
-				RaiseConfirmMatch[
-					placedColumnElements,
-					{{Bounded[{___?ContentQ}, _Rectangle]...}...}
-				];
-
-				placedColumnElements = Part[placedColumnElements, All, 1, 1];
-
-				RaiseConfirmMatch[placedColumnElements, {{___?ContentQ}...}];
-
-				placedColumnElements = Flatten[placedColumnElements];
-
-				RaiseConfirmMatch[placedColumnElements, {___?ContentQ}];
-
-				Bounded[placedColumnElements, columnBoundingBox]
+				boundedForLaidOutContent[placedColumnElements]
 			],
 			graphic: _Graphics :> Module[{rect},
 				rect = Rectangle[{xOffset, yOffset}, {xOffset + 20, yOffset + 20}];
@@ -698,6 +672,45 @@ LayoutBoxContent[
 	];
 
 	{elements, contentBoundingRect, borderRect}
+]
+
+(*====================================*)
+
+SetFallthroughError[boundedForLaidOutContent]
+
+(*
+	Returns a Bounded[content, rect] that contains the specified laid-out
+	content.
+*)
+boundedForLaidOutContent[
+	placedElements0: {
+		{{___Bounded}, _Rectangle, _Rectangle} ...
+	}
+] := Module[{
+	placedElements = placedElements0,
+	boundingBox
+},
+	boundingBox = RectangleBoundingBox @ RaiseConfirmMatch[
+		Part[placedElements, All, 2],
+		{___Rectangle}
+	];
+
+	placedElements = Part[placedElements, All, 1];
+
+	RaiseConfirmMatch[
+		placedElements,
+		{{Bounded[{___?ContentQ}, _Rectangle]...}...}
+	];
+
+	placedElements = Part[placedElements, All, 1, 1];
+
+	RaiseConfirmMatch[placedElements, {{___?ContentQ}...}];
+
+	placedElements = Flatten[placedElements];
+
+	RaiseConfirmMatch[placedElements, {___?ContentQ}];
+
+	Bounded[placedElements, boundingBox]
 ]
 
 (*====================================*)
