@@ -588,7 +588,8 @@ LayoutBoxContent[
 			],
 			Column[columnElements: _?ListQ] :> Module[{
 				placedColumnElements,
-				columnYOffset = 0
+				columnYOffset = 0,
+				columnBoundingBox
 			},
 				placedColumnElements = Map[
 					columnElement |-> Module[{result},
@@ -630,8 +631,10 @@ LayoutBoxContent[
 					{{{___Bounded}, _Rectangle, _Rectangle}...}
 				];
 
-				boundingBoxes = Part[placedColumnElements, All, 2];
-				RaiseConfirmMatch[boundingBoxes, {Rectangle[__]...}];
+				columnBoundingBox = RectangleBoundingBox @ RaiseConfirmMatch[
+					Part[placedColumnElements, All, 2],
+					{___Rectangle}
+				];
 
 				placedColumnElements = Part[placedColumnElements, All, 1];
 
@@ -647,8 +650,6 @@ LayoutBoxContent[
 				placedColumnElements = Flatten[placedColumnElements];
 
 				RaiseConfirmMatch[placedColumnElements, {___?ContentQ}];
-
-				columnBoundingBox = RectangleBoundingBox[boundingBoxes];
 
 				Bounded[placedColumnElements, columnBoundingBox]
 			],
