@@ -33,7 +33,7 @@ PackageUse[Diagrams -> {
 	DiagramError,
 	Errors -> {
 		Raise, RaiseError, RaiseConfirm, RaiseAssert, RaiseConfirmMatch,
-		ConfirmReplace, SetFallthroughError
+		ConfirmReplace, SetFallthroughError, WrapRaised
 	},
 	Render -> SizedText,
 	Layout -> {$TextWidth, $BoxPadding, $Margin, PlacedBox, PlacedArrow},
@@ -233,10 +233,15 @@ SetFallthroughError[GroupBoxesByGraphRow]
 GroupBoxesByGraphRow[
 	boxes: _List,
 	arrows: _List
-] := Module[{
+] := WrapRaised[
+	DiagramError,
+	"Error grouping boxes by graph row"
+] @ Module[{
 	rows,
 	boxesById = makeBoxesById[boxes]
 },
+	RaiseAssert[AssociationQ[boxesById]];
+
 	rows = Module[{
 		graph,
 		embedding,
