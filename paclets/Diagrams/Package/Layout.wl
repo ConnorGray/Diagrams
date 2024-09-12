@@ -28,6 +28,7 @@ PackageUse[Diagrams -> {
 		RaiseError, RaiseAssert, SetFallthroughError, ConfirmReplace
 	},
 	Layouts -> {
+		DoManualLayout,
 		DoRowLayout, DoRowsLayout, DoEqualWidthRowsLayout, DoGraphLayout
 	}
 }]
@@ -52,7 +53,17 @@ LayoutDiagram[
 	}];
 
 	(* Default to "RowsLayout". *)
-	algo = Replace[algo, Automatic :> "Rows"];
+	(* If there is only one box, then this is likely a hierarchical diagram,
+		so the top-level layout algorithm does not matter. *)
+	algo = Replace[
+		algo,
+		Automatic :> Which[
+			Length[boxes] === 1,
+				"Manual",
+			True,
+				"Rows"
+		]
+	];
 
 	Block[{
 		$BoxPadding = Replace[
@@ -65,6 +76,7 @@ LayoutDiagram[
 			"Rows" :> DoRowsLayout[boxes, arrows],
 			"EqualWidthRows" :> DoEqualWidthRowsLayout[boxes, arrows],
 			"Graph" :> DoGraphLayout[boxes, arrows],
+			"Manual" :> DoManualLayout[boxes, arrows],
 			_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 		}];
 	];

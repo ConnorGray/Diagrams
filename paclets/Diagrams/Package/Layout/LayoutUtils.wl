@@ -49,9 +49,10 @@ SetFallthroughError[PlaceArrowsBasedOnBoxes]
 
 PlaceArrowsBasedOnBoxes[
 	arrows: {___DiaArrow},
-	placedBoxes: _?AssociationQ,
+	placedBoxes0: _?AssociationQ,
 	sides : _ : Automatic
 ] := Module[{
+	placedBoxes,
 	(*
 		<|
 			(* The number of arrows that start or end at this side of the box's
@@ -69,6 +70,15 @@ PlaceArrowsBasedOnBoxes[
 	incrSideAttachmentCount,
 	getSideLerpFactor
 },
+	(* FIXME:
+		Determine the set of placed boxes in a more structured way
+		instead of using Cases. *)
+	placedBoxes = Cases[
+		placedBoxes0,
+		placedBox:PlacedBox[box: _DiaBox, ___] :> (DiagramElementId[box] -> placedBox),
+		Infinity
+	];
+
 	(*================================*)
 
 	SetFallthroughError[incrSideAttachmentCount];

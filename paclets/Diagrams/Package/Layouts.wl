@@ -5,13 +5,18 @@ PackageModule["Rows"]
 PackageModule["Graph"]
 PackageModule["EqualWidthRows"]
 
+PackageModule["Manual"]
+
 PackageExport[{
 	$DiagramLayouts,
 
 	DoRowLayout,
 	DoRowsLayout,
 	DoGraphLayout,
-	DoEqualWidthRowsLayout
+	DoEqualWidthRowsLayout,
+
+	(* Special case, where layout is manual. *)
+	DoManualLayout
 }]
 
 $DiagramLayouts = {
