@@ -8,7 +8,7 @@ PackageUse[Diagrams -> {
 		$Margin,
 		PlacedBox,
 		LayoutUtils -> {
-			MakePlacedBox, PlacedBoxBorderRectangle, PlaceArrowsBasedOnBoxes
+			MakePlacedBox, PlacedBoxBorderRectangle
 		}
 	},
 	Utils -> {RectangleWidth},
@@ -21,16 +21,13 @@ SetFallthroughError[DoRowLayout]
 
 (* Layout all diagram boxes in a single row. *)
 DoRowLayout[
-	boxes: {___DiaBox},
-	arrows: {___DiaArrow}
+	boxes: {___DiaBox}
 ] := Module[{
 	xOffset,
-	placedBoxes,
-	placedArrows
+	placedBoxes
 },
 	xOffset = 0.0;
 	placedBoxes = <||>;
-	placedArrows = {};
 
 	(*-------------*)
 	(* Place boxes *)
@@ -55,17 +52,5 @@ DoRowLayout[
 		boxes
 	];
 
-	(*--------------*)
-	(* Place arrows *)
-	(*--------------*)
-
-	placedArrows = PlaceArrowsBasedOnBoxes[arrows, placedBoxes];
-
-	RaiseAssert[Length[placedArrows] === Length[arrows]];
-	RaiseAssert[Length[placedBoxes] === Length[boxes]];
-
-	PlacedDiagram[
-		placedBoxes,
-		placedArrows
-	]
+	placedBoxes
 ]

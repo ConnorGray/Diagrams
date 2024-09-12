@@ -9,9 +9,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin,
 		PlacedBox,
-		LayoutUtils -> {
-			MakePlacedBox, PlaceArrowsBasedOnBoxes
-		}
+		LayoutUtils -> {MakePlacedBox}
 	},
 	Errors -> {Raise, RaiseAssert, SetFallthroughError, ConfirmReplace}
 }]
@@ -28,8 +26,7 @@ DoManualLayout[
 	arrows = arrows0,
 	singleBox,
 	boxID,
-	placedBox,
-	placedArrows,
+	placedBox
 },
 	singleBox = ConfirmReplace[boxes, {
 		{single: _DiaBox} :> single,
@@ -43,13 +40,5 @@ DoManualLayout[
 
 	placedBox = MakePlacedBox[singleBox];
 
-	placedArrows = PlaceArrowsBasedOnBoxes[
-		arrows,
-		<| boxID -> placedBox |>
-	];
-
-	PlacedDiagram[
-		<| boxID -> placedBox |>,
-		placedArrows
-	]
+	<| boxID -> placedBox |>
 ]

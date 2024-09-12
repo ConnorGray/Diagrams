@@ -30,7 +30,8 @@ PackageUse[Diagrams -> {
 	Layouts -> {
 		DoManualLayout,
 		DoRowLayout, DoRowsLayout, DoEqualWidthRowsLayout, DoGraphLayout
-	}
+	},
+	Layout -> {LayoutUtils -> PlaceArrowsBasedOnBoxes}
 }]
 
 (*========================================================*)
@@ -44,6 +45,9 @@ LayoutDiagram[
 ] := Module[{
 	algo = algo0,
 	algoOpts,
+	placedBoxes,
+	arrowPlacementSpec,
+	placedArrows,
 	result
 },
 	{algo, algoOpts} = ConfirmReplace[algo, {
@@ -65,20 +69,51 @@ LayoutDiagram[
 		]
 	];
 
+	(*--------------------------------*)
+	(* Compute box layout             *)
+	(*--------------------------------*)
+
 	Block[{
 		$BoxPadding = Replace[
 			Lookup[algoOpts, BoxPadding, Automatic],
 			Automatic :> $BoxPadding
 		]
 	},
-		result = Replace[algo, {
-			"Row" :> DoRowLayout[boxes, arrows],
-			"Rows" :> DoRowsLayout[boxes, arrows],
-			"EqualWidthRows" :> DoEqualWidthRowsLayout[boxes, arrows],
-			"Graph" :> DoGraphLayout[boxes, arrows],
-			"Manual" :> DoManualLayout[boxes, arrows],
+		{placedBoxes, arrowPlacementSpec} = Replace[algo, {
+			"Row" :> {DoRowLayout[boxes, arrows], Automatic},
+			(* Only permit arrows placed automatically to attach to the bottom or
+				top edge of a box. *)
+			"Rows" :> {DoRowsLayout[boxes, arrows], {Top, Bottom}},
+			"EqualWidthRows" :> {DoEqualWidthRowsLayout[boxes, arrows], {Top, Bottom}},
+			"Graph" :> {DoGraphLayout[boxes, arrows], Automatic},
+			"Manual" :> {DoManualLayout[boxes, arrows], Automatic},
 			_ :> RaiseError["Unknown diagram layout algorithm: ``", algo]
 		}];
+	];
+
+	RaiseAssert[
+		MatchQ[placedBoxes, _?AssociationQ],
+		"Diagram layout `` did not return expected result: ``",
+		InputForm[algo],
+		InputForm[result]
+	];
+
+	(*--------------------------------*)
+	(* Compute arrow placement        *)
+	(*--------------------------------*)
+
+	placedArrows = PlaceArrowsBasedOnBoxes[
+		arrows,
+		placedBoxes,
+		arrowPlacementSpec
+	];
+
+	RaiseAssert[Length[placedArrows] === Length[arrows]];
+	RaiseAssert[Length[placedBoxes] === Length[boxes]];
+
+	result = PlacedDiagram[
+		placedBoxes,
+		placedArrows
 	];
 
 	RaiseAssert[

@@ -7,7 +7,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		PlacedBox,
 		LayoutUtils -> {
-			MakePlacedBox, RowWidth, PlaceArrowsBasedOnBoxes,
+			MakePlacedBox, RowWidth,
 			GroupBoxesByGraphRow
 		}
 	},
@@ -29,8 +29,7 @@ DoGraphLayout[
 	graph,
 	embedding,
 	vertices,
-	placedBoxes = <||>,
-	placedArrows = {}
+	placedBoxes = <||>
 },
 	graph = DiagramGraph[boxes, arrows];
 	RaiseAssert[GraphQ[graph]];
@@ -72,17 +71,5 @@ DoGraphLayout[
 		boxes
 	];
 
-	(*--------------*)
-	(* Place arrows *)
-	(*--------------*)
-
-	placedArrows = PlaceArrowsBasedOnBoxes[arrows, placedBoxes];
-
-	RaiseAssert[Length[placedArrows] === Length[arrows]];
-	RaiseAssert[Length[placedBoxes] === Length[boxes]];
-
-	PlacedDiagram[
-		placedBoxes,
-		placedArrows
-	]
+	placedBoxes
 ]

@@ -7,8 +7,7 @@ PackageUse[Diagrams -> {
 	Layout -> {
 		$Margin, $BoxPadding, PlacedBox,
 		LayoutUtils -> {
-			MakePlacedBox, PlacedBoxBorderRectangle, RowWidth, GroupBoxesByGraphRow,
-			PlaceArrowsBasedOnBoxes
+			MakePlacedBox, PlacedBoxBorderRectangle, RowWidth, GroupBoxesByGraphRow
 		}
 	},
 	Utils -> {RectangleWidth, RectangleHeight},
@@ -29,8 +28,7 @@ DoEqualWidthRowsLayout[
 	maxRowWidth = 0,
 	xOffset = 0.0,
 	yOffset = 0.0,
-	placedBoxes = <||>,
-	placedArrows = {}
+	placedBoxes = <||>
 },
 	rows = GroupBoxesByGraphRow[boxes, arrows];
 
@@ -104,24 +102,6 @@ DoEqualWidthRowsLayout[
 		rows
 	];
 
-	(*--------------*)
-	(* Place arrows *)
-	(*--------------*)
-
-	placedArrows = PlaceArrowsBasedOnBoxes[
-		arrows,
-		placedBoxes,
-		(* Only permit arrows placed automatically to attach to the bottom or
-		   top edge of a box. *)
-		{Top, Bottom}
-	];
-
-	RaiseAssert[Length[placedArrows] === Length[arrows]];
-	RaiseAssert[Length[placedBoxes] === Length[boxes]];
-
-	PlacedDiagram[
-		placedBoxes,
-		placedArrows
-	]
+	placedBoxes
 ]
 
