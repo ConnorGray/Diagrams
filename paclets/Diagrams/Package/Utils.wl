@@ -14,6 +14,7 @@ PackageExport[{
 	ConstructOutputElements,
 	ForwardOptions,
 	AbsoluteOptions2,
+	ConfirmFileType,
 
 	(* FrontEnd Operations *)
 	NotebookImportCell,
@@ -211,6 +212,101 @@ AbsoluteOptions2[expr:(head_Symbol[___])] := Module[{
 		],
 		(* Delete by duplicate Rule LHS (i.e. the option name). *)
 		First
+	]
+]
+
+(*====================================*)
+
+(* TODO: Support this option. *)
+(* Options[ConfirmFileType] = {
+	(* Whether to include the file path in any returned error messages.
+		Disabling this shortens the messages, and may be a good choice
+		when choosing to display the "Path" field in a different way. *)
+	"IncludeFilePath" -> True
+} *)
+
+SetFallthroughError[ConfirmFileType]
+
+(*
+	Confirm that the specified file path conforms to the specified file type.
+
+	This is a versatile tool for generating precise error messages indicating
+	e.g. when a file was expected to exist but did not, when a path was either
+	expected to be a normal file or not exist but in fact is a directory, and
+	more.
+
+	The second argument must be one of the following patterns verbatim:
+
+	* None
+	* File
+	* Directory
+	* None | File
+	* None | Directory
+	* File | Directory
+*)
+ConfirmFileType[
+	(path: _?StringQ) | File[path: _?StringQ],
+	typePatt: _,
+	errorPrefix: _?StringQ : None
+] := Module[{
+	fileType = FileType[path],
+	template,
+	metadata
+},
+	If[MatchQ[fileType, typePatt],
+		Return[path, Module];
+	];
+
+	(* The actual file type did not match the expected file spec. *)
+	template = ConfirmReplace[{fileType, typePatt}, {
+		{None, File} :>
+			"Path does not exist when a file was expected",
+		{None, Directory} :>
+			"Path does not exist when a directory was expected",
+		{None, Verbatim[File | Directory]} :>
+			"Path does not exist when a file or directory was expected",
+
+		{File, None} :>
+			(* "File unexpectedly exists at path: ``", *)
+			"Found file when path was expected to not exist",
+		{File, Directory} :>
+			"Found file at path where directory was expected",
+		{File, Verbatim[None | Directory]} :>
+			"Found file when directory or non-existent path was expected",
+
+		{Directory, None} :>
+			"Found directory when path was expected to not exist",
+		{Directory, File} :>
+			"Found directory at path where normal file was expected",
+		{Directory, Verbatim[None | File]} :>
+			"Found directory when normal file or non-existent path was expected",
+
+		(* TODO: Should be a LogicError *)
+		other_ :> Raise[
+			DiagramError,
+			"Invalid type pattern specified: `` (or unhandled file type: ``)",
+			InputForm[typePatt],
+			InputForm[fileType]
+		]
+	}];
+
+	(* Note: Use `1` explicitly so that a custom errorPrefix can use `` without
+		affecting the template parameter this resolves to. *)
+	template = template <> ": `1`";
+
+	If[StringQ[errorPrefix],
+		template = errorPrefix <> ": " <> template;
+	];
+
+	Raise[
+		DiagramError,
+		<|
+			"Path" -> path,
+			"FileType" -> fileType,
+			"ExpectedFileType" -> typePatt
+		|>,
+		template,
+		path
 	]
 ]
 
