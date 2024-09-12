@@ -368,6 +368,8 @@ CopyToClipboard2[text: _?StringQ] := Module[{
 			"LANG" -> "en_US.UTF-8"
 		]
 	];
+
+	text
 ]
 
 (*========================================================*)
