@@ -1,0 +1,4 @@
+BlockDiagram[
+	DiaBox["Foo"],
+	{}
+]

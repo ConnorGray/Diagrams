@@ -80,7 +80,7 @@ LayoutDiagram[
 		]
 	},
 		{placedBoxes, arrowPlacementSpec} = Replace[algo, {
-			"Row" :> {DoRowLayout[boxes, arrows], Automatic},
+			"Row" :> {DoRowLayout[boxes], Automatic},
 			(* Only permit arrows placed automatically to attach to the bottom or
 				top edge of a box. *)
 			"Rows" :> {DoRowsLayout[boxes, arrows], {Top, Bottom}},
@@ -95,7 +95,7 @@ LayoutDiagram[
 		MatchQ[placedBoxes, _?AssociationQ],
 		"Diagram layout `` did not return expected result: ``",
 		InputForm[algo],
-		InputForm[result]
+		InputForm[placedBoxes]
 	];
 
 	(*--------------------------------*)

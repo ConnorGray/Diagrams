@@ -6,6 +6,7 @@ PackageModule["Layout"]
 PackageModule["Layouts"]
 PackageModule["Render"]
 PackageModule["Utils"]
+PackageModule["TestingUtils"]
 PackageModule["Library"]
 PackageModule["Kinds"]     (* Diagram Kinds *)
 

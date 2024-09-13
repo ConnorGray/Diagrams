@@ -23,6 +23,14 @@ $ cargo make paclet
 wolfram-cli paclet test ./paclets/Diagrams ./Tests
 ```
 
+#### Run the Diagrams "blob" tests:
+
+```wolfram
+Diagrams`TestingUtils`RunBlobTests[
+    "~/Dev/GitHub/ConnorGray/Diagrams/Tests/BlobTestsData"
+]
+```
+
 #### Run the `diagram-maker` tests:
 
 ```shell
